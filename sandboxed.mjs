@@ -13,7 +13,7 @@ const PROFILE = `${HOME}/.claude-sandboxed`;
 const CACHE = `${HOME}/.cache/sandboxed`;
 const CONFIG = `${HOME}/.sandboxed/config.json`;
 // Explained in the README; removeDefaults can drop its allowRead and allowWrite entries, nothing else
-const DEFAULTS = JSON.parse(readFileSync(new URL("./default-srt-settings.json", import.meta.url), "utf8"));
+const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
 
 const args = process.argv.slice(2);
 const addDirs = [];
