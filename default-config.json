@@ -10,7 +10,7 @@
     "allowRead": [
       "~/.local/bin",
       "~/.local/share",
-      "~/.local/state/fnm_multishells",
+      "~/.local/state",
       "~/.gitconfig",
       "~/.gitignore_global",
       "~/.config/uv/uv.toml"
