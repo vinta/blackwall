@@ -1,8 +1,9 @@
 #!/usr/bin/env node
-import { execFileSync, spawn } from "node:child_process";
-import { mkdirSync } from "node:fs";
+import { spawn } from "node:child_process";
+import { mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, resolve } from "node:path";
+import { parseEnv } from "node:util";
 import { SandboxManager } from "@anthropic-ai/sandbox-runtime";
 
 const USAGE = "usage: sandboxed [--add-dir DIR]... [--] <command> [args...]";
@@ -26,10 +27,8 @@ function exitWithUsage() {
   process.exit(2);
 }
 
-// Created with Keychain `-T ""`, so each read shows a dialog: click Allow, never Always Allow
-function readKeychain(service) {
-  return execFileSync("security", ["find-generic-password", "-s", service, "-w"], { encoding: "utf8" }).trim();
-}
+// A 1Password Environments mount (a FIFO) or a hand-made file; parsed, not loaded, so non-claude commands never inherit the OAuth token
+const secrets = parseEnv(readFileSync(`${HOME}/.sandboxed/.env`, "utf8"));
 
 const cwd = process.cwd();
 const config = {
@@ -68,12 +67,12 @@ const env = {
   GIT_CONFIG_COUNT: "1",
   GIT_CONFIG_KEY_0: "commit.gpgsign",
   GIT_CONFIG_VALUE_0: "false",
-  GH_TOKEN: readKeychain("sandboxed-gh-token"),
+  GH_TOKEN: secrets.GH_TOKEN,
 };
 
 // Only claude gets the subscription token: any other command would hold it with no classifier
 function applyClaude() {
-  env.CLAUDE_CODE_OAUTH_TOKEN = readKeychain("sandboxed-claude-oauth-token");
+  env.CLAUDE_CODE_OAUTH_TOKEN = secrets.CLAUDE_CODE_OAUTH_TOKEN;
   env.CLAUDE_CONFIG_DIR = PROFILE;
   config.filesystem.allowRead.push(PROFILE, "~/.claude/skills", "~/.claude/plugins");
   config.filesystem.allowWrite.push(PROFILE);
