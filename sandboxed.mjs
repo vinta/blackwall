@@ -12,7 +12,7 @@ const PROFILE = `${HOME}/.claude-sandboxed`;
 // Private to sandboxed runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/sandboxed`;
 const CONFIG = `${HOME}/.sandboxed/config.json`;
-// Explained in the README; removeDefaults can drop its allowRead and allowWrite entries, nothing else
+// Explained in the README; also the shape a user config must match
 const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
 
 const args = process.argv.slice(2);
@@ -43,22 +43,35 @@ function readUserConfig() {
   try {
     user = JSON.parse(readFileSync(CONFIG, "utf8"));
   } catch (error) {
-    if (error.code === "ENOENT") return {};
+    if (error.code === "ENOENT") return { additions: {}, overrides: {} };
     throw error;
   }
-  // A misspelled key would otherwise drop its paths without a word, and a string would spread into characters
-  checkLists(user, ["removeDefaults"], ["filesystem", "network"], "");
-  checkLists(user.filesystem ?? {}, ["allowRead", "allowWrite", "denyRead", "denyWrite"], [], "filesystem.");
-  checkLists(user.network ?? {}, ["allowedDomains", "deniedDomains"], [], "network.");
-  return user;
+  checkShape(user, { ...DEFAULTS, overrideDefaults: {} }, "", true, ["overrideDefaults"]);
+  const { overrideDefaults: overrides = {}, ...additions } = user;
+  checkShape(overrides, DEFAULTS, "overrideDefaults.", false);
+  return { additions, overrides };
 }
 
-function checkLists(object, listKeys, objectKeys, prefix) {
-  for (const [key, value] of Object.entries(object)) {
-    if (objectKeys.includes(key)) continue;
-    if (!listKeys.includes(key)) exitWithConfigError(`unknown key ${prefix}${key}`);
-    if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
-      exitWithConfigError(`${prefix}${key} must be a list of strings`);
+// Keys and types mirror default-config.json: a misspelled key would otherwise drop its paths without a word, and a string would spread into characters
+function checkShape(value, shape, prefix, listsOnly, skip = []) {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    exitWithConfigError(`${prefix.slice(0, -1) || "the file"} must be an object`);
+  }
+  for (const [key, item] of Object.entries(value)) {
+    if (skip.includes(key)) continue;
+    const name = `${prefix}${key}`;
+    if (!Object.hasOwn(shape, key)) exitWithConfigError(`unknown key ${name}`);
+    const expected = shape[key];
+    if (Array.isArray(expected)) {
+      if (!Array.isArray(item) || !item.every((entry) => typeof entry === "string")) {
+        exitWithConfigError(`${name} must be a list of strings`);
+      }
+    } else if (typeof expected === "object") {
+      checkShape(item, expected, `${name}.`, listsOnly);
+    } else if (listsOnly) {
+      exitWithConfigError(`${name} can only be set under overrideDefaults`);
+    } else if (typeof item !== typeof expected) {
+      exitWithConfigError(`${name} must be a ${typeof expected}`);
     }
   }
 }
@@ -68,36 +81,39 @@ function exitWithConfigError(message) {
   process.exit(2);
 }
 
+// overrideDefaults replaces default values, then the top-level lists are added on top
+const { additions, overrides } = readUserConfig();
+const base = {
+  ...DEFAULTS,
+  ...overrides,
+  network: { ...DEFAULTS.network, ...overrides.network },
+  filesystem: { ...DEFAULTS.filesystem, ...overrides.filesystem },
+};
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
-const user = readUserConfig();
-const removals = user.removeDefaults ?? [];
-const sameEntry = (a, b) => expandPath(a) === expandPath(b);
-const removable = [...DEFAULTS.filesystem.allowRead, ...DEFAULTS.filesystem.allowWrite, ...DEFAULTS.network.allowedDomains];
-for (const removal of removals) {
-  if (!removable.some((entry) => sameEntry(entry, removal))) {
-    console.warn(`sandboxed: removeDefaults entry ${removal} in ${CONFIG} matches no default`);
-  }
+if (!base.filesystem.denyRead.some((path) => expandPath(path) === HOME)) {
+  console.warn(`sandboxed: overrideDefaults.filesystem.denyRead in ${CONFIG} no longer denies ~/, so your home directory is readable`);
 }
+const added = (section, key) => additions[section]?.[key] ?? [];
 
 const cwd = process.cwd();
-const kept = (entry) => !removals.some((removal) => sameEntry(entry, removal));
 const config = {
-  ...DEFAULTS,
+  ...base,
   network: {
-    allowedDomains: [...DEFAULTS.network.allowedDomains.filter(kept), ...(user.network?.allowedDomains ?? [])],
-    deniedDomains: [...DEFAULTS.network.deniedDomains, ...(user.network?.deniedDomains ?? [])],
+    allowedDomains: [...base.network.allowedDomains, ...added("network", "allowedDomains")],
+    deniedDomains: [...base.network.deniedDomains, ...added("network", "deniedDomains")],
   },
   filesystem: {
-    denyRead: DEFAULTS.filesystem.denyRead,
-    allowRead: [cwd, ...addDirs, ...DEFAULTS.filesystem.allowRead.filter(kept), CACHE],
-    allowWrite: [cwd, ...addDirs, ...DEFAULTS.filesystem.allowWrite.filter(kept), "/private/tmp", CACHE],
+    denyRead: [...base.filesystem.denyRead, ...added("filesystem", "denyRead")],
+    allowRead: [cwd, ...addDirs, ...base.filesystem.allowRead, CACHE, ...added("filesystem", "allowRead")],
+    allowWrite: [cwd, ...addDirs, ...base.filesystem.allowWrite, "/private/tmp", CACHE, ...added("filesystem", "allowWrite")],
     // srt's built-in denies anchor on cwd only
-    denyWrite: [...DEFAULTS.filesystem.denyWrite, ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`])],
+    denyWrite: [
+      ...base.filesystem.denyWrite,
+      ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]),
+      ...added("filesystem", "denyWrite"),
+    ],
   },
 };
-for (const key of ["allowRead", "allowWrite", "denyRead", "denyWrite"]) {
-  config.filesystem[key].push(...(user.filesystem?.[key] ?? []));
-}
 
 // Only claude gets the profile, and further down the subscription token: any other command would hold it with no classifier
 const isClaude = args[0] !== undefined && basename(args[0]) === "claude";
