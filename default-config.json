@@ -6,7 +6,7 @@
   "enableWeakerNetworkIsolation": true,
   "allowPty": true,
   "filesystem": {
-    "denyRead": ["~/"],
+    "denyRead": ["~/", "/private/var/folders", "/Volumes"],
     "allowRead": [
       "~/.local/bin",
       "~/.local/share",
