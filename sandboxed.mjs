@@ -12,15 +12,8 @@ const PROFILE = `${HOME}/.claude-sandboxed`;
 // Private to sandboxed runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/sandboxed`;
 const CONFIG = `${HOME}/.sandboxed/config.json`;
-// Toolchain and tool config paths; unlike the rest of the config, a user can drop these with removeDefaults
-const DEFAULT_ALLOW_READ = [
-  "~/.local/bin",
-  "~/.local/share",
-  "~/.local/state/fnm_multishells",
-  "~/.gitconfig",
-  "~/.gitignore_global",
-  "~/.config/uv/uv.toml",
-];
+// Explained in the README; removeDefaults can drop its allowRead and allowWrite entries, nothing else
+const DEFAULTS = JSON.parse(readFileSync(new URL("./default-srt-settings.json", import.meta.url), "utf8"));
 
 const args = process.argv.slice(2);
 const addDirs = [];
@@ -78,24 +71,23 @@ function exitWithConfigError(message) {
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
 const user = readUserConfig();
 const removals = (user.removeDefaults ?? []).map(expandPath);
+const removable = [...DEFAULTS.filesystem.allowRead, ...DEFAULTS.filesystem.allowWrite];
 for (const path of removals) {
-  if (!DEFAULT_ALLOW_READ.some((entry) => expandPath(entry) === path)) {
+  if (!removable.some((entry) => expandPath(entry) === path)) {
     console.warn(`sandboxed: removeDefaults entry ${path} in ${CONFIG} matches no default`);
   }
 }
 
 const cwd = process.cwd();
+const kept = (entry) => !removals.includes(expandPath(entry));
 const config = {
-  network: { allowedDomains: [], deniedDomains: [] },
-  // Go tools such as gh fail TLS verification without it
-  enableWeakerNetworkIsolation: true,
-  allowPty: true,
+  ...DEFAULTS,
   filesystem: {
-    denyRead: ["~/"],
-    allowRead: [cwd, ...addDirs, ...DEFAULT_ALLOW_READ.filter((entry) => !removals.includes(expandPath(entry))), CACHE],
-    allowWrite: [cwd, ...addDirs, "/private/tmp", CACHE],
+    denyRead: DEFAULTS.filesystem.denyRead,
+    allowRead: [cwd, ...addDirs, ...DEFAULTS.filesystem.allowRead.filter(kept), CACHE],
+    allowWrite: [cwd, ...addDirs, ...DEFAULTS.filesystem.allowWrite.filter(kept), "/private/tmp", CACHE],
     // srt's built-in denies anchor on cwd only
-    denyWrite: addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]),
+    denyWrite: [...DEFAULTS.filesystem.denyWrite, ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`])],
   },
 };
 for (const key of ["allowRead", "allowWrite", "denyRead", "denyWrite"]) {

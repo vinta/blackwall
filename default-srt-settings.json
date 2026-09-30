@@ -1,0 +1,21 @@
+{
+  "network": {
+    "allowedDomains": [],
+    "deniedDomains": []
+  },
+  "enableWeakerNetworkIsolation": true,
+  "allowPty": true,
+  "filesystem": {
+    "denyRead": ["~/"],
+    "allowRead": [
+      "~/.local/bin",
+      "~/.local/share",
+      "~/.local/state/fnm_multishells",
+      "~/.gitconfig",
+      "~/.gitignore_global",
+      "~/.config/uv/uv.toml"
+    ],
+    "allowWrite": [],
+    "denyWrite": []
+  }
+}
