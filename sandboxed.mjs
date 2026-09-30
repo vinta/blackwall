@@ -4,31 +4,85 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, resolve } from "node:path";
 import { parseEnv } from "node:util";
-import { SandboxManager } from "@anthropic-ai/sandbox-runtime";
+import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 
-const USAGE = "usage: sandboxed [--add-dir DIR]... [--] <command> [args...]";
+const USAGE = "usage: sandboxed [--add-dir DIR]... [--print-config] [--] <command> [args...]";
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-sandboxed`;
 // Private to sandboxed runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/sandboxed`;
+const CONFIG = `${HOME}/.sandboxed/config.json`;
+// Toolchain and tool config paths; unlike the rest of the config, a user can drop these with removeDefaults
+const DEFAULT_ALLOW_READ = [
+  "~/.local/bin",
+  "~/.local/share",
+  "~/.local/state/fnm_multishells",
+  "~/.gitconfig",
+  "~/.gitignore_global",
+  "~/.config/uv/uv.toml",
+];
 
 const args = process.argv.slice(2);
 const addDirs = [];
-while (args[0] === "--add-dir") {
-  args.shift();
-  if (!args[0]) exitWithUsage();
-  addDirs.push(resolve(args.shift()));
+let printConfig = false;
+for (;;) {
+  if (args[0] === "--add-dir") {
+    args.shift();
+    if (!args[0]) exitWithUsage();
+    addDirs.push(resolve(args.shift()));
+  } else if (args[0] === "--print-config") {
+    args.shift();
+    printConfig = true;
+  } else {
+    break;
+  }
 }
 if (args[0] === "--") args.shift();
-if (!args[0]) exitWithUsage();
+if (!args[0] && !printConfig) exitWithUsage();
 
 function exitWithUsage() {
   console.error(USAGE);
   process.exit(2);
 }
 
-// A 1Password Environments mount (a FIFO) or a hand-made file; parsed, not loaded, so non-claude commands never inherit the OAuth token
-const secrets = parseEnv(readFileSync(`${HOME}/.sandboxed/.env`, "utf8"));
+function readUserConfig() {
+  let user;
+  try {
+    user = JSON.parse(readFileSync(CONFIG, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") return {};
+    throw error;
+  }
+  // A misspelled key would otherwise drop its paths without a word, and a string would spread into characters
+  checkLists(user, ["removeDefaults"], ["filesystem", "network"], "");
+  checkLists(user.filesystem ?? {}, ["allowRead", "allowWrite", "denyRead", "denyWrite"], [], "filesystem.");
+  checkLists(user.network ?? {}, ["deniedDomains"], [], "network.");
+  return user;
+}
+
+function checkLists(object, listKeys, objectKeys, prefix) {
+  for (const [key, value] of Object.entries(object)) {
+    if (objectKeys.includes(key)) continue;
+    if (!listKeys.includes(key)) exitWithConfigError(`unknown key ${prefix}${key}`);
+    if (!Array.isArray(value) || !value.every((item) => typeof item === "string")) {
+      exitWithConfigError(`${prefix}${key} must be a list of strings`);
+    }
+  }
+}
+
+function exitWithConfigError(message) {
+  console.error(`sandboxed: ${CONFIG}: ${message}`);
+  process.exit(2);
+}
+
+const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
+const user = readUserConfig();
+const removals = (user.removeDefaults ?? []).map(expandPath);
+for (const path of removals) {
+  if (!DEFAULT_ALLOW_READ.some((entry) => expandPath(entry) === path)) {
+    console.warn(`sandboxed: removeDefaults entry ${path} in ${CONFIG} matches no default`);
+  }
+}
 
 const cwd = process.cwd();
 const config = {
@@ -38,23 +92,34 @@ const config = {
   allowPty: true,
   filesystem: {
     denyRead: ["~/"],
-    allowRead: [
-      cwd,
-      ...addDirs,
-      "~/.local/bin",
-      "~/.local/share",
-      "~/.local/state/fnm_multishells",
-      "~/.gitconfig",
-      "~/.gitignore_global",
-      "~/.config/uv/uv.toml",
-      "~/.npmrc",
-      CACHE,
-    ],
+    allowRead: [cwd, ...addDirs, ...DEFAULT_ALLOW_READ.filter((entry) => !removals.includes(expandPath(entry))), CACHE],
     allowWrite: [cwd, ...addDirs, "/private/tmp", CACHE],
     // srt's built-in denies anchor on cwd only
     denyWrite: addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]),
   },
 };
+for (const key of ["allowRead", "allowWrite", "denyRead", "denyWrite"]) {
+  config.filesystem[key].push(...(user.filesystem?.[key] ?? []));
+}
+config.network.deniedDomains.push(...(user.network?.deniedDomains ?? []));
+
+// Only claude gets the profile, and further down the subscription token: any other command would hold it with no classifier
+const isClaude = args[0] !== undefined && basename(args[0]) === "claude";
+if (isClaude) {
+  config.filesystem.allowRead.push(PROFILE, "~/.claude/skills", "~/.claude/plugins");
+  config.filesystem.allowWrite.push(PROFILE);
+  // Right after the command name, so a trailing `--` or prompt argument can't swallow them
+  args.splice(1, 0, ...addDirs.flatMap((dir) => ["--add-dir", dir]));
+}
+
+SandboxRuntimeConfigSchema.parse(config);
+if (printConfig) {
+  console.log(JSON.stringify(config, null, 2));
+  process.exit(0);
+}
+
+// A 1Password Environments mount (a FIFO) or a hand-made file; parsed, not loaded, so non-claude commands never inherit the OAuth token
+const secrets = parseEnv(readFileSync(`${HOME}/.sandboxed/.env`, "utf8"));
 // srt sets the child's TMPDIR from this; /tmp alone fails Claude's Bash tool
 process.env.CLAUDE_CODE_TMPDIR = "/private/tmp";
 const env = {
@@ -69,18 +134,10 @@ const env = {
   GIT_CONFIG_VALUE_0: "false",
   GH_TOKEN: secrets.GH_TOKEN,
 };
-
-// Only claude gets the subscription token: any other command would hold it with no classifier
-function applyClaude() {
+if (isClaude) {
   env.CLAUDE_CODE_OAUTH_TOKEN = secrets.CLAUDE_CODE_OAUTH_TOKEN;
   env.CLAUDE_CONFIG_DIR = PROFILE;
-  config.filesystem.allowRead.push(PROFILE, "~/.claude/skills", "~/.claude/plugins");
-  config.filesystem.allowWrite.push(PROFILE);
-  // Right after the command name, so a trailing `--` or prompt argument can't swallow them
-  args.splice(1, 0, ...addDirs.flatMap((dir) => ["--add-dir", dir]));
 }
-
-if (basename(args[0]) === "claude") applyClaude();
 
 mkdirSync(CACHE, { recursive: true });
 // No rule matches any host, so srt asks for each one: allow all for full internet
