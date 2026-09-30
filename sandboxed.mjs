@@ -49,7 +49,7 @@ function readUserConfig() {
   // A misspelled key would otherwise drop its paths without a word, and a string would spread into characters
   checkLists(user, ["removeDefaults"], ["filesystem", "network"], "");
   checkLists(user.filesystem ?? {}, ["allowRead", "allowWrite", "denyRead", "denyWrite"], [], "filesystem.");
-  checkLists(user.network ?? {}, ["deniedDomains"], [], "network.");
+  checkLists(user.network ?? {}, ["allowedDomains", "deniedDomains"], [], "network.");
   return user;
 }
 
@@ -70,18 +70,23 @@ function exitWithConfigError(message) {
 
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
 const user = readUserConfig();
-const removals = (user.removeDefaults ?? []).map(expandPath);
-const removable = [...DEFAULTS.filesystem.allowRead, ...DEFAULTS.filesystem.allowWrite];
-for (const path of removals) {
-  if (!removable.some((entry) => expandPath(entry) === path)) {
-    console.warn(`sandboxed: removeDefaults entry ${path} in ${CONFIG} matches no default`);
+const removals = user.removeDefaults ?? [];
+const sameEntry = (a, b) => expandPath(a) === expandPath(b);
+const removable = [...DEFAULTS.filesystem.allowRead, ...DEFAULTS.filesystem.allowWrite, ...DEFAULTS.network.allowedDomains];
+for (const removal of removals) {
+  if (!removable.some((entry) => sameEntry(entry, removal))) {
+    console.warn(`sandboxed: removeDefaults entry ${removal} in ${CONFIG} matches no default`);
   }
 }
 
 const cwd = process.cwd();
-const kept = (entry) => !removals.includes(expandPath(entry));
+const kept = (entry) => !removals.some((removal) => sameEntry(entry, removal));
 const config = {
   ...DEFAULTS,
+  network: {
+    allowedDomains: [...DEFAULTS.network.allowedDomains.filter(kept), ...(user.network?.allowedDomains ?? [])],
+    deniedDomains: [...DEFAULTS.network.deniedDomains, ...(user.network?.deniedDomains ?? [])],
+  },
   filesystem: {
     denyRead: DEFAULTS.filesystem.denyRead,
     allowRead: [cwd, ...addDirs, ...DEFAULTS.filesystem.allowRead.filter(kept), CACHE],
@@ -93,7 +98,6 @@ const config = {
 for (const key of ["allowRead", "allowWrite", "denyRead", "denyWrite"]) {
   config.filesystem[key].push(...(user.filesystem?.[key] ?? []));
 }
-config.network.deniedDomains.push(...(user.network?.deniedDomains ?? []));
 
 // Only claude gets the profile, and further down the subscription token: any other command would hold it with no classifier
 const isClaude = args[0] !== undefined && basename(args[0]) === "claude";
@@ -104,7 +108,10 @@ if (isClaude) {
   args.splice(1, 0, ...addDirs.flatMap((dir) => ["--add-dir", dir]));
 }
 
-SandboxRuntimeConfigSchema.parse(config);
+// srt rejects "*", so sandboxed turns it into an ask callback that allows every host no rule matches
+const allowAllDomains = config.network.allowedDomains.includes("*");
+const srtConfig = { ...config, network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") } };
+SandboxRuntimeConfigSchema.parse(srtConfig);
 if (printConfig) {
   console.log(JSON.stringify(config, null, 2));
   process.exit(0);
@@ -132,8 +139,7 @@ if (isClaude) {
 }
 
 mkdirSync(CACHE, { recursive: true });
-// No rule matches any host, so srt asks for each one: allow all for full internet
-await SandboxManager.initialize(config, async () => true);
+await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
 
 const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
 const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
