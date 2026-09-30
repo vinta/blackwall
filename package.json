@@ -1,5 +1,5 @@
 {
-  "name": "sandboxed",
+  "name": "sandboxed-cli",
   "private": true,
   "type": "module",
   "scripts": {
