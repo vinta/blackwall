@@ -13,7 +13,7 @@ const PROFILE = `${HOME}/.claude-blackwall`;
 const CACHE = `${HOME}/.cache/blackwall`;
 const CONFIG = `${HOME}/.blackwall/config.json`;
 // Explained in the README; also the shape a user config must match
-const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
+const DEFAULTS = JSON.parse(readFileSync(new URL("../configs/default-config.json", import.meta.url), "utf8"));
 
 const args = process.argv.slice(2);
 const addDirs = [];

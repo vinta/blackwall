@@ -25,10 +25,10 @@
   },
   "type": "module",
   "bin": {
-    "blackwall": "blackwall.mjs"
+    "blackwall": "src/blackwall.mjs"
   },
   "files": [
-    "blackwall.mjs",
+    "src/",
     "configs/"
   ],
   "scripts": {
