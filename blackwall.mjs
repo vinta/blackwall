@@ -6,10 +6,10 @@ import { basename, resolve } from "node:path";
 import { parseEnv } from "node:util";
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 
-const USAGE = "usage: sandboxed [--add-dir DIR]... [--print-config | --print-default-config] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-default-config] [--] <command> [args...]";
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-sandboxed`;
-// Private to sandboxed runs: host tools later execute what lands in a package cache
+// Private to blackwall runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/sandboxed`;
 const CONFIG = `${HOME}/.sandboxed/config.json`;
 // Explained in the README; also the shape a user config must match
@@ -80,7 +80,7 @@ function checkShape(value, shape, prefix, listsOnly, skip = []) {
 }
 
 function exitWithConfigError(message) {
-  console.error(`sandboxed: ${CONFIG}: ${message}`);
+  console.error(`blackwall: ${CONFIG}: ${message}`);
   process.exit(2);
 }
 
@@ -94,7 +94,7 @@ const base = {
 };
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
 if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
-  console.warn(`sandboxed: overrideDefaults.filesystem.denyRead in ${CONFIG} no longer denies ~/, so your home directory is readable`);
+  console.warn(`blackwall: overrideDefaults.filesystem.denyRead in ${CONFIG} no longer denies ~/, so your home directory is readable`);
 }
 const added = (section, key) => additions[section]?.[key] ?? [];
 
@@ -139,7 +139,7 @@ for (const path of [...config.filesystem.allowRead]) {
   }
 }
 
-// srt rejects "*", so sandboxed turns it into an ask callback that allows every host no rule matches
+// srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
 const allowAllDomains = config.network.allowedDomains.includes("*");
 const srtConfig = { ...config, network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") } };
 SandboxRuntimeConfigSchema.parse(srtConfig);

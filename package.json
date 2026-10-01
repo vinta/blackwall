@@ -1,9 +1,9 @@
 {
-  "name": "sandboxed-cli",
+  "name": "blackwall-sandbox",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "mkdir -p runtime && cp \"$(node -p process.execPath)\" runtime/sandboxed.tmp && codesign -f -s - runtime/sandboxed.tmp && mv -f runtime/sandboxed.tmp runtime/sandboxed"
+    "build": "mkdir -p runtime && cp \"$(node -p process.execPath)\" runtime/blackwall.tmp && codesign -f -s - runtime/blackwall.tmp && mv -f runtime/blackwall.tmp runtime/blackwall"
   },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "0.0.77"
