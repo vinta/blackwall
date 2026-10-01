@@ -149,7 +149,13 @@ if (printConfig) {
 }
 
 // A 1Password Environments mount (a FIFO) or a hand-made file; parsed, not loaded, so non-claude commands never inherit the OAuth token
-const secrets = parseEnv(readFileSync(`${HOME}/.blackwall/.env`, "utf8"));
+// Optional: without it, only gh and claude lose their tokens
+let secrets = {};
+try {
+  secrets = parseEnv(readFileSync(`${HOME}/.blackwall/.env`, "utf8"));
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+}
 // srt sets the child's TMPDIR from this; /tmp alone fails Claude's Bash tool
 process.env.CLAUDE_CODE_TMPDIR = "/private/tmp";
 const env = {
