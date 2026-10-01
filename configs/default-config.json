@@ -32,7 +32,9 @@
       "~/.local/state",
       "~/.gitconfig",
       "~/.gitignore_global",
-      "~/.config/uv/uv.toml"
+      "~/.config/git/ignore",
+      "~/.config/uv/uv.toml",
+      "~/Library/Caches/com.github.wasilibs"
     ],
     "allowWrite": [],
     "denyWrite": []
