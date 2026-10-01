@@ -127,9 +127,11 @@ if (isClaude) {
   args.splice(1, 0, ...addDirs.flatMap((dir) => ["--add-dir", dir]));
 }
 
-// Seatbelt checks a symlink and its target separately. Only the configured entries are resolved, never links inside a granted directory, which a run could plant there
+// Seatbelt checks a symlink and its target separately. Only configured entries under ~ are resolved (dotfile-manager links), not system links like /var, whose target would
+// widen the grant, and never links inside a granted directory, which a run could plant there
 for (const path of [...config.filesystem.allowRead]) {
   const absolute = expandPath(path);
+  if (!absolute.startsWith(`${HOME}/`)) continue;
   try {
     if (lstatSync(absolute).isSymbolicLink()) config.filesystem.allowRead.push(realpathSync(absolute));
   } catch (error) {
