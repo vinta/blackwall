@@ -158,6 +158,7 @@ const env = {
   GH_CONFIG_DIR: `${CACHE}/gh`,
   UV_CACHE_DIR: `${CACHE}/uv`,
   npm_config_cache: `${CACHE}/npm`,
+  PRE_COMMIT_HOME: `${CACHE}/pre-commit`,
   // gpg can't reach ~/.gnupg under denyRead
   GIT_CONFIG_COUNT: "1",
   GIT_CONFIG_KEY_0: "commit.gpgsign",
