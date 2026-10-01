@@ -14,7 +14,7 @@ blackwall npm test # any command works, not only claude
 
 A sandboxed command can only write to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`. Reads are blocked by default, except those folders and the `allowRead` paths in the [default config](#default-config). Every host is allowed by default.
 
-`claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`.
+`claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. It shares the current folder's sessions with your normal `claude`, so `claude --resume` works both ways, but it can't read other projects' sessions, and it can only read this project's auto memory, not write it.
 
 Put your env vars in `~/.blackwall/.env` if you need them. Every key goes to every command, and `BLACKWALL_*` keys also configure `blackwall` itself:
 
