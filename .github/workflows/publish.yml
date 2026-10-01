@@ -1,0 +1,49 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write # for npm trusted publishing
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          # npmjs.org is already the default registry, but this makes setup-node write its own .npmrc and point NPM_CONFIG_USERCONFIG at it, so publish ignores runner-level npm config
+          # No NODE_AUTH_TOKEN is set on purpose: npm then falls through to OIDC. This is the shape in npm's trusted publishing docs
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Check version
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: Version mismatch!"
+            echo "package.json version: $PACKAGE_VERSION"
+            echo "Git tag version: $TAG_VERSION"
+            exit 1
+          fi
+          echo "Version check passed: $PACKAGE_VERSION"
+
+      - name: Publish to npm
+        run: npm publish
