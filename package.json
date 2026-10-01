@@ -1,7 +1,19 @@
 {
   "name": "blackwall-sandbox",
-  "private": true,
+  "version": "0.1.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vinta/blackwall.git"
+  },
   "type": "module",
+  "bin": {
+    "blackwall": "blackwall.mjs"
+  },
+  "files": [
+    "blackwall.mjs",
+    "configs/"
+  ],
   "scripts": {
     "build": "mkdir -p runtime && cp \"$(node -p process.execPath)\" runtime/blackwall.tmp && codesign -f -s - runtime/blackwall.tmp && mv -f runtime/blackwall.tmp runtime/blackwall"
   },
