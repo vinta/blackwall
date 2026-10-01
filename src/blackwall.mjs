@@ -46,13 +46,23 @@ function readUserConfig() {
   try {
     user = JSON.parse(readFileSync(CONFIG, "utf8"));
   } catch (error) {
-    if (error.code === "ENOENT") return { additions: {}, overrides: {} };
+    if (error.code === "ENOENT") return { additions: {}, overrides: {}, presets: [] };
     throw error;
   }
   checkShape(user, { ...DEFAULTS, overrideDefaults: {} }, "", true, ["overrideDefaults"]);
-  const { overrideDefaults: overrides = {}, ...additions } = user;
+  const { overrideDefaults: overrides = {}, presets = [], ...additions } = user;
   checkShape(overrides, DEFAULTS, "overrideDefaults.", false);
-  return { additions, overrides };
+  return { additions, overrides, presets };
+}
+
+// A preset has the shape of the top-level lists in a user config
+function readPreset(name) {
+  try {
+    return JSON.parse(readFileSync(new URL(`../configs/presets/${name}.json`, import.meta.url), "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") exitWithConfigError(`unknown preset ${name}`);
+    throw error;
+  }
 }
 
 // Keys and types mirror default-config.json: a misspelled key would otherwise drop its paths without a word, and a string would spread into characters
@@ -84,19 +94,27 @@ function exitWithConfigError(message) {
   process.exit(2);
 }
 
-// overrideDefaults replaces default values, then the top-level lists are added on top
-const { additions, overrides } = readUserConfig();
-const base = {
+// Only claude gets the profile, and further down the subscription token: any other command would hold it with no classifier
+const isClaude = args[0] !== undefined && basename(args[0]) === "claude";
+
+// overrideDefaults replaces default values, then the presets and the top-level lists are added on top
+const { additions, overrides, presets } = readUserConfig();
+// presets is blackwall's own key, so it never reaches srt
+const { presets: basePresets, ...base } = {
   ...DEFAULTS,
   ...overrides,
   network: { ...DEFAULTS.network, ...overrides.network },
   filesystem: { ...DEFAULTS.filesystem, ...overrides.filesystem },
 };
+// mac and claude aren't in the presets list, so overriding it can't drop them
+const automatic = [...(process.platform === "darwin" ? ["mac"] : []), ...(isClaude ? ["claude"] : [])];
+const layers = [...new Set([...automatic, ...basePresets, ...presets])].map(readPreset);
+layers.push(additions);
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
 if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
   console.warn(`blackwall: overrideDefaults.filesystem.denyRead in ${CONFIG} no longer denies ~/, so your home directory is readable`);
 }
-const added = (section, key) => additions[section]?.[key] ?? [];
+const added = (section, key) => layers.flatMap((layer) => layer[section]?.[key] ?? []);
 
 const cwd = process.cwd();
 const config = {
@@ -118,8 +136,6 @@ const config = {
   },
 };
 
-// Only claude gets the profile, and further down the subscription token: any other command would hold it with no classifier
-const isClaude = args[0] !== undefined && basename(args[0]) === "claude";
 if (isClaude) {
   config.filesystem.allowRead.push(PROFILE, "~/.claude/skills", "~/.claude/plugins");
   config.filesystem.allowWrite.push(PROFILE);

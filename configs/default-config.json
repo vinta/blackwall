@@ -1,40 +1,38 @@
 {
+  "presets": [
+    "python",
+    "npm",
+    "github"
+  ],
   "network": {
-    "allowedDomains": ["*"],
+    "allowedDomains": [],
     "deniedDomains": []
   },
   "enableWeakerNetworkIsolation": true,
   "allowPty": true,
   "filesystem": {
-    "denyRead": ["/"],
+    "denyRead": [
+      "/"
+    ],
     "allowRead": [
-      "/System",
+      "/bin",
+      "/dev",
+      "/etc",
+      "/sbin",
+      "/tmp",
       "/usr/bin",
       "/usr/lib",
       "/usr/libexec",
       "/usr/sbin",
       "/usr/share",
-      "/bin",
-      "/sbin",
-      "/private/etc",
-      "/etc",
-      "/private/var/run",
-      "/private/var/select",
-      "/private/var/db/timezone",
       "/var",
-      "/dev",
-      "/opt/homebrew",
-      "/private/tmp",
-      "/tmp",
-      "/Library/Developer/CommandLineTools",
-      "~/.local/bin",
-      "~/.local/share",
-      "~/.local/state",
-      "~/.gitconfig",
-      "~/.gitignore_global",
       "~/.config/git/ignore",
       "~/.config/uv/uv.toml",
-      "~/Library/Caches/com.github.wasilibs"
+      "~/.gitconfig",
+      "~/.gitignore_global",
+      "~/.local/bin",
+      "~/.local/share",
+      "~/.local/state"
     ],
     "allowWrite": [],
     "denyWrite": []

@@ -1,0 +1,8 @@
+{
+  "network": {
+    "allowedDomains": [
+      "pypi.org",
+      "files.pythonhosted.org"
+    ]
+  }
+}
