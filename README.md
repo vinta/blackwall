@@ -27,13 +27,15 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx # run `claude setup-token` to get one
 
 ## Signed Node
 
-Firewalls like Little Snitch see `blackwall` as `node`, so a rule for it covers every Node script. To give `blackwall` its own identity on macOS:
+For firewall apps like Little Snitch. Every sandboxed command connects through a proxy inside `blackwall`, so the firewall sees all that traffic as `node`. It's the same `node` behind every other Node script, so you can't tell them apart, and one rule covers them all.
+
+To give `blackwall` its own identity on macOS, so you can control its connections separately:
 
 ```bash
 export BLACKWALL_USE_SELF_SIGNED_NODE=1
 ```
 
-`blackwall` then runs itself with `~/.blackwall/blackwall_node`, an ad-hoc-signed copy of your `node`. It's created on the first run, and again whenever it's missing. Delete it after upgrading Node to get a fresh copy. Needs Node 22.15+.
+Little Snitch then shows `blackwall_node` instead of `node`. `blackwall` runs itself with `~/.blackwall/blackwall_node`, an ad-hoc-signed copy of your `node`. It's created on the first run, and again whenever it's missing. Delete it after upgrading Node to get a fresh copy. Needs Node 22.15+.
 
 ## Configurations
 
