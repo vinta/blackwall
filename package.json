@@ -1,10 +1,27 @@
 {
   "name": "blackwall-sandbox",
+  "description": "Opinionated lightweight sandbox for daily dev tasks, with full network access",
+  "keywords": [
+    "sandbox",
+    "seatbelt",
+    "claude-code",
+    "ai-agent",
+    "cli"
+  ],
   "version": "0.1.0",
+  "author": {
+    "name": "Vinta Chen",
+    "email": "vinta.chen@gmail.com",
+    "url": "https://vinta.ws/code/"
+  },
   "license": "MIT",
+  "homepage": "https://github.com/vinta/blackwall",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/vinta/blackwall.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vinta/blackwall/issues"
   },
   "type": "module",
   "bin": {
@@ -19,5 +36,8 @@
   },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "0.0.77"
+  },
+  "engines": {
+    "node": ">=20.12.0"
   }
 }
