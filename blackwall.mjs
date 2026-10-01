@@ -8,10 +8,10 @@ import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbo
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-default-config] [--] <command> [args...]";
 const HOME = homedir();
-const PROFILE = `${HOME}/.claude-sandboxed`;
+const PROFILE = `${HOME}/.claude-blackwall`;
 // Private to blackwall runs: host tools later execute what lands in a package cache
-const CACHE = `${HOME}/.cache/sandboxed`;
-const CONFIG = `${HOME}/.sandboxed/config.json`;
+const CACHE = `${HOME}/.cache/blackwall`;
+const CONFIG = `${HOME}/.blackwall/config.json`;
 // Explained in the README; also the shape a user config must match
 const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
 
@@ -149,7 +149,7 @@ if (printConfig) {
 }
 
 // A 1Password Environments mount (a FIFO) or a hand-made file; parsed, not loaded, so non-claude commands never inherit the OAuth token
-const secrets = parseEnv(readFileSync(`${HOME}/.sandboxed/.env`, "utf8"));
+const secrets = parseEnv(readFileSync(`${HOME}/.blackwall/.env`, "utf8"));
 // srt sets the child's TMPDIR from this; /tmp alone fails Claude's Bash tool
 process.env.CLAUDE_CODE_TMPDIR = "/private/tmp";
 const env = {

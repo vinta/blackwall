@@ -8,7 +8,7 @@
 
 ## Default config
 
-[`configs/default-config.json`](configs/default-config.json) is the default layer of `blackwall`'s config, and your `~/.sandboxed/config.json` goes on top of it.
+[`configs/default-config.json`](configs/default-config.json) is the default layer of `blackwall`'s config, and your `~/.blackwall/config.json` goes on top of it.
 
 It looks like srt's settings today, but it's not `~/.srt-settings.json`: `blackwall` never reads that file, and `srt` never reads this one.
 
@@ -16,7 +16,7 @@ It looks like srt's settings today, but it's not `~/.srt-settings.json`: `blackw
 
 ## Custom config
 
-Put your changes in `~/.sandboxed/config.json`. Top-level lists are added to the defaults. To replace a default value, set it under `overrideDefaults`:
+Put your changes in `~/.blackwall/config.json`. Top-level lists are added to the defaults. To replace a default value, set it under `overrideDefaults`:
 
 ```json
 {
