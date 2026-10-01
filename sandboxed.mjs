@@ -93,7 +93,7 @@ const base = {
   filesystem: { ...DEFAULTS.filesystem, ...overrides.filesystem },
 };
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
-if (!base.filesystem.denyRead.some((path) => expandPath(path) === HOME)) {
+if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
   console.warn(`sandboxed: overrideDefaults.filesystem.denyRead in ${CONFIG} no longer denies ~/, so your home directory is readable`);
 }
 const added = (section, key) => additions[section]?.[key] ?? [];
