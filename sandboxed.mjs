@@ -163,6 +163,8 @@ const env = {
   GIT_CONFIG_COUNT: "1",
   GIT_CONFIG_KEY_0: "commit.gpgsign",
   GIT_CONFIG_VALUE_0: "false",
+  // srt sets http.proxyAuthMethod=basic through GIT_CONFIG_PARAMETERS, which pre-commit strips before cloning hook repos; srt's proxy aborts git's default credential-less CONNECT
+  GIT_HTTP_PROXY_AUTHMETHOD: "basic",
   GH_TOKEN: secrets.GH_TOKEN,
 };
 if (isClaude) {
