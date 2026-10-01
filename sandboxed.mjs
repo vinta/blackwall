@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
-import { mkdirSync, readFileSync } from "node:fs";
+import { lstatSync, mkdirSync, readFileSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, resolve } from "node:path";
 import { parseEnv } from "node:util";
@@ -125,6 +125,16 @@ if (isClaude) {
   config.filesystem.allowWrite.push(PROFILE);
   // Right after the command name, so a trailing `--` or prompt argument can't swallow them
   args.splice(1, 0, ...addDirs.flatMap((dir) => ["--add-dir", dir]));
+}
+
+// Seatbelt checks a symlink and its target separately. Only the configured entries are resolved, never links inside a granted directory, which a run could plant there
+for (const path of [...config.filesystem.allowRead]) {
+  const absolute = expandPath(path);
+  try {
+    if (lstatSync(absolute).isSymbolicLink()) config.filesystem.allowRead.push(realpathSync(absolute));
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
 }
 
 // srt rejects "*", so sandboxed turns it into an ask callback that allows every host no rule matches
