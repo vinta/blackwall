@@ -6,7 +6,7 @@ import { basename, resolve } from "node:path";
 import { parseEnv } from "node:util";
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 
-const USAGE = "usage: sandboxed [--add-dir DIR]... [--print-config] [--] <command> [args...]";
+const USAGE = "usage: sandboxed [--add-dir DIR]... [--print-config | --print-default-config] [--] <command> [args...]";
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-sandboxed`;
 // Private to sandboxed runs: host tools later execute what lands in a package cache
@@ -26,6 +26,9 @@ for (;;) {
   } else if (args[0] === "--print-config") {
     args.shift();
     printConfig = true;
+  } else if (args[0] === "--print-default-config") {
+    console.log(JSON.stringify(DEFAULTS, null, 2));
+    process.exit(0);
   } else {
     break;
   }
