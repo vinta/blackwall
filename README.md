@@ -25,6 +25,16 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx # run `claude setup-token` to get one
 
 `GH_TOKEN` goes to every command, and `CLAUDE_CODE_OAUTH_TOKEN` only goes to `claude`.
 
+## Signed Node
+
+Firewalls like Little Snitch see `blackwall` as `node`, so a rule for it covers every Node script. To give `blackwall` its own identity on macOS:
+
+```bash
+export BLACKWALL_USE_SELF_SIGNED_NODE=1
+```
+
+`blackwall` then runs itself with `~/.blackwall/blackwall_node`, an ad-hoc-signed copy of your `node`. It's created on the first run, and again whenever it's missing. Delete it after upgrading Node to get a fresh copy. Needs Node 22.15+.
+
 ## Configurations
 
 ### Default Config

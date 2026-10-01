@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 import { SandboxManager, SandboxRuntimeConfigSchema } from '@anthropic-ai/sandbox-runtime';
-import { spawn } from 'node:child_process';
-import { lstatSync, mkdirSync, readFileSync, realpathSync } from 'node:fs';
+import { execFileSync, spawn } from 'node:child_process';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { basename, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { parseEnv } from 'node:util';
 
 const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-default-config] [--] <command> [args...]';
@@ -12,6 +12,21 @@ const PROFILE = `${HOME}/.claude-blackwall`;
 // Private to blackwall runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/blackwall`;
 const CONFIG = `${HOME}/.blackwall/config.json`;
+// Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
+const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
+
+// An ad-hoc-signed node copy gets its own code identity, so a firewall rule for blackwall doesn't cover every node script
+if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === '1' && basename(process.execPath) !== basename(SIGNED_NODE)) {
+  if (!existsSync(SIGNED_NODE)) {
+    mkdirSync(dirname(SIGNED_NODE), { recursive: true });
+    // Signed under a temp name, so an interrupted run can't leave a broken copy that counts as present
+    const temp = `${SIGNED_NODE}.tmp`;
+    copyFileSync(process.execPath, temp);
+    execFileSync('codesign', ['-f', '-s', '-', temp]);
+    renameSync(temp, SIGNED_NODE);
+  }
+  process.execve(SIGNED_NODE, [SIGNED_NODE, ...process.execArgv, ...process.argv.slice(1)]);
+}
 // Explained in the README; also the shape a user config must match
 const DEFAULTS = JSON.parse(readFileSync(new URL('../configs/default-config.json', import.meta.url), 'utf8'));
 
