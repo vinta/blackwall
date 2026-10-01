@@ -15,6 +15,14 @@ const CONFIG = `${HOME}/.blackwall/config.json`;
 // Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
 const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
 
+// A 1Password Environments mount (a FIFO) or a hand-made file. Loaded before the re-exec below so it can set BLACKWALL_* keys; the signed copy inherits the values, since a second read of a FIFO may prompt again
+if (basename(process.execPath) !== basename(SIGNED_NODE)) {
+  try {
+    Object.assign(process.env, parseEnv(readFileSync(`${HOME}/.blackwall/.env`, 'utf8')));
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
 // An ad-hoc-signed node copy gets its own code identity, so a firewall rule for blackwall doesn't cover every node script
 if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === '1' && basename(process.execPath) !== basename(SIGNED_NODE)) {
   if (!existsSync(SIGNED_NODE)) {
@@ -109,7 +117,7 @@ function exitWithConfigError(message) {
   process.exit(2);
 }
 
-// Only claude gets the profile, and further down the subscription token: any other command would hold it with no classifier
+// Only claude gets the profile
 const isClaude = args[0] !== undefined && basename(args[0]) === 'claude';
 
 // overrideDefaults replaces default values, then the presets and the top-level lists are added on top
@@ -175,14 +183,6 @@ if (printConfig) {
   process.exit(0);
 }
 
-// A 1Password Environments mount (a FIFO) or a hand-made file; parsed, not loaded, so non-claude commands never inherit the OAuth token
-// Optional: without it, only gh and claude lose their tokens
-let secrets = {};
-try {
-  secrets = parseEnv(readFileSync(`${HOME}/.blackwall/.env`, 'utf8'));
-} catch (error) {
-  if (error.code !== 'ENOENT') throw error;
-}
 // srt sets the child's TMPDIR from this; /tmp alone fails Claude's Bash tool
 process.env.CLAUDE_CODE_TMPDIR = '/private/tmp';
 const env = {
@@ -198,12 +198,8 @@ const env = {
   GIT_CONFIG_VALUE_0: 'false',
   // srt sets http.proxyAuthMethod=basic through GIT_CONFIG_PARAMETERS, which pre-commit strips before cloning hook repos; srt's proxy aborts git's default credential-less CONNECT
   GIT_HTTP_PROXY_AUTHMETHOD: 'basic',
-  GH_TOKEN: secrets.GH_TOKEN,
 };
-if (isClaude) {
-  env.CLAUDE_CODE_OAUTH_TOKEN = secrets.CLAUDE_CODE_OAUTH_TOKEN;
-  env.CLAUDE_CONFIG_DIR = PROFILE;
-}
+if (isClaude) env.CLAUDE_CONFIG_DIR = PROFILE;
 
 mkdirSync(CACHE, { recursive: true });
 await SandboxManager.initialize(srtConfig, async () => allowAllDomains);

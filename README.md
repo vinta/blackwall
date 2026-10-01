@@ -16,14 +16,12 @@ A sandboxed command can only write to the current folder, `--add-dir` folders, `
 
 `claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`.
 
-Put your tokens in `~/.blackwall/.env` if you need them:
+Put your env vars in `~/.blackwall/.env` if you need them. Every key goes to every command, and `BLACKWALL_*` keys also configure `blackwall` itself:
 
 ```bash
 GH_TOKEN=xxx # generate a readonly PAT from https://github.com/settings/personal-access-tokens
 CLAUDE_CODE_OAUTH_TOKEN=xxx # run `claude setup-token` to get one
 ```
-
-`GH_TOKEN` goes to every command, and `CLAUDE_CODE_OAUTH_TOKEN` only goes to `claude`.
 
 ## Signed Node
 
@@ -32,7 +30,7 @@ For firewall apps like Little Snitch. Every sandboxed command connects through a
 To give `blackwall` its own identity on macOS, so you can control its connections separately:
 
 ```bash
-export BLACKWALL_USE_SELF_SIGNED_NODE=1
+export BLACKWALL_USE_SELF_SIGNED_NODE=1 # or put BLACKWALL_USE_SELF_SIGNED_NODE=1 in ~/.blackwall/.env
 ```
 
 Little Snitch then shows `blackwall_node` instead of `node`. `blackwall` runs itself with `~/.blackwall/blackwall_node`, an ad-hoc-signed copy of your `node`. It's created on the first run, and again whenever it's missing. Delete it after upgrading Node to get a fresh copy. Needs Node 22.15+.
