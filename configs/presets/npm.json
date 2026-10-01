@@ -1,0 +1,7 @@
+{
+  "network": {
+    "allowedDomains": [
+      "registry.npmjs.org"
+    ]
+  }
+}

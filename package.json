@@ -31,9 +31,6 @@
     "src/",
     "configs/"
   ],
-  "scripts": {
-    "build": "mkdir -p runtime && cp \"$(node -p process.execPath)\" runtime/blackwall.tmp && codesign -f -s - runtime/blackwall.tmp && mv -f runtime/blackwall.tmp runtime/blackwall"
-  },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "0.0.77"
   },

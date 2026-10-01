@@ -1,0 +1,15 @@
+{
+  "network": {
+    "allowedDomains": [
+      "api.anthropic.com",
+      "bridge.claudeusercontent.com",
+      "*.frame.claudeusercontent.com",
+      "claude.ai",
+      "claude.com",
+      "code.claude.com",
+      "downloads.claude.ai",
+      "mcp-proxy.anthropic.com",
+      "platform.claude.com"
+    ]
+  }
+}
