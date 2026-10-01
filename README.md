@@ -1,22 +1,49 @@
 # blackwall
 
+Opinionated lightweight sandbox for daily dev tasks, with **full network access**.
+
 ## Usage
 
 ```bash
+npm install -g blackwall-sandbox
 
+blackwall claude
+blackwall --add-dir ../another-repo claude # also let it write to another folder
+blackwall npm test # any command works, not only claude
 ```
 
-## Default config
+A sandboxed command can only write to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`. Reads are blocked by default, except those folders and the `allowRead` paths in the [default config](#default-config). Every host is allowed by default.
+
+`claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`.
+
+Put your tokens in `~/.blackwall/.env` if you need them:
+
+```bash
+GH_TOKEN=xxx # generate a readonly PAT from https://github.com/settings/personal-access-tokens
+CLAUDE_CODE_OAUTH_TOKEN=xxx # run `claude setup-token` to get one
+```
+
+`GH_TOKEN` goes to every command, and `CLAUDE_CODE_OAUTH_TOKEN` only goes to `claude`.
+
+## Configurations
+
+### Default Config
 
 [`configs/default-config.json`](configs/default-config.json) is the default layer of `blackwall`'s config, and your `~/.blackwall/config.json` goes on top of it.
 
-It looks like srt's settings today, but it's not `~/.srt-settings.json`: `blackwall` never reads that file, and `srt` never reads this one.
+Every key is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
 
 - `network.allowedDomains: ["*"]`: Every host is allowed. srt itself rejects `"*"`, so `blackwall` handles it. Without `"*"`, `allowedDomains` becomes a strict allowlist
 
-## Custom config
+To see the shipped default config:
 
-Put your changes in `~/.blackwall/config.json`. Top-level lists are added to the defaults. To replace a default value, set it under `overrideDefaults`:
+```bash
+blackwall --print-default-config
+```
+
+### Custom Config
+
+Put your customizations in `~/.blackwall/config.json`. Top-level lists are added to the defaults. To replace a default value, set it under `overrideDefaults`:
 
 ```json
 {
@@ -33,9 +60,8 @@ Put your changes in `~/.blackwall/config.json`. Top-level lists are added to the
 - An overridden list stops getting new defaults when `blackwall` updates, so override only what you want to own
 - To allow only a few hosts, override `allowedDomains` without `"*"`. Claude needs `api.anthropic.com` at least
 
-To see the shipped defaults, and what you actually get after your config and the launch-time grants:
+To see what you actually get after your config and the launch-time grants:
 
 ```bash
-blackwall --print-default-config
 blackwall --print-config claude
 ```
