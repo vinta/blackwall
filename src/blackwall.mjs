@@ -6,6 +6,7 @@ import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
 
 const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-path-access | --print-default-config] [--] <command> [args...]';
@@ -168,6 +169,10 @@ if (isClaude) {
   config.filesystem.allowWrite.push(PROFILE);
   // Right after the command name, so a trailing `--` or prompt argument can't swallow them
   args.splice(1, 0, ...addDirs.flatMap((dir) => ['--add-dir', dir]));
+}
+// srt runs its apply-seccomp helper inside the sandbox, from wherever npm installed srt
+if (process.platform === 'linux') {
+  config.filesystem.allowRead.push(fileURLToPath(new URL('../vendor', import.meta.resolve('@anthropic-ai/sandbox-runtime'))));
 }
 
 // Seatbelt checks a symlink and its target separately. Only configured entries under ~ are resolved (dotfile-manager links), not system links like /var, whose target would
