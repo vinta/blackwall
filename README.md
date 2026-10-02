@@ -23,6 +23,26 @@ GH_TOKEN=xxx # generate a readonly PAT from https://github.com/settings/personal
 CLAUDE_CODE_OAUTH_TOKEN=xxx # run `claude setup-token` to get one
 ```
 
+## Linux
+
+Install the dependencies first:
+
+```bash
+sudo apt-get install bubblewrap socat ripgrep # Debian/Ubuntu
+```
+
+`blackwall` also reads `/usr/local` on Linux, where `node` and global npm packages usually live. If yours live elsewhere, like nvm's `~/.nvm`, add it to `allowRead`.
+
+Ubuntu 24.04+ restricts the unprivileged user namespaces bubblewrap needs. See [sandbox-runtime's Linux notes](https://github.com/anthropics/sandbox-runtime#platform-specific-dependencies) for the fix.
+
+Docker's default seccomp profile blocks them too, so relax it:
+
+```bash
+docker run --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt systempaths=unconfined ...
+```
+
+Or drop `systempaths=unconfined` and set `"overrideDefaults": { "enableWeakerNestedSandbox": true }` in `~/.blackwall/config.json`, which reuses the container's `/proc` instead of mounting a fresh one.
+
 ## Signed Node
 
 For firewall apps like Little Snitch. Every sandboxed command connects through a proxy inside `blackwall`, so the firewall sees all that traffic as `node`. It's the same `node` behind every other Node script, so you can't tell them apart, and one rule covers them all.
