@@ -138,8 +138,9 @@ const { presets: basePresets, ...base } = {
   network: { ...DEFAULTS.network, ...overrides.network },
   filesystem: { ...DEFAULTS.filesystem, ...overrides.filesystem },
 };
-// mac and claude aren't in the presets list, so overriding it can't drop them
-const automatic = [...(process.platform === 'darwin' ? ['mac'] : []), ...(isClaude ? ['claude'] : [])];
+// mac, linux, and claude aren't in the presets list, so overriding it can't drop them
+const platformPresets = { darwin: ['mac'], linux: ['linux'] }[process.platform] ?? [];
+const automatic = [...platformPresets, ...(isClaude ? ['claude'] : [])];
 const layers = [...new Set([...automatic, ...basePresets, ...presets])].map(readPreset);
 layers.push(additions);
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
