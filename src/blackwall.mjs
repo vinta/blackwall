@@ -11,6 +11,7 @@ import { parseEnv } from 'node:util';
 
 const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-path-access | --print-default-config] [--] <command> [args...]';
 const HOME = homedir();
+const cwd = process.cwd();
 const PROFILE = `${HOME}/.claude-blackwall`;
 // Copied into the profile on every launch rather than linked, so a sandboxed run can change only its copies, never ~/.claude
 const SHARED = ['CLAUDE.md', 'rules', 'skills', 'agents', 'commands', 'output-styles'];
@@ -73,17 +74,22 @@ function exitWithUsage() {
   process.exit(2);
 }
 
-function readUserConfig() {
-  let user;
+function readConfig(file) {
+  let text;
   try {
-    user = JSON.parse(readFileSync(CONFIG, 'utf8'));
+    text = readFileSync(file, 'utf8');
   } catch (error) {
     if (error.code === 'ENOENT') return { additions: {}, overrides: {}, presets: [] };
     throw error;
   }
-  checkShape(user, { ...DEFAULTS, overrideDefaults: {} }, '', true, ['overrideDefaults']);
-  const { overrideDefaults: overrides = {}, presets = [], ...additions } = user;
-  checkShape(overrides, DEFAULTS, 'overrideDefaults.', false);
+  return parseConfig(file, text);
+}
+
+function parseConfig(file, text) {
+  const parsed = JSON.parse(text);
+  checkShape(file, parsed, { ...DEFAULTS, overrideDefaults: {} }, '', true, ['overrideDefaults']);
+  const { overrideDefaults: overrides = {}, presets = [], ...additions } = parsed;
+  checkShape(file, overrides, DEFAULTS, 'overrideDefaults.', false);
   return { additions, overrides, presets };
 }
 
@@ -92,37 +98,37 @@ function readPreset(name) {
   try {
     return JSON.parse(readFileSync(new URL(`../configs/presets/${name}.json`, import.meta.url), 'utf8'));
   } catch (error) {
-    if (error.code === 'ENOENT') exitWithConfigError(`unknown preset ${name}`);
+    if (error.code === 'ENOENT') exitWithConfigError(CONFIG, `unknown preset ${name}`);
     throw error;
   }
 }
 
 // Keys and types mirror default-config.json: a misspelled key would otherwise drop its paths without a word, and a string would spread into characters
-function checkShape(value, shape, prefix, listsOnly, skip = []) {
+function checkShape(file, value, shape, prefix, listsOnly, skip = []) {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-    exitWithConfigError(`${prefix.slice(0, -1) || 'the file'} must be an object`);
+    exitWithConfigError(file, `${prefix.slice(0, -1) || 'the file'} must be an object`);
   }
   for (const [key, item] of Object.entries(value)) {
     if (skip.includes(key)) continue;
     const name = `${prefix}${key}`;
-    if (!Object.hasOwn(shape, key)) exitWithConfigError(`unknown key ${name}`);
+    if (!Object.hasOwn(shape, key)) exitWithConfigError(file, `unknown key ${name}`);
     const expected = shape[key];
     if (Array.isArray(expected)) {
       if (!Array.isArray(item) || !item.every((entry) => typeof entry === 'string')) {
-        exitWithConfigError(`${name} must be a list of strings`);
+        exitWithConfigError(file, `${name} must be a list of strings`);
       }
     } else if (typeof expected === 'object') {
-      checkShape(item, expected, `${name}.`, listsOnly);
+      checkShape(file, item, expected, `${name}.`, listsOnly);
     } else if (listsOnly) {
-      exitWithConfigError(`${name} can only be set under overrideDefaults`);
+      exitWithConfigError(file, `${name} can only be set under overrideDefaults`);
     } else if (typeof item !== typeof expected) {
-      exitWithConfigError(`${name} must be a ${typeof expected}`);
+      exitWithConfigError(file, `${name} must be a ${typeof expected}`);
     }
   }
 }
 
-function exitWithConfigError(message) {
-  console.error(`blackwall: ${CONFIG}: ${message}`);
+function exitWithConfigError(file, message) {
+  console.error(`blackwall: ${file}: ${message}`);
   process.exit(2);
 }
 
@@ -130,7 +136,7 @@ function exitWithConfigError(message) {
 const isClaude = args[0] !== undefined && basename(args[0]) === 'claude';
 
 // overrideDefaults replaces default values, then the presets and the top-level lists are added on top
-const { additions, overrides, presets } = readUserConfig();
+const { additions, overrides, presets } = readConfig(CONFIG);
 // presets is blackwall's own key, so it never reaches srt
 const { presets: basePresets, ...base } = {
   ...DEFAULTS,
@@ -149,7 +155,6 @@ if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath
 }
 const added = (section, key) => layers.flatMap((layer) => layer[section]?.[key] ?? []);
 
-const cwd = process.cwd();
 const config = {
   ...base,
   network: {
