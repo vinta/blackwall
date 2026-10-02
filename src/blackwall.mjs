@@ -3,7 +3,7 @@ import { SandboxManager, SandboxRuntimeConfigSchema } from '@anthropic-ai/sandbo
 // Not in the package's index, but srt builds its mandatory write denies from these
 import { DANGEROUS_FILES, getDangerousDirectories } from '@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync } from 'node:fs';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import { parseEnv } from 'node:util';
@@ -232,7 +232,26 @@ if (isClaude) {
 
 mkdirSync(CACHE, { recursive: true });
 if (isClaude) {
+  const firstRun = !existsSync(PROFILE);
   mkdirSync(PROFILE, { recursive: true });
+  // Seeded once, then the user's: seed plugins load only when enabled, while the host's other settings (hooks, permissions) assume no sandbox
+  let seeded = false;
+  if (!existsSync(`${PROFILE}/settings.json`)) {
+    try {
+      const { enabledPlugins } = JSON.parse(readFileSync(`${HOME}/.claude/settings.json`, 'utf8'));
+      if (enabledPlugins) {
+        // wx refuses a dangling dotfile-manager link instead of writing to its target
+        writeFileSync(`${PROFILE}/settings.json`, `${JSON.stringify({ enabledPlugins }, null, 2)}\n`, { flag: 'wx' });
+        seeded = true;
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT' && error.code !== 'EEXIST') throw error;
+    }
+  }
+  if (firstRun) {
+    console.warn(`blackwall: created ${PROFILE} as claude's config folder. Every launch copies ${SHARED.join(', ')} from ~/.claude into it, and plugins load from ~/.claude/plugins read-only`);
+    console.warn(`blackwall: sessions, settings, and login stay apart from ~/.claude. Settings go in ${PROFILE}/settings.json${seeded ? ', which starts with your enabledPlugins' : ''}`);
+  }
   for (const name of SHARED) {
     const source = `${HOME}/.claude/${name}`;
     if (!existsSync(source)) continue;
