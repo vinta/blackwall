@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { SandboxManager, SandboxRuntimeConfigSchema } from '@anthropic-ai/sandbox-runtime';
 import { execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, symlinkSync } from 'node:fs';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import { parseEnv } from 'node:util';
@@ -119,8 +119,6 @@ function exitWithConfigError(message) {
 
 // Only claude gets the profile
 const isClaude = args[0] !== undefined && basename(args[0]) === 'claude';
-// Claude Code's own folder for this cwd (undocumented naming), linked into the profile so both share sessions without exposing other projects
-const PROJECT = `${HOME}/.claude/projects/${process.cwd().replace(/[^A-Za-z0-9]/g, '-')}`;
 
 // overrideDefaults replaces default values, then the presets and the top-level lists are added on top
 const { additions, overrides, presets } = readUserConfig();
@@ -159,10 +157,7 @@ const config = {
 
 if (isClaude) {
   config.filesystem.allowRead.push(PROFILE, '~/.claude/skills', '~/.claude/plugins');
-  config.filesystem.allowWrite.push(PROFILE, PROJECT);
-  config.filesystem.allowRead.push(PROJECT);
-  // Host sessions load this memory, so a sandboxed run can't plant instructions there
-  config.filesystem.denyWrite.push(`${PROJECT}/memory`);
+  config.filesystem.allowWrite.push(PROFILE);
   // Right after the command name, so a trailing `--` or prompt argument can't swallow them
   args.splice(1, 0, ...addDirs.flatMap((dir) => ['--add-dir', dir]));
 }
@@ -207,20 +202,6 @@ const env = {
 if (isClaude) env.CLAUDE_CONFIG_DIR = PROFILE;
 
 mkdirSync(CACHE, { recursive: true });
-if (isClaude) {
-  const link = `${PROFILE}/projects/${basename(PROJECT)}`;
-  // The target first: Claude's mkdir through a dangling link fails
-  mkdirSync(PROJECT, { recursive: true });
-  mkdirSync(dirname(link), { recursive: true });
-  try {
-    if (!lstatSync(link).isSymbolicLink()) {
-      console.warn(`blackwall: ${link} is a folder, so this project's sessions stay apart from ${PROJECT}; move its contents there and delete it to share them`);
-    }
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-    symlinkSync(PROJECT, link);
-  }
-}
 await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
 
 const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
