@@ -99,7 +99,7 @@ blackwall --print-config claude
 To see which files and folders the sandbox can read and write, including the paths the sandbox runtime adds on its own:
 
 ```bash
-blackwall --print-path-access claude
+blackwall --print-file-access claude
 ```
 
 ### Project Config

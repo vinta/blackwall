@@ -63,7 +63,7 @@ check "CLAUDE.md copied" test -f "$home/.claude-blackwall/CLAUDE.md"
 check "linked skill copied as a folder" eval 'test -f "$home/.claude-blackwall/skills/linked-skill/SKILL.md" && ! test -L "$home/.claude-blackwall/skills/linked-skill"'
 check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claude-blackwall/settings.json" && ! grep -q hooks "$home/.claude-blackwall/settings.json"'
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
-check "--print-path-access" eval 'blackwall --print-path-access claude | grep -q "write denied:"'
+check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
 
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
