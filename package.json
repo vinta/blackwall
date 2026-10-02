@@ -31,6 +31,9 @@
     "src/",
     "configs/"
   ],
+  "scripts": {
+    "test": "bash tests/e2e.sh"
+  },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "0.0.77"
   },
