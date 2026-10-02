@@ -9,6 +9,7 @@
     "deniedDomains": []
   },
   "enableWeakerNetworkIsolation": true,
+  "enableWeakerNestedSandbox": false,
   "allowPty": true,
   "filesystem": {
     "denyRead": [
