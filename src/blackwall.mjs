@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { SandboxManager, SandboxRuntimeConfigSchema } from '@anthropic-ai/sandbox-runtime';
+// Not in the package's index, but srt builds its mandatory write denies from these
+import { DANGEROUS_FILES, getDangerousDirectories } from '@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import { parseEnv } from 'node:util';
 
-const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-default-config] [--] <command> [args...]';
+const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-path-access | --print-default-config] [--] <command> [args...]';
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-blackwall`;
 // Copied into the profile on every launch rather than linked, so a sandboxed run can change only its copies, never ~/.claude
@@ -43,6 +45,7 @@ const DEFAULTS = JSON.parse(readFileSync(new URL('../configs/default-config.json
 const args = process.argv.slice(2);
 const addDirs = [];
 let printConfig = false;
+let printPathAccess = false;
 for (;;) {
   if (args[0] === '--add-dir') {
     args.shift();
@@ -51,6 +54,9 @@ for (;;) {
   } else if (args[0] === '--print-config') {
     args.shift();
     printConfig = true;
+  } else if (args[0] === '--print-path-access') {
+    args.shift();
+    printPathAccess = true;
   } else if (args[0] === '--print-default-config') {
     console.log(JSON.stringify(DEFAULTS, null, 2));
     process.exit(0);
@@ -59,7 +65,7 @@ for (;;) {
   }
 }
 if (args[0] === '--') args.shift();
-if (!args[0] && !printConfig) exitWithUsage();
+if (!args[0] && !printConfig && !printPathAccess) exitWithUsage();
 
 function exitWithUsage() {
   console.error(USAGE);
@@ -182,6 +188,23 @@ const srtConfig = { ...config, network: { ...config.network, allowedDomains: con
 SandboxRuntimeConfigSchema.parse(srtConfig);
 if (printConfig) {
   console.log(JSON.stringify(config, null, 2));
+  process.exit(0);
+}
+if (printPathAccess) {
+  // srt's view, not the config's: it adds its own write paths, and denies writes to these names in the cwd at any depth
+  SandboxManager.updateConfig(srtConfig);
+  const read = SandboxManager.getFsReadConfig();
+  const write = SandboxManager.getFsWriteConfig();
+  const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), '.git/hooks', '.git/config'].map((name) => `${cwd}/**/${name}`);
+  for (const [title, paths] of [
+    ['read allowed', read.allowWithinDeny],
+    ['read denied', read.denyOnly],
+    ['write allowed', write.allowOnly],
+    ['write denied', [...write.denyWithinAllow, ...mandatory]],
+  ]) {
+    console.log(`${title}:`);
+    for (const path of new Set(paths)) console.log(`  ${path}`);
+  }
   process.exit(0);
 }
 
