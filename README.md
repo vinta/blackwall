@@ -14,7 +14,7 @@ blackwall npm test # any command works, not only claude
 
 A sandboxed command can only write to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`. Reads are blocked by default, except those folders and the `allowRead` paths in the [default config](#default-config). Every host is allowed by default.
 
-`claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`.
+`claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. On every launch, `blackwall` copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude` into it, replacing what was there, so edits to those copies don't last. Your plugins load from `~/.claude/plugins` read-only, without auto-update. Sessions, settings, and login stay separate: enable plugins with `enabledPlugins` in `~/.claude-blackwall/settings.json`, and log in with `CLAUDE_CODE_OAUTH_TOKEN` below or `/login`.
 
 Put your env vars in `~/.blackwall/.env` if you need them. Every key goes to every command, and `BLACKWALL_*` keys also configure `blackwall` itself:
 

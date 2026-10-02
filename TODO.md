@@ -23,7 +23,6 @@
 ## Unverified
 
 - WebFetch honoring srt's proxy (only curl, `gh api`, and the Claude API call were measured)
-- Plugin marketplace auto-update under read-only `~/.claude/plugins`: if it aborts instead of warning, set `autoUpdate: false` in the profile
 - Hosts a `claude` run needs beyond `api.anthropic.com` when `allowedDomains` is a strict allowlist
 - Whether `/Library/Application Support/ClaudeCode` (managed settings) needs a read grant, so an unreadable file isn't taken for a broken policy
 - srt passes the profile inline to `sandbox-exec -p`, so very long path lists may hit ARG_MAX (Claude Code issue #73468)

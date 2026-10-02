@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { SandboxManager, SandboxRuntimeConfigSchema } from '@anthropic-ai/sandbox-runtime';
-import { execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync } from 'node:fs';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import { parseEnv } from 'node:util';
@@ -9,6 +9,8 @@ import { parseEnv } from 'node:util';
 const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-default-config] [--] <command> [args...]';
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-blackwall`;
+// Copied into the profile on every launch rather than linked, so a sandboxed run can change only its copies, never ~/.claude
+const SHARED = ['CLAUDE.md', 'rules', 'skills', 'agents', 'commands', 'output-styles'];
 // Private to blackwall runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/blackwall`;
 const CONFIG = `${HOME}/.blackwall/config.json`;
@@ -156,7 +158,7 @@ const config = {
 };
 
 if (isClaude) {
-  config.filesystem.allowRead.push(PROFILE, '~/.claude/skills', '~/.claude/plugins');
+  config.filesystem.allowRead.push(PROFILE, '~/.claude/plugins');
   config.filesystem.allowWrite.push(PROFILE);
   // Right after the command name, so a trailing `--` or prompt argument can't swallow them
   args.splice(1, 0, ...addDirs.flatMap((dir) => ['--add-dir', dir]));
@@ -199,9 +201,24 @@ const env = {
   // srt sets http.proxyAuthMethod=basic through GIT_CONFIG_PARAMETERS, which pre-commit strips before cloning hook repos; srt's proxy aborts git's default credential-less CONNECT
   GIT_HTTP_PROXY_AUTHMETHOD: 'basic',
 };
-if (isClaude) env.CLAUDE_CONFIG_DIR = PROFILE;
+if (isClaude) {
+  env.CLAUDE_CONFIG_DIR = PROFILE;
+  // Claude loads the host's plugins in place without writing there, and forces their auto-update off
+  env.CLAUDE_CODE_PLUGIN_SEED_DIR = `${HOME}/.claude/plugins`;
+}
 
 mkdirSync(CACHE, { recursive: true });
+if (isClaude) {
+  mkdirSync(PROFILE, { recursive: true });
+  for (const name of SHARED) {
+    const source = `${HOME}/.claude/${name}`;
+    if (!existsSync(source)) continue;
+    // Removes a dotfile-manager link itself, never its target
+    rmSync(`${PROFILE}/${name}`, { recursive: true, force: true });
+    // -L resolves nested links too (cpSync's dereference doesn't), since their targets are unreadable in the sandbox; cp reports a dangling one and copies the rest
+    spawnSync('cp', ['-RL', source, `${PROFILE}/${name}`], { stdio: 'inherit' });
+  }
+}
 await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
 
 const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
