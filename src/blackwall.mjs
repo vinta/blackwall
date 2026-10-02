@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 import { SandboxManager, SandboxRuntimeConfigSchema } from '@anthropic-ai/sandbox-runtime';
-// Not in the package's index, but srt builds its mandatory write denies from these
-import { DANGEROUS_FILES, getDangerousDirectories } from '@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
@@ -237,6 +235,8 @@ if (printFileAccess) {
   SandboxManager.updateConfig(srtConfig);
   const read = SandboxManager.getFsReadConfig();
   const write = SandboxManager.getFsWriteConfig();
+  // Not in the package's index, but srt builds its mandatory write denies from these. Loaded only here, so an srt update that moves them breaks this flag, not every launch
+  const { DANGEROUS_FILES, getDangerousDirectories } = await import('@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js');
   const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), '.git/hooks', '.git/config'].map((name) => `${cwd}/**/${name}`);
   for (const [title, paths] of [
     ['read allowed', read.allowWithinDeny],
