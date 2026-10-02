@@ -101,3 +101,24 @@ To see which files and folders the sandbox can read and write, including the pat
 ```bash
 blackwall --print-path-access claude
 ```
+
+### Project Config
+
+Put a project's own config in `.blackwall/config.json` in that folder. It takes the same keys as `~/.blackwall/config.json`, e.g. to read a skill folder from another repo:
+
+```json
+{
+  "filesystem": { "allowRead": ["~/Projects/my-skills/write-intro"] }
+}
+```
+
+- Its lists are added to yours, and its `overrideDefaults` wins over yours
+- Only the current folder's config loads, not its parent folders'
+
+A cloned repo can ship one that widens the sandbox, so `blackwall` refuses to run until you review the file and trust it:
+
+```bash
+blackwall --trust # trust .blackwall/config.json in the current folder
+```
+
+Trust covers that path with that exact content, so run `--trust` again after every edit. Sandboxed commands can't write to `.blackwall` in the current folder.

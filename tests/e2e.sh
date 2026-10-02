@@ -44,6 +44,18 @@ check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude
 check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https://api.github.com
 check "other host blocked" eval '! blackwall curl -sS -o /dev/null --max-time 20 https://example.com'
 
+skill=$elsewhere/linked-skill/SKILL.md
+check "read outside grants denied" eval '! blackwall cat "$skill"'
+mkdir -p "$proj/.blackwall"
+printf '{"filesystem":{"allowRead":["%s"]}}\n' "$elsewhere" >"$proj/.blackwall/config.json"
+check "untrusted project config refused" eval '! blackwall true'
+check "--trust" blackwall --trust
+check "trusted project config grants read" blackwall cat "$skill"
+check "write cwd .blackwall denied" eval 'blackwall sh -c "echo x >> .blackwall/config.json"; ! grep -q "^x" "$proj/.blackwall/config.json"'
+check "edited project config refused" eval 'echo "{}" >"$proj/.blackwall/config.json"; ! blackwall true'
+rm -r "$proj/.blackwall"
+check "create cwd .blackwall denied" eval 'blackwall mkdir .blackwall; ! test -e "$proj/.blackwall"'
+
 first=$(blackwall claude --version 2>&1)
 check "claude runs" eval 'grep -q "Claude Code" <<<"$first"'
 check "first run prints the notice" eval 'grep -q "blackwall: created" <<<"$first"'

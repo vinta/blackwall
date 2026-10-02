@@ -3,13 +3,14 @@ import { SandboxManager, SandboxRuntimeConfigSchema } from '@anthropic-ai/sandbo
 // Not in the package's index, but srt builds its mandatory write denies from these
 import { DANGEROUS_FILES, getDangerousDirectories } from '@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
 
-const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-path-access | --print-default-config] [--] <command> [args...]';
+const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-path-access | --print-default-config | --trust] [--] <command> [args...]';
 const HOME = homedir();
 const cwd = process.cwd();
 const PROFILE = `${HOME}/.claude-blackwall`;
@@ -18,6 +19,9 @@ const SHARED = ['CLAUDE.md', 'rules', 'skills', 'agents', 'commands', 'output-st
 // Private to blackwall runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/blackwall`;
 const CONFIG = `${HOME}/.blackwall/config.json`;
+// Loads only once trusted, since a cloned repo can ship one that widens the sandbox
+const PROJECT_CONFIG = `${cwd}/.blackwall/config.json`;
+const TRUSTED = `${HOME}/.blackwall/trusted`;
 // Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
 const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
 
@@ -62,6 +66,20 @@ for (;;) {
   } else if (args[0] === '--print-default-config') {
     console.log(JSON.stringify(DEFAULTS, null, 2));
     process.exit(0);
+  } else if (args[0] === '--trust') {
+    let text;
+    try {
+      text = readFileSync(PROJECT_CONFIG, 'utf8');
+    } catch (error) {
+      if (error.code === 'ENOENT') exitWithConfigError(PROJECT_CONFIG, 'not found');
+      throw error;
+    }
+    // A malformed file fails now rather than on the next launch
+    parseConfig(PROJECT_CONFIG, text);
+    mkdirSync(TRUSTED, { recursive: true });
+    writeFileSync(trustMarker(text), '');
+    console.log(`blackwall: trusted ${PROJECT_CONFIG}`);
+    process.exit(0);
   } else {
     break;
   }
@@ -74,7 +92,7 @@ function exitWithUsage() {
   process.exit(2);
 }
 
-function readConfig(file) {
+function readConfig(file, requireTrust = false) {
   let text;
   try {
     text = readFileSync(file, 'utf8');
@@ -82,7 +100,14 @@ function readConfig(file) {
     if (error.code === 'ENOENT') return { additions: {}, overrides: {}, presets: [] };
     throw error;
   }
+  // Checks the same text it parses, so an edit in between can't skip the check
+  if (requireTrust && !existsSync(trustMarker(text))) exitWithConfigError(file, 'not trusted. Review it, then run `blackwall --trust`');
   return parseConfig(file, text);
+}
+
+// Like direnv, trust covers this path with these exact contents, so any edit needs a new --trust
+function trustMarker(text) {
+  return `${TRUSTED}/${createHash('sha256').update(`${PROJECT_CONFIG}\n${text}`).digest('hex')}`;
 }
 
 function parseConfig(file, text) {
@@ -98,7 +123,10 @@ function readPreset(name) {
   try {
     return JSON.parse(readFileSync(new URL(`../configs/presets/${name}.json`, import.meta.url), 'utf8'));
   } catch (error) {
-    if (error.code === 'ENOENT') exitWithConfigError(CONFIG, `unknown preset ${name}`);
+    if (error.code === 'ENOENT') {
+      console.error(`blackwall: unknown preset ${name}`);
+      process.exit(2);
+    }
     throw error;
   }
 }
@@ -135,23 +163,26 @@ function exitWithConfigError(file, message) {
 // Only claude gets the profile
 const isClaude = args[0] !== undefined && basename(args[0]) === 'claude';
 
-// overrideDefaults replaces default values, then the presets and the top-level lists are added on top
-const { additions, overrides, presets } = readConfig(CONFIG);
+// overrideDefaults replaces default values, the project's over the user's, then the presets and the top-level lists of both are added on top
+const user = readConfig(CONFIG);
+// From ~, both paths name the user config
+const project = PROJECT_CONFIG === CONFIG ? { additions: {}, overrides: {}, presets: [] } : readConfig(PROJECT_CONFIG, true);
 // presets is blackwall's own key, so it never reaches srt
 const { presets: basePresets, ...base } = {
   ...DEFAULTS,
-  ...overrides,
-  network: { ...DEFAULTS.network, ...overrides.network },
-  filesystem: { ...DEFAULTS.filesystem, ...overrides.filesystem },
+  ...user.overrides,
+  ...project.overrides,
+  network: { ...DEFAULTS.network, ...user.overrides.network, ...project.overrides.network },
+  filesystem: { ...DEFAULTS.filesystem, ...user.overrides.filesystem, ...project.overrides.filesystem },
 };
 // mac, linux, and claude aren't in the presets list, so overriding it can't drop them
 const platformPresets = { darwin: ['mac'], linux: ['linux'] }[process.platform] ?? [];
 const automatic = [...platformPresets, ...(isClaude ? ['claude'] : [])];
-const layers = [...new Set([...automatic, ...basePresets, ...presets])].map(readPreset);
-layers.push(additions);
+const layers = [...new Set([...automatic, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
+layers.push(user.additions, project.additions);
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
 if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace('//', '/')))) {
-  console.warn(`blackwall: overrideDefaults.filesystem.denyRead in ${CONFIG} no longer denies ~/, so your home directory is readable`);
+  console.warn('blackwall: overrideDefaults.filesystem.denyRead no longer denies ~/, so your home directory is readable');
 }
 const added = (section, key) => layers.flatMap((layer) => layer[section]?.[key] ?? []);
 
@@ -165,8 +196,8 @@ const config = {
     denyRead: [...base.filesystem.denyRead, ...added('filesystem', 'denyRead')],
     allowRead: [cwd, ...addDirs, ...base.filesystem.allowRead, CACHE, ...added('filesystem', 'allowRead')],
     allowWrite: [cwd, ...addDirs, ...base.filesystem.allowWrite, '/private/tmp', CACHE, ...added('filesystem', 'allowWrite')],
-    // srt's built-in denies anchor on cwd only
-    denyWrite: [...base.filesystem.denyWrite, ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]), ...added('filesystem', 'denyWrite')],
+    // srt's built-in denies anchor on cwd only. cwd/.blackwall keeps a run from writing a project config for you to trust
+    denyWrite: [...base.filesystem.denyWrite, `${cwd}/.blackwall`, ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]), ...added('filesystem', 'denyWrite')],
   },
 };
 
