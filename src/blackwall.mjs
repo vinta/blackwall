@@ -1,14 +1,19 @@
 #!/usr/bin/env node
 import { SandboxManager, SandboxRuntimeConfigSchema } from '@anthropic-ai/sandbox-runtime';
-import { execFileSync, spawn } from 'node:child_process';
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync } from 'node:fs';
+// Not in the package's index, but srt builds its mandatory write denies from these
+import { DANGEROUS_FILES, getDangerousDirectories } from '@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseEnv } from 'node:util';
 
-const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-default-config] [--] <command> [args...]';
+const USAGE = 'usage: blackwall [--add-dir DIR]... [--print-config | --print-path-access | --print-default-config] [--] <command> [args...]';
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-blackwall`;
+// Copied into the profile on every launch rather than linked, so a sandboxed run can change only its copies, never ~/.claude
+const SHARED = ['CLAUDE.md', 'rules', 'skills', 'agents', 'commands', 'output-styles'];
 // Private to blackwall runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/blackwall`;
 const CONFIG = `${HOME}/.blackwall/config.json`;
@@ -41,6 +46,7 @@ const DEFAULTS = JSON.parse(readFileSync(new URL('../configs/default-config.json
 const args = process.argv.slice(2);
 const addDirs = [];
 let printConfig = false;
+let printPathAccess = false;
 for (;;) {
   if (args[0] === '--add-dir') {
     args.shift();
@@ -49,6 +55,9 @@ for (;;) {
   } else if (args[0] === '--print-config') {
     args.shift();
     printConfig = true;
+  } else if (args[0] === '--print-path-access') {
+    args.shift();
+    printPathAccess = true;
   } else if (args[0] === '--print-default-config') {
     console.log(JSON.stringify(DEFAULTS, null, 2));
     process.exit(0);
@@ -57,7 +66,7 @@ for (;;) {
   }
 }
 if (args[0] === '--') args.shift();
-if (!args[0] && !printConfig) exitWithUsage();
+if (!args[0] && !printConfig && !printPathAccess) exitWithUsage();
 
 function exitWithUsage() {
   console.error(USAGE);
@@ -129,8 +138,9 @@ const { presets: basePresets, ...base } = {
   network: { ...DEFAULTS.network, ...overrides.network },
   filesystem: { ...DEFAULTS.filesystem, ...overrides.filesystem },
 };
-// mac and claude aren't in the presets list, so overriding it can't drop them
-const automatic = [...(process.platform === 'darwin' ? ['mac'] : []), ...(isClaude ? ['claude'] : [])];
+// mac, linux, and claude aren't in the presets list, so overriding it can't drop them
+const platformPresets = { darwin: ['mac'], linux: ['linux'] }[process.platform] ?? [];
+const automatic = [...platformPresets, ...(isClaude ? ['claude'] : [])];
 const layers = [...new Set([...automatic, ...basePresets, ...presets])].map(readPreset);
 layers.push(additions);
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
@@ -156,10 +166,14 @@ const config = {
 };
 
 if (isClaude) {
-  config.filesystem.allowRead.push(PROFILE, '~/.claude/skills', '~/.claude/plugins');
+  config.filesystem.allowRead.push(PROFILE, '~/.claude/plugins');
   config.filesystem.allowWrite.push(PROFILE);
   // Right after the command name, so a trailing `--` or prompt argument can't swallow them
   args.splice(1, 0, ...addDirs.flatMap((dir) => ['--add-dir', dir]));
+}
+// srt runs its apply-seccomp helper inside the sandbox, from wherever npm installed srt
+if (process.platform === 'linux') {
+  config.filesystem.allowRead.push(fileURLToPath(new URL('../vendor', import.meta.resolve('@anthropic-ai/sandbox-runtime'))));
 }
 
 // Seatbelt checks a symlink and its target separately. Only configured entries under ~ are resolved (dotfile-manager links), not system links like /var, whose target would
@@ -182,6 +196,23 @@ if (printConfig) {
   console.log(JSON.stringify(config, null, 2));
   process.exit(0);
 }
+if (printPathAccess) {
+  // srt's view, not the config's: it adds its own write paths, and denies writes to these names in the cwd at any depth
+  SandboxManager.updateConfig(srtConfig);
+  const read = SandboxManager.getFsReadConfig();
+  const write = SandboxManager.getFsWriteConfig();
+  const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), '.git/hooks', '.git/config'].map((name) => `${cwd}/**/${name}`);
+  for (const [title, paths] of [
+    ['read allowed', read.allowWithinDeny],
+    ['read denied', read.denyOnly],
+    ['write allowed', write.allowOnly],
+    ['write denied', [...write.denyWithinAllow, ...mandatory]],
+  ]) {
+    console.log(`${title}:`);
+    for (const path of new Set(paths)) console.log(`  ${path}`);
+  }
+  process.exit(0);
+}
 
 // srt sets the child's TMPDIR from this; /tmp alone fails Claude's Bash tool
 process.env.CLAUDE_CODE_TMPDIR = '/private/tmp';
@@ -199,9 +230,43 @@ const env = {
   // srt sets http.proxyAuthMethod=basic through GIT_CONFIG_PARAMETERS, which pre-commit strips before cloning hook repos; srt's proxy aborts git's default credential-less CONNECT
   GIT_HTTP_PROXY_AUTHMETHOD: 'basic',
 };
-if (isClaude) env.CLAUDE_CONFIG_DIR = PROFILE;
+if (isClaude) {
+  env.CLAUDE_CONFIG_DIR = PROFILE;
+  // Claude loads the host's plugins in place without writing there, and forces their auto-update off
+  env.CLAUDE_CODE_PLUGIN_SEED_DIR = `${HOME}/.claude/plugins`;
+}
 
 mkdirSync(CACHE, { recursive: true });
+if (isClaude) {
+  const firstRun = !existsSync(PROFILE);
+  mkdirSync(PROFILE, { recursive: true });
+  // Seeded once, then the user's: seed plugins load only when enabled, while the host's other settings (hooks, permissions) assume no sandbox
+  let seeded = false;
+  if (!existsSync(`${PROFILE}/settings.json`)) {
+    try {
+      const { enabledPlugins } = JSON.parse(readFileSync(`${HOME}/.claude/settings.json`, 'utf8'));
+      if (enabledPlugins) {
+        // wx refuses a dangling dotfile-manager link instead of writing to its target
+        writeFileSync(`${PROFILE}/settings.json`, `${JSON.stringify({ enabledPlugins }, null, 2)}\n`, { flag: 'wx' });
+        seeded = true;
+      }
+    } catch (error) {
+      if (error.code !== 'ENOENT' && error.code !== 'EEXIST') throw error;
+    }
+  }
+  if (firstRun) {
+    console.warn(`blackwall: created ${PROFILE} as claude's config folder. Every launch copies ${SHARED.join(', ')} from ~/.claude into it, and plugins load from ~/.claude/plugins read-only`);
+    console.warn(`blackwall: sessions, settings, and login stay apart from ~/.claude. Settings go in ${PROFILE}/settings.json${seeded ? ', which starts with your enabledPlugins' : ''}`);
+  }
+  for (const name of SHARED) {
+    const source = `${HOME}/.claude/${name}`;
+    if (!existsSync(source)) continue;
+    // Removes a dotfile-manager link itself, never its target
+    rmSync(`${PROFILE}/${name}`, { recursive: true, force: true });
+    // -L resolves nested links too (cpSync's dereference doesn't), since their targets are unreadable in the sandbox; cp reports a dangling one and copies the rest
+    spawnSync('cp', ['-RL', source, `${PROFILE}/${name}`], { stdio: 'inherit' });
+  }
+}
 await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
 
 const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;

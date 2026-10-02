@@ -1,0 +1,7 @@
+{
+  "filesystem": {
+    "allowRead": [
+      "/usr/local"
+    ]
+  }
+}
