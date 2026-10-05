@@ -42,7 +42,7 @@ export function buildConfig({ addDirs, presets }) {
     filesystem: { ...DEFAULTS.filesystem, ...user.overrides.filesystem, ...project.overrides.filesystem },
   };
 
-  // Platform and adaptor presets aren't in the presets list, so overriding it can't drop them
+  // Platform and adapter presets aren't in the presets list, so overriding it can't drop them
   const platformPresets = { darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [];
   const automatic = [...platformPresets, ...presets];
   const layers = [...new Set([...automatic, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
