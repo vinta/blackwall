@@ -69,7 +69,7 @@ A preset adds hosts or read paths for one tool, with the same lists as a user co
 - [github](configs/presets/github.json): GitHub, for `git`, `gh`, and raw files
 - [mac](configs/presets/mac.json): System paths macOS tools need, added on macOS
 - [linux](configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
-- [claude](configs/presets/claude.json): The hosts Claude Code needs, added when the command is `claude`
+- [claude](configs/presets/claude.json): The hosts and folders Claude Code needs, added when the command is `claude`
 
 `mac`, `linux`, and `claude` aren't in the `presets` list, so overriding it can't drop them.
 

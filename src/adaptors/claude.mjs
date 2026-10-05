@@ -10,10 +10,6 @@ const SHARED = ["CLAUDE.md", "rules", "skills", "agents", "commands", "output-st
 export default {
   presets: ["claude"],
 
-  config() {
-    return { filesystem: { allowRead: [PROFILE, "~/.claude/plugins"], allowWrite: [PROFILE] } };
-  },
-
   // Right after the command name, so a trailing `--` or prompt argument can't swallow them
   args([command, ...rest], { addDirs }) {
     return [command, ...addDirs.flatMap((dir) => ["--add-dir", dir]), ...rest];

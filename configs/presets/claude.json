@@ -11,5 +11,14 @@
       "mcp-proxy.anthropic.com",
       "platform.claude.com"
     ]
+  },
+  "filesystem": {
+    "allowRead": [
+      "~/.claude-blackwall",
+      "~/.claude/plugins"
+    ],
+    "allowWrite": [
+      "~/.claude-blackwall"
+    ]
   }
 }
