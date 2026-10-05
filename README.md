@@ -2,37 +2,15 @@
 
 [![npm Version](https://img.shields.io/npm/v/blackwall-sandbox?style=for-the-badge)](https://www.npmjs.com/package/blackwall-sandbox)
 
-Opinionated lightweight sandbox for daily dev tasks.
+Opinionated lightweight sandbox for daily dev tasks. Built on Anthropic's [sandbox-runtime](https://github.com/anthropics/sandbox-runtime) (srt): Seatbelt on macOS, bubblewrap on Linux.
 
 > This project is named after the Blackwall in Cyberpunk 2077, a firewall NetWatch built to keep rogue AIs out of the Net.
-
-Built on Anthropic's [sandbox-runtime](https://github.com/anthropics/sandbox-runtime) (srt): Seatbelt on macOS, bubblewrap on Linux.
 
 ## Installation
 
 ```bash
 npm install -g blackwall-sandbox
 ```
-
-### Linux
-
-Install the dependencies first:
-
-```bash
-sudo apt-get install bubblewrap socat ripgrep # Debian/Ubuntu
-```
-
-`blackwall` also reads `/usr/local` on Linux, where `node` and global npm packages usually live. If yours live elsewhere, like nvm's `~/.nvm`, add it to `allowRead`.
-
-Ubuntu 24.04+ restricts the unprivileged user namespaces bubblewrap needs. See [sandbox-runtime's Linux notes](https://github.com/anthropics/sandbox-runtime#platform-specific-dependencies) for the fix.
-
-Docker's default seccomp profile blocks them too, so relax it:
-
-```bash
-docker run --security-opt seccomp=unconfined --security-opt apparmor=unconfined --security-opt systempaths=unconfined ...
-```
-
-Or drop `systempaths=unconfined` and set `"overrideDefaults": { "enableWeakerNestedSandbox": true }` in `~/.blackwall/config.json`, which reuses the container's `/proc` instead of mounting a fresh one.
 
 ## Usage
 
@@ -65,7 +43,7 @@ Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 
 ### Env Vars
 
-Put your env vars in `~/.blackwall/.env` if you need them. It can be a 1Password Environments mount too. Every key goes to every command, and `BLACKWALL_*` keys also configure `blackwall` itself:
+Put your env vars in `~/.blackwall/.env` if you need them.
 
 ```bash
 GH_TOKEN=xxx                  # generate a read-only PAT from https://github.com/settings/personal-access-tokens
