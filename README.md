@@ -1,4 +1,4 @@
-# blackwall
+# Blackwall
 
 [![npm Version](https://img.shields.io/npm/v/blackwall-sandbox?style=for-the-badge)](https://www.npmjs.com/package/blackwall-sandbox)
 
