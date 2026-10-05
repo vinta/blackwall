@@ -25,11 +25,7 @@ const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
 
 // A 1Password Environments mount (a FIFO) or a hand-made file. Loaded before the re-exec below so it can set BLACKWALL_* keys; the signed copy inherits the values, since a second read of a FIFO may prompt again
 if (basename(process.execPath) !== basename(SIGNED_NODE)) {
-  try {
-    Object.assign(process.env, parseEnv(readFileSync(`${HOME}/.blackwall/.env`, 'utf8')));
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-  }
+  Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ''));
 }
 // An ad-hoc-signed node copy gets its own code identity, so a firewall rule for blackwall doesn't cover every node script
 if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === '1' && basename(process.execPath) !== basename(SIGNED_NODE)) {
@@ -65,13 +61,8 @@ for (;;) {
     console.log(JSON.stringify(DEFAULTS, null, 2));
     process.exit(0);
   } else if (args[0] === '--trust') {
-    let text;
-    try {
-      text = readFileSync(PROJECT_CONFIG, 'utf8');
-    } catch (error) {
-      if (error.code === 'ENOENT') exitWithConfigError(PROJECT_CONFIG, 'not found');
-      throw error;
-    }
+    const text = readIfExists(PROJECT_CONFIG);
+    if (text === undefined) exitWithConfigError(PROJECT_CONFIG, 'not found');
     // A malformed file fails now rather than on the next launch
     parseConfig(PROJECT_CONFIG, text);
     mkdirSync(TRUSTED, { recursive: true });
@@ -90,14 +81,17 @@ function exitWithUsage() {
   process.exit(2);
 }
 
-function readConfig(file, requireTrust = false) {
-  let text;
+function readIfExists(file) {
   try {
-    text = readFileSync(file, 'utf8');
+    return readFileSync(file, 'utf8');
   } catch (error) {
-    if (error.code === 'ENOENT') return { additions: {}, overrides: {}, presets: [] };
-    throw error;
+    if (error.code !== 'ENOENT') throw error;
   }
+}
+
+function readConfig(file, requireTrust = false) {
+  const text = readIfExists(file);
+  if (text === undefined) return { additions: {}, overrides: {}, presets: [] };
   // Checks the same text it parses, so an edit in between can't skip the check
   if (requireTrust && !existsSync(trustMarker(text))) exitWithConfigError(file, 'not trusted. Review it, then run `blackwall --trust`');
   return parseConfig(file, text);
@@ -118,15 +112,12 @@ function parseConfig(file, text) {
 
 // A preset has the shape of the top-level lists in a user config
 function readPreset(name) {
-  try {
-    return JSON.parse(readFileSync(new URL(`../configs/presets/${name}.json`, import.meta.url), 'utf8'));
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      console.error(`blackwall: unknown preset ${name}`);
-      process.exit(2);
-    }
-    throw error;
+  const text = readIfExists(new URL(`../configs/presets/${name}.json`, import.meta.url));
+  if (text === undefined) {
+    console.error(`blackwall: unknown preset ${name}`);
+    process.exit(2);
   }
+  return JSON.parse(text);
 }
 
 // Keys and types mirror default-config.json: a misspelled key would otherwise drop its paths without a word, and a string would spread into characters
