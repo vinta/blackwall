@@ -39,7 +39,6 @@ if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === '1' && basename(process.execP
   }
   process.execve(SIGNED_NODE, [SIGNED_NODE, ...process.execArgv, ...process.argv.slice(1)]);
 }
-// Explained in the README; also the shape a user config must match
 const DEFAULTS = JSON.parse(readFileSync(new URL('../configs/default-config.json', import.meta.url), 'utf8'));
 
 const args = process.argv.slice(2);
@@ -110,7 +109,6 @@ function parseConfig(file, text) {
   return { additions, overrides, presets };
 }
 
-// A preset has the shape of the top-level lists in a user config
 function readPreset(name) {
   const text = readIfExists(new URL(`../configs/presets/${name}.json`, import.meta.url));
   if (text === undefined) {
@@ -149,7 +147,6 @@ function exitWithConfigError(file, message) {
   process.exit(2);
 }
 
-// Only claude gets the profile
 const isClaude = args[0] !== undefined && basename(args[0]) === 'claude';
 
 // overrideDefaults replaces default values, the project's over the user's, then the presets and the top-level lists of both are added on top
