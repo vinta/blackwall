@@ -28,8 +28,7 @@
     "blackwall": "src/blackwall.mjs"
   },
   "files": [
-    "src/",
-    "configs/"
+    "src/"
   ],
   "scripts": {
     "test": "bash tests/e2e.sh"

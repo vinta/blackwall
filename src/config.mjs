@@ -15,7 +15,7 @@ const CONFIG = `${HOME}/.blackwall/config.json`;
 const PROJECT_CONFIG = `${cwd}/.blackwall/config.json`;
 const TRUSTED = `${HOME}/.blackwall/trusted`;
 
-export const DEFAULTS = JSON.parse(readFileSync(new URL("../configs/default-config.json", import.meta.url), "utf8"));
+export const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
 
 export function trustProjectConfig() {
   const text = readIfExists(PROJECT_CONFIG);
@@ -120,7 +120,7 @@ function parseConfig(file, text) {
 }
 
 function readPreset(name) {
-  const text = readIfExists(new URL(`../configs/presets/${name}.json`, import.meta.url));
+  const text = readIfExists(new URL(`./configs/presets/${name}.json`, import.meta.url));
   if (text === undefined) {
     console.error(`blackwall: unknown preset ${name}`);
     process.exit(2);

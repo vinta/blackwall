@@ -54,7 +54,7 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 ### Default Config
 
-[`configs/default-config.json`](configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
+[`src/configs/default-config.json`](src/configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
 
 - `presets: ["python", "npm", "github"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
@@ -64,12 +64,12 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 A preset adds hosts or read paths for one tool, with the same lists as a user config:
 
-- [python](configs/presets/python.json): PyPI, for `pip` and `uv`
-- [npm](configs/presets/npm.json): The npm registry
-- [github](configs/presets/github.json): GitHub, for `git`, `gh`, and raw files
-- [mac](configs/presets/mac.json): System paths macOS tools need, added on macOS
-- [linux](configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
-- [claude](configs/presets/claude.json): The hosts and folders Claude Code needs, added when the command is `claude`
+- [python](src/configs/presets/python.json): PyPI, for `pip` and `uv`
+- [npm](src/configs/presets/npm.json): The npm registry
+- [github](src/configs/presets/github.json): GitHub, for `git`, `gh`, and raw files
+- [mac](src/configs/presets/mac.json): System paths macOS tools need, added on macOS
+- [linux](src/configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
+- [claude](src/configs/presets/claude.json): The hosts and folders Claude Code needs, added when the command is `claude`
 
 `mac`, `linux`, and `claude` aren't in the `presets` list, so overriding it can't drop them.
 
