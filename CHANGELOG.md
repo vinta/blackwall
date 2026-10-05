@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## vX.Y.Z / xxxx-xx-xx
 
 - The network is an allowlist now: only the hosts in presets are allowed. `python`, `npm`, and `github` are on by default, and `mac`, `linux`, and `claude` are added automatically. Add `"*"` to `network.allowedDomains` to allow every host again
 - Every `~/.blackwall/.env` key goes to every command, `CLAUDE_CODE_OAUTH_TOKEN` included, and `BLACKWALL_*` keys configure `blackwall` itself
