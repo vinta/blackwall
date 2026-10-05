@@ -1,6 +1,6 @@
 # blackwall
 
-Opinionated lightweight sandbox for daily dev tasks, with **full network access**.
+Opinionated lightweight sandbox for daily dev tasks, with a network allowlist.
 
 ## Usage
 
@@ -12,7 +12,7 @@ blackwall --add-dir ../another-repo claude # also let it write to another folder
 blackwall npm test # any command works, not only claude
 ```
 
-A sandboxed command can only write to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`. Reads are blocked by default, except those folders and the `allowRead` paths in the [default config](#default-config). Every host is allowed by default.
+A sandboxed command can only write to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`. Reads are blocked by default, except those folders and the `allowRead` paths in the [default config](#default-config) and [presets](#presets). Hosts are blocked by default too, except the ones in presets.
 
 `claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. On every launch, `blackwall` copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude` into it, replacing what was there, so edits to those copies don't last. Your plugins load from `~/.claude/plugins` read-only, without auto-update. Sessions, settings, and login stay separate. `~/.claude-blackwall/settings.json` starts with only your `enabledPlugins`, since your other settings, such as hooks and permissions, assume no sandbox; after that it's yours to edit. Log in with `CLAUDE_CODE_OAUTH_TOKEN` below or `/login`.
 
@@ -61,15 +61,26 @@ Little Snitch then shows `blackwall_node` instead of `node`. `blackwall` runs it
 
 [`configs/default-config.json`](configs/default-config.json) is the default layer of `blackwall`'s config, and your `~/.blackwall/config.json` goes on top of it.
 
-Every key is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
+Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
 
-- `network.allowedDomains: ["*"]`: Every host is allowed. srt itself rejects `"*"`, so `blackwall` handles it. Without `"*"`, `allowedDomains` becomes a strict allowlist
+- `presets: ["python", "npm", "github"]`: The [presets](#presets) on by default
+- `network.allowedDomains: []`: A strict allowlist, so only the hosts in presets are allowed. Add `"*"` to allow every host. srt itself rejects `"*"`, so `blackwall` handles it
 
 To see the shipped default config:
 
 ```bash
 blackwall --print-default-config
 ```
+
+### Presets
+
+A preset adds hosts or read paths for one tool. It's a file in [`configs/presets`](configs/presets) with the same lists as a user config.
+
+- `python`, `npm`, `github`: On by default, through `presets` in the default config
+- `mac`, `linux`: Added on that platform
+- `claude`: Added when the command is `claude`, with the hosts Claude Code needs
+
+`mac`, `linux`, and `claude` aren't in the `presets` list, so overriding it can't drop them.
 
 ### Custom Config
 
@@ -79,16 +90,16 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 {
   "filesystem": { "allowRead": ["~/.npmrc"] },
   "overrideDefaults": {
-    "network": { "allowedDomains": ["api.anthropic.com", "pypi.org"] },
+    "presets": ["github"],
     "allowPty": false
   }
 }
 ```
 
-- Top-level `filesystem` and `network` keys take lists only, and they're added to the defaults
+- Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're added to the defaults
 - `overrideDefaults` takes any key in `default-config.json` and replaces its default value. It's applied first, then the top-level lists are added
 - An overridden list stops getting new defaults when `blackwall` updates, so override only what you want to own
-- To allow only a few hosts, override `allowedDomains` without `"*"`. Claude needs `api.anthropic.com` at least
+- To allow every host, add `"*"` to `network.allowedDomains`
 
 To see what you actually get after your config and the launch-time grants:
 
