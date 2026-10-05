@@ -4,7 +4,7 @@
 set -uo pipefail
 
 repo=$(cd "$(dirname "$0")/.." && pwd)
-root=${E2E_ROOT:-$repo/.e2e}
+root=${E2E_ROOT:-$repo/tests/.e2e}
 # /tmp is writable inside the sandbox, so a stub HOME there would pass the deny checks for the wrong reason
 case $(mkdir -p "$root" && cd "$root" && pwd -P) in
   /tmp* | /private/tmp* | /var/folders* | /private/var/folders*) echo "e2e: E2E_ROOT must be outside /tmp and /var/folders" >&2; exit 2 ;;

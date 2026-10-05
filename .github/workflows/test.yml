@@ -50,5 +50,5 @@ jobs:
       - name: Run e2e tests
         run: npm test
         env:
-          # The default .e2e/ would work too; RUNNER_TEMP keeps the checkout clean and sits outside /tmp
+          # The default tests/.e2e/ would work too; RUNNER_TEMP keeps the checkout clean and sits outside /tmp
           E2E_ROOT: ${{ runner.temp }}/e2e
