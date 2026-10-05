@@ -6,6 +6,7 @@ import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
 import { parseEnv } from "node:util";
 import claude from "./adapters/claude.mjs";
+import codex from "./adapters/codex.mjs";
 import { CACHE, DEFAULTS, buildConfig, readIfExists, trustProjectConfig } from "./config.mjs";
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-default-config | --trust] [--] <command> [args...]";
@@ -13,7 +14,7 @@ const HOME = homedir();
 const cwd = process.cwd();
 
 // Each adapter handles one command's quirks, matched by the command's name
-const ADAPTERS = { claude };
+const ADAPTERS = { claude, codex };
 
 // Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
 const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;

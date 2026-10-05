@@ -11,14 +11,16 @@ case $(mkdir -p "$root" && cd "$root" && pwd -P) in
 esac
 rm -rf "$root/home" "$root/proj" "$root/added" "$root/elsewhere"
 home=$root/home proj=$root/proj added=$root/added elsewhere=$root/elsewhere
-mkdir -p "$home/.blackwall" "$home/.claude/skills" "$proj" "$added" "$elsewhere/linked-skill"
+mkdir -p "$home/.blackwall" "$home/.claude/skills" "$home/.codex" "$proj" "$added" "$elsewhere/linked-skill"
 git -C "$proj" init -q
 
-# setup-node and the claude installer put node and claude outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
+# setup-node and the claude and codex installers put them outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
 grants() { local path; path=$(command -v "$1"); printf '"%s","%s"' "$(dirname "$path")" "$(dirname "$(dirname "$(realpath "$path")")")"; }
-printf '{"filesystem":{"allowRead":[%s,%s]}}\n' "$(grants node)" "$(grants claude)" >"$home/.blackwall/config.json"
+# The codex preset's ~/.codex/packages, where Codex's standalone installer links through a `current` folder, points into the stub HOME here
+printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
 echo secret >"$home/secret.txt"
 echo "# host instructions" >"$home/.claude/CLAUDE.md"
+echo "# host instructions" >"$home/.codex/AGENTS.md"
 printf -- '---\nname: linked-skill\ndescription: test\n---\nhi\n' >"$elsewhere/linked-skill/SKILL.md"
 ln -s "$elsewhere/linked-skill" "$home/.claude/skills/linked-skill"
 ln -s "$elsewhere/missing" "$home/.claude/skills/dangling"
@@ -64,6 +66,13 @@ check "linked skill copied as a folder" eval 'test -f "$home/.claude-blackwall/s
 check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claude-blackwall/settings.json" && ! grep -q hooks "$home/.claude-blackwall/settings.json"'
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
 check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
+
+first=$(blackwall codex --version 2>&1)
+check "codex runs" eval 'grep -q "codex-cli" <<<"$first"'
+check "codex first run prints the notice" eval 'grep -q "blackwall: created" <<<"$first"'
+check "AGENTS.md copied" test -f "$home/.codex-blackwall/AGENTS.md"
+check "write ~/.codex denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.codex/AGENTS.md\""; test "$(cat "$home/.codex/AGENTS.md")" = "# host instructions"'
+check "codex preset hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
 
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]

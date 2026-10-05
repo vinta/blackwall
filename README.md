@@ -41,6 +41,16 @@ By default, a sandboxed command:
 
 Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 
+### Codex
+
+`blackwall codex` uses `~/.codex-blackwall` as its config folder instead of `~/.codex`. A sandboxed run never writes to `~/.codex`, and reads only `~/.codex/packages`, where the standalone installer puts the `codex` binary.
+
+- Every launch copies your `AGENTS.md`, `agents`, `prompts`, `rules`, and `skills` from `~/.codex`, replacing what was there, so edits to those copies don't last
+- Sessions, `config.toml`, and login stay separate
+- Codex's own sandbox is off (`-c sandbox_mode="danger-full-access"`), since it can't start inside blackwall's. blackwall is the sandbox
+
+Log in with `blackwall codex login --device-auth`, or `printenv OPENAI_API_KEY | blackwall codex login --with-api-key`.
+
 ### Env Vars
 
 Put your env vars in `~/.blackwall/.env` if you need them.
@@ -70,8 +80,9 @@ A preset adds hosts or read paths for one tool, with the same lists as a user co
 - [mac](src/configs/presets/mac.json): System paths macOS tools need, added on macOS
 - [linux](src/configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
 - [claude](src/configs/presets/claude.json): The hosts and folders Claude Code needs, added when the command is `claude`
+- [codex](src/configs/presets/codex.json): The hosts and folders Codex needs, added when the command is `codex`
 
-`mac`, `linux`, and `claude` aren't in the `presets` list, so overriding it can't drop them.
+`mac`, `linux`, `claude`, and `codex` aren't in the `presets` list, so overriding it can't drop them.
 
 ### Custom Config
 

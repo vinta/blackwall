@@ -18,7 +18,6 @@
 - Signed commits from sandboxed runs: gpg can't reach `~/.gnupg`, so commits are unsigned. Until then: `git rebase --exec 'git commit --amend --no-edit -S' <base>`
 - Signed node with a self-signed code-signing certificate instead of ad-hoc: the identity survives a Node upgrade, so Little Snitch doesn't alert again
 - `--print-config` lists which config files loaded (enclave's `enclave config`)
-- Codex support: `~/.codex` is under `denyRead ~/`, and its own Seatbelt sandbox likely can't nest inside srt (unverified)
 
 ## Unverified
 
