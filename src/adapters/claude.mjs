@@ -1,10 +1,10 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
+import { copyShared } from "./shared.mjs";
 
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-blackwall`;
-// Copied into the profile on every launch rather than linked, so a sandboxed run can change only its copies, never ~/.claude
+// Copied into the profile on every launch
 const SHARED = ["CLAUDE.md", "rules", "skills", "agents", "commands", "output-styles"];
 
 export default {
@@ -47,13 +47,6 @@ export default {
       console.warn(`blackwall: sessions, settings, and login stay apart from ~/.claude. Settings go in ${PROFILE}/settings.json${seeded ? ", which starts with your enabledPlugins" : ""}`);
     }
 
-    for (const name of SHARED) {
-      const source = `${HOME}/.claude/${name}`;
-      if (!existsSync(source)) continue;
-      // Removes a dotfile-manager link itself, never its target
-      rmSync(`${PROFILE}/${name}`, { recursive: true, force: true });
-      // -L resolves nested links too (cpSync's dereference doesn't), since their targets are unreadable in the sandbox; cp reports a dangling one and copies the rest
-      spawnSync("cp", ["-RL", source, `${PROFILE}/${name}`], { stdio: "inherit" });
-    }
+    copyShared(`${HOME}/.claude`, PROFILE, SHARED);
   },
 };
