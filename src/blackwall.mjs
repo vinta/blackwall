@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
-import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseEnv } from "node:util";
+import claude from "./adaptors/claude.mjs";
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-default-config | --trust] [--] <command> [args...]";
 const HOME = homedir();
 const cwd = process.cwd();
 
-const PROFILE = `${HOME}/.claude-blackwall`;
-// Copied into the profile on every launch rather than linked, so a sandboxed run can change only its copies, never ~/.claude
-const SHARED = ["CLAUDE.md", "rules", "skills", "agents", "commands", "output-styles"];
+// Each adaptor handles one command's quirks, matched by the command's name
+const ADAPTORS = { claude };
 
 // Private to blackwall runs: host tools later execute what lands in a package cache
 const CACHE = `${HOME}/.cache/blackwall`;
@@ -153,7 +153,8 @@ function exitWithConfigError(file, message) {
   process.exit(2);
 }
 
-const isClaude = args[0] !== undefined && basename(args[0]) === "claude";
+const name = basename(args[0] ?? "");
+const adaptor = Object.hasOwn(ADAPTORS, name) ? ADAPTORS[name] : {};
 
 // overrideDefaults replaces default values, the project's over the user's, then the presets and the top-level lists of both are added on top
 const user = readConfig(CONFIG);
@@ -169,11 +170,11 @@ const { presets: basePresets, ...base } = {
   filesystem: { ...DEFAULTS.filesystem, ...user.overrides.filesystem, ...project.overrides.filesystem },
 };
 
-// mac, linux, and claude aren't in the presets list, so overriding it can't drop them
+// Platform and adaptor presets aren't in the presets list, so overriding it can't drop them
 const platformPresets = { darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [];
-const automatic = [...platformPresets, ...(isClaude ? ["claude"] : [])];
+const automatic = [...platformPresets, ...(adaptor.presets ?? [])];
 const layers = [...new Set([...automatic, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
-layers.push(user.additions, project.additions);
+layers.push(user.additions, project.additions, adaptor.config?.() ?? {});
 
 const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
 if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
@@ -196,13 +197,6 @@ const config = {
     denyWrite: [...base.filesystem.denyWrite, `${cwd}/.blackwall`, ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]), ...added("filesystem", "denyWrite")],
   },
 };
-
-if (isClaude) {
-  config.filesystem.allowRead.push(PROFILE, "~/.claude/plugins");
-  config.filesystem.allowWrite.push(PROFILE);
-  // Right after the command name, so a trailing `--` or prompt argument can't swallow them
-  args.splice(1, 0, ...addDirs.flatMap((dir) => ["--add-dir", dir]));
-}
 
 // srt runs its apply-seccomp helper inside the sandbox, from wherever npm installed srt
 if (process.platform === "linux") {
@@ -266,53 +260,16 @@ const env = {
   GIT_CONFIG_VALUE_0: "false",
   // srt sets http.proxyAuthMethod=basic through GIT_CONFIG_PARAMETERS, which pre-commit strips before cloning hook repos; srt's proxy aborts git's default credential-less CONNECT
   GIT_HTTP_PROXY_AUTHMETHOD: "basic",
+  ...adaptor.env?.(),
 };
-if (isClaude) {
-  env.CLAUDE_CONFIG_DIR = PROFILE;
-  // Claude loads the host's plugins in place without writing there, and forces their auto-update off
-  env.CLAUDE_CODE_PLUGIN_SEED_DIR = `${HOME}/.claude/plugins`;
-}
 
 mkdirSync(CACHE, { recursive: true });
-
-if (isClaude) {
-  const firstRun = !existsSync(PROFILE);
-  mkdirSync(PROFILE, { recursive: true });
-
-  // Seeded once, then the user's: seed plugins load only when enabled, while the host's other settings (hooks, permissions) assume no sandbox
-  let seeded = false;
-  if (!existsSync(`${PROFILE}/settings.json`)) {
-    try {
-      const { enabledPlugins } = JSON.parse(readFileSync(`${HOME}/.claude/settings.json`, "utf8"));
-      if (enabledPlugins) {
-        // wx refuses a dangling dotfile-manager link instead of writing to its target
-        writeFileSync(`${PROFILE}/settings.json`, `${JSON.stringify({ enabledPlugins }, null, 2)}\n`, { flag: "wx" });
-        seeded = true;
-      }
-    } catch (error) {
-      if (error.code !== "ENOENT" && error.code !== "EEXIST") throw error;
-    }
-  }
-
-  if (firstRun) {
-    console.warn(`blackwall: created ${PROFILE} as claude's config folder. Every launch copies ${SHARED.join(", ")} from ~/.claude into it, and plugins load from ~/.claude/plugins read-only`);
-    console.warn(`blackwall: sessions, settings, and login stay apart from ~/.claude. Settings go in ${PROFILE}/settings.json${seeded ? ", which starts with your enabledPlugins" : ""}`);
-  }
-
-  for (const name of SHARED) {
-    const source = `${HOME}/.claude/${name}`;
-    if (!existsSync(source)) continue;
-    // Removes a dotfile-manager link itself, never its target
-    rmSync(`${PROFILE}/${name}`, { recursive: true, force: true });
-    // -L resolves nested links too (cpSync's dereference doesn't), since their targets are unreadable in the sandbox; cp reports a dangling one and copies the rest
-    spawnSync("cp", ["-RL", source, `${PROFILE}/${name}`], { stdio: "inherit" });
-  }
-}
+adaptor.prepare?.();
 
 await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
 
 const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
-const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
+const command = await SandboxManager.wrapWithSandbox((adaptor.args?.(args, { addDirs }) ?? args).map(quote).join(" "));
 const child = spawn(command, { shell: true, stdio: "inherit", env });
 
 // The terminal sends Ctrl+C to the child too; the launcher must outlive it to keep srt's proxy up
