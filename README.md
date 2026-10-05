@@ -32,7 +32,7 @@ By default, a sandboxed command:
 
 ### Claude Code
 
-`blackwall claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`:
+`blackwall claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. For security, a sandboxed run never writes to `~/.claude`.
 
 - Every launch copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude`, replacing what was there, so edits to those copies don't last
 - Your plugins load from `~/.claude/plugins` read-only, without auto-update
