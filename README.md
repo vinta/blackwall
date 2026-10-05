@@ -98,7 +98,7 @@ Put a project's own config in `.blackwall/config.json` in that folder. It takes 
 
 ```json
 {
-  "filesystem": { "allowRead": ["~/Projects/my-skills/write-intro"] }
+  "filesystem": { "allowRead": ["/path/to/file"] }
 }
 ```
 
