@@ -2,7 +2,7 @@
 
 [![npm Version](https://img.shields.io/npm/v/blackwall-sandbox?style=for-the-badge)](https://www.npmjs.com/package/blackwall-sandbox)
 
-Opinionated lightweight sandbox for daily dev tasks, with a network allowlist.
+Opinionated lightweight sandbox for daily dev tasks.
 
 > This project is named after the Blackwall in Cyberpunk 2077, a firewall NetWatch built to keep rogue AIs out of the Net.
 
