@@ -66,12 +66,17 @@ check "linked skill copied as a folder" eval 'test -f "$home/.claude-blackwall/s
 check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claude-blackwall/settings.json" && ! grep -q hooks "$home/.claude-blackwall/settings.json"'
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
 check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
+# Named claude so the claude adapter's grants and env apply, without needing a login
+printf '#!/bin/sh\necho x > "$CLAUDE_CONFIG_DIR/probe"\n' >"$proj/claude" && chmod +x "$proj/claude"
+check "write claude profile" eval 'blackwall ./claude && test -f "$home/.claude-blackwall/probe"'
 
 first=$(blackwall codex --version 2>&1)
 check "codex runs" eval 'grep -q "codex-cli" <<<"$first"'
 check "codex first run prints the notice" eval 'grep -q "blackwall: created" <<<"$first"'
 check "AGENTS.md copied" test -f "$home/.codex-blackwall/AGENTS.md"
 check "write ~/.codex denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.codex/AGENTS.md\""; test "$(cat "$home/.codex/AGENTS.md")" = "# host instructions"'
+printf '#!/bin/sh\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
+check "write codex profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'
 check "codex preset hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
 
 echo "$pass passed, $fail failed"
