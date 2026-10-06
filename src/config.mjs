@@ -27,7 +27,8 @@ export function trustProjectConfig() {
   return PROJECT_CONFIG;
 }
 
-export function buildConfig({ addDirs, presets }) {
+// additions is the adapter's layer, added after every config file's lists
+export function buildConfig({ addDirs, additions }) {
   // overrideDefaults replaces default values, the project's over the user's, then the presets and the top-level lists of both are added on top
   const user = readConfig(CONFIG);
   // From ~, both paths name the user config
@@ -42,11 +43,10 @@ export function buildConfig({ addDirs, presets }) {
     filesystem: { ...DEFAULTS.filesystem, ...user.overrides.filesystem, ...project.overrides.filesystem },
   };
 
-  // Platform and adapter presets aren't in the presets list, so overriding it can't drop them
+  // Platform presets aren't in the presets list, so overriding it can't drop them
   const platformPresets = { darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [];
-  const automatic = [...platformPresets, ...presets];
-  const layers = [...new Set([...automatic, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
-  layers.push(user.additions, project.additions);
+  const layers = [...new Set([...platformPresets, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
+  layers.push(user.additions, project.additions, additions);
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
   if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {

@@ -28,7 +28,7 @@ By default, a sandboxed command:
 
 - Writes only to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
-- Connects only to the hosts in [presets](#presets)
+- Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
 ### Claude Code
 
@@ -79,10 +79,8 @@ A preset adds hosts or read paths for one tool, with the same lists as a user co
 - [github](src/configs/presets/github.json): GitHub, for `git`, `gh`, and raw files
 - [mac](src/configs/presets/mac.json): System paths macOS tools need, added on macOS
 - [linux](src/configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
-- [claude](src/configs/presets/claude.json): The hosts and folders Claude Code needs, added when the command is `claude`
-- [codex](src/configs/presets/codex.json): The hosts and folders Codex needs, added when the command is `codex`
 
-`mac`, `linux`, `claude`, and `codex` aren't in the `presets` list, so overriding it can't drop them.
+`mac` and `linux` aren't in the `presets` list, so overriding it can't drop them.
 
 ### Custom Config
 

@@ -4,11 +4,29 @@ import { copyShared } from "./shared.mjs";
 
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-blackwall`;
+const PLUGINS = `${HOME}/.claude/plugins`;
 // Copied into the profile on every launch
 const SHARED = ["CLAUDE.md", "rules", "skills", "agents", "commands", "output-styles"];
 
 export default {
-  presets: ["claude"],
+  config() {
+    return {
+      network: {
+        allowedDomains: [
+          "api.anthropic.com",
+          "bridge.claudeusercontent.com",
+          "*.frame.claudeusercontent.com",
+          "claude.ai",
+          "claude.com",
+          "code.claude.com",
+          "downloads.claude.ai",
+          "mcp-proxy.anthropic.com",
+          "platform.claude.com",
+        ],
+      },
+      filesystem: { allowRead: [PROFILE, PLUGINS], allowWrite: [PROFILE] },
+    };
+  },
 
   // Right after the command name, so a trailing `--` or prompt argument can't swallow them
   args([command, ...rest], { addDirs }) {
@@ -19,7 +37,7 @@ export default {
     return {
       CLAUDE_CONFIG_DIR: PROFILE,
       // Claude loads the host's plugins in place without writing there, and forces their auto-update off
-      CLAUDE_CODE_PLUGIN_SEED_DIR: `${HOME}/.claude/plugins`,
+      CLAUDE_CODE_PLUGIN_SEED_DIR: PLUGINS,
     };
   },
 

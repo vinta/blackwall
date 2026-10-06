@@ -16,7 +16,7 @@ git -C "$proj" init -q
 
 # setup-node and the claude and codex installers put them outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
 grants() { local path; path=$(command -v "$1"); printf '"%s","%s"' "$(dirname "$path")" "$(dirname "$(dirname "$(realpath "$path")")")"; }
-# The codex preset's ~/.codex/packages, where Codex's standalone installer links through a `current` folder, points into the stub HOME here
+# The codex adapter's ~/.codex/packages, where Codex's standalone installer links through a `current` folder, points into the stub HOME here
 printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
 echo secret >"$home/secret.txt"
 echo "# host instructions" >"$home/.claude/CLAUDE.md"
@@ -77,7 +77,7 @@ check "AGENTS.md copied" test -f "$home/.codex-blackwall/AGENTS.md"
 check "write ~/.codex denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.codex/AGENTS.md\""; test "$(cat "$home/.codex/AGENTS.md")" = "# host instructions"'
 printf '#!/bin/sh\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
 check "write codex profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'
-check "codex preset hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
+check "codex hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
 
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]

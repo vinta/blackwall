@@ -8,7 +8,12 @@ const PROFILE = `${HOME}/.codex-blackwall`;
 const SHARED = ["AGENTS.md", "agents", "prompts", "rules", "skills"];
 
 export default {
-  presets: ["codex"],
+  config() {
+    return {
+      network: { allowedDomains: ["api.openai.com", "auth.openai.com", "chatgpt.com"] },
+      filesystem: { allowRead: [PROFILE, `${HOME}/.codex/packages`], allowWrite: [PROFILE] },
+    };
+  },
 
   // Codex's own Seatbelt can't start inside srt's (sandbox_apply: Operation not permitted), so blackwall is the only sandbox
   args([command, ...rest]) {

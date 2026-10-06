@@ -72,7 +72,7 @@ function exitWithUsage() {
 
 const name = basename(args[0] ?? "");
 const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
-const config = buildConfig({ addDirs, presets: adapter.presets ?? [] });
+const config = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
 
 // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
 const allowAllDomains = config.network.allowedDomains.includes("*");

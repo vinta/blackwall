@@ -2,7 +2,7 @@
 
 ## vX.Y.Z / xxxx-xx-xx
 
-- The network is an allowlist now: only the hosts in presets are allowed. `python`, `npm`, and `github` are on by default, and `mac`, `linux`, and `claude` are added automatically. Add `"*"` to `network.allowedDomains` to allow every host again
+- The network is an allowlist now: only the hosts in presets and adapters are allowed. `python`, `npm`, and `github` are on by default, `mac` and `linux` are added automatically, and `blackwall claude` and `blackwall codex` allow the hosts they need. Add `"*"` to `network.allowedDomains` to allow every host again
 - Every `~/.blackwall/.env` key goes to every command, `CLAUDE_CODE_OAUTH_TOKEN` included, and `BLACKWALL_*` keys configure `blackwall` itself
 - `blackwall claude` copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude` on every launch, and loads your plugins from `~/.claude/plugins` read-only
 - `blackwall codex` runs Codex with its own `~/.codex-blackwall` config folder, copies your `AGENTS.md`, `agents`, `prompts`, `rules`, and `skills` from `~/.codex` on every launch, and turns off Codex's own sandbox, which can't start inside blackwall's
