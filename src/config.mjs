@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 const HOME = homedir();
 const cwd = process.cwd();
@@ -64,16 +63,11 @@ export function buildConfig({ addDirs, additions }) {
     filesystem: {
       denyRead: [...base.filesystem.denyRead, ...added("filesystem", "denyRead")],
       allowRead: [cwd, ...addDirs, ...base.filesystem.allowRead, CACHE, ...added("filesystem", "allowRead")],
-      allowWrite: [cwd, ...addDirs, ...base.filesystem.allowWrite, "/private/tmp", CACHE, ...added("filesystem", "allowWrite")],
-      // srt's built-in denies anchor on cwd only. cwd/.blackwall keeps a run from writing a project config for you to trust
-      denyWrite: [...base.filesystem.denyWrite, `${cwd}/.blackwall`, ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]), ...added("filesystem", "denyWrite")],
+      allowWrite: [cwd, ...addDirs, ...base.filesystem.allowWrite, CACHE, ...added("filesystem", "allowWrite")],
+      // cwd/.blackwall keeps a run from writing a project config for you to trust
+      denyWrite: [...base.filesystem.denyWrite, `${cwd}/.blackwall`, ...added("filesystem", "denyWrite")],
     },
   };
-
-  // srt runs its apply-seccomp helper inside the sandbox, from wherever npm installed srt
-  if (process.platform === "linux") {
-    config.filesystem.allowRead.push(fileURLToPath(new URL("../vendor", import.meta.resolve("@anthropic-ai/sandbox-runtime"))));
-  }
 
   // Seatbelt checks a symlink and its target separately. Only configured entries under ~ are resolved (dotfile-manager links), not system links like /var, whose target would
   // widen the grant, and never links inside a granted directory, which a run could plant there

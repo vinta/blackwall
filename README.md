@@ -18,8 +18,8 @@ npm install -g blackwall-sandbox
 blackwall claude                              # run Claude Code in the sandbox
 blackwall --add-dir ../another-repo claude    # also let it write to another folder
 blackwall npm test                            # any command works, not only claude
-blackwall --print-config claude               # show the final config, after your config and the launch-time grants
-blackwall --print-file-access claude          # show what it can read and write, including the paths srt adds on its own
+blackwall --print-config claude               # show the merged config, after your config and the launch-time grants
+blackwall --print-file-access claude          # show what it can read and write, as srt sees it
 blackwall --print-default-config              # show the shipped default config
 blackwall --trust                             # trust .blackwall/config.json in the current folder
 ```

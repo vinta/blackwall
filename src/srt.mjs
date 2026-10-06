@@ -1,15 +1,27 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { spawn } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const cwd = process.cwd();
 
 // srt sets the child's TMPDIR from this; /tmp alone fails Claude's Bash tool
 const TMPDIR = "/private/tmp";
 
-export function createSandbox(config) {
+export function createSandbox(config, { addDirs }) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
   const allowAllDomains = config.network.allowedDomains.includes("*");
-  const srtConfig = { ...config, network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") } };
+  const srtConfig = {
+    ...config,
+    network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") },
+    filesystem: {
+      ...config.filesystem,
+      // srt runs its apply-seccomp helper inside the sandbox, from wherever npm installed srt
+      allowRead: [...config.filesystem.allowRead, ...(process.platform === "linux" ? [fileURLToPath(new URL("../vendor", import.meta.resolve("@anthropic-ai/sandbox-runtime")))] : [])],
+      allowWrite: [...config.filesystem.allowWrite, TMPDIR],
+      // srt's built-in denies anchor on cwd only
+      denyWrite: [...config.filesystem.denyWrite, ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`])],
+    },
+  };
   SandboxRuntimeConfigSchema.parse(srtConfig);
 
   return {

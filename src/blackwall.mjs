@@ -73,7 +73,7 @@ const name = basename(args[0] ?? "");
 const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
 const config = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
 
-const sandbox = createSandbox(config);
+const sandbox = createSandbox(config, { addDirs });
 
 if (printConfig) {
   console.log(JSON.stringify(config, null, 2));
