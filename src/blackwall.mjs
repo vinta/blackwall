@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, renameSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
@@ -8,10 +7,10 @@ import { parseEnv } from "node:util";
 import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
 import { CACHE, DEFAULTS, buildConfig, readIfExists, trustProjectConfig } from "./config.mjs";
+import { createSandbox } from "./srt.mjs";
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-default-config | --trust] [--] <command> [args...]";
 const HOME = homedir();
-const cwd = process.cwd();
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
@@ -74,10 +73,7 @@ const name = basename(args[0] ?? "");
 const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
 const config = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
 
-// srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
-const allowAllDomains = config.network.allowedDomains.includes("*");
-const srtConfig = { ...config, network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") } };
-SandboxRuntimeConfigSchema.parse(srtConfig);
+const sandbox = createSandbox(config);
 
 if (printConfig) {
   console.log(JSON.stringify(config, null, 2));
@@ -85,27 +81,10 @@ if (printConfig) {
 }
 
 if (printFileAccess) {
-  // srt's view, not the config's: it adds its own write paths, and denies writes to these names in the cwd at any depth
-  SandboxManager.updateConfig(srtConfig);
-  const read = SandboxManager.getFsReadConfig();
-  const write = SandboxManager.getFsWriteConfig();
-  // Not in the package's index, but srt builds its mandatory write denies from these. Loaded only here, so an srt update that moves them breaks this flag, not every launch
-  const { DANGEROUS_FILES, getDangerousDirectories } = await import("@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js");
-  const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), ".git/hooks", ".git/config"].map((name) => `${cwd}/**/${name}`);
-  for (const [title, paths] of [
-    ["read allowed", read.allowWithinDeny],
-    ["read denied", read.denyOnly],
-    ["write allowed", write.allowOnly],
-    ["write denied", [...write.denyWithinAllow, ...mandatory]],
-  ]) {
-    console.log(`${title}:`);
-    for (const path of new Set(paths)) console.log(`  ${path}`);
-  }
+  await sandbox.printFileAccess();
   process.exit(0);
 }
 
-// srt sets the child's TMPDIR from this; /tmp alone fails Claude's Bash tool
-process.env.CLAUDE_CODE_TMPDIR = "/private/tmp";
 const env = {
   ...process.env,
   // gh exits on the unreadable ~/.config/gh instead of falling back to defaults
@@ -125,13 +104,4 @@ const env = {
 mkdirSync(CACHE, { recursive: true });
 adapter.prepare?.();
 
-await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
-
-const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
-const command = await SandboxManager.wrapWithSandbox((adapter.args?.(args, { addDirs }) ?? args).map(quote).join(" "));
-const child = spawn(command, { shell: true, stdio: "inherit", env });
-
-// The terminal sends Ctrl+C to the child too; the launcher must outlive it to keep srt's proxy up
-process.on("SIGINT", () => {});
-process.on("SIGTERM", () => child.kill("SIGTERM"));
-child.on("exit", (code) => process.exit(code ?? 1));
+await sandbox.run(adapter.args?.(args, { addDirs }) ?? args, env);
