@@ -24,4 +24,4 @@
 - WebFetch honoring srt's proxy (only curl, `gh api`, and the Claude API call were measured)
 - Whether `/Library/Application Support/ClaudeCode` (managed settings) needs a read grant, so an unreadable file isn't taken for a broken policy
 - srt passes the profile inline to `sandbox-exec -p`, so very long path lists may hit ARG_MAX (Claude Code issue #73468)
-- The Keychain `securityd` Mach lookup inside the sandbox (only file reads of `~/Library/Keychains` were shown blocked)
+- Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)
