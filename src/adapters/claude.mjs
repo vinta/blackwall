@@ -4,7 +4,10 @@ import { copyShared } from "./shared.mjs";
 
 const HOME = homedir();
 const PROFILE = `${HOME}/.claude-blackwall`;
+
+// Claude plugins don't need copying; it's safe to read them directly
 const PLUGINS = `${HOME}/.claude/plugins`;
+
 // Copied into the profile on every launch
 const SHARED = ["CLAUDE.md", "rules", "skills", "agents", "commands", "output-styles"];
 
@@ -24,7 +27,10 @@ export default {
           "platform.claude.com",
         ],
       },
-      filesystem: { allowRead: [PROFILE, PLUGINS], allowWrite: [PROFILE] },
+      filesystem: {
+        allowRead: [PROFILE, PLUGINS],
+        allowWrite: [PROFILE],
+      },
     };
   },
 
