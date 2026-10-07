@@ -9,12 +9,21 @@ import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
 import { CACHE, DEFAULTS, buildConfig, readIfExists, trustProjectConfig } from "./config.mjs";
 import { createSandbox } from "./srt.mjs";
+import gh from "./workarounds/gh.mjs";
+import gitAddDir from "./workarounds/git-add-dir.mjs";
+import gitSigning from "./workarounds/git-signing.mjs";
+import preCommit from "./workarounds/pre-commit.mjs";
+import srtVendor from "./workarounds/srt-vendor.mjs";
+import tmpdir from "./workarounds/tmpdir.mjs";
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-default-config | --trust] [--] <command> [args...]";
 const HOME = homedir();
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
+
+// Each workaround makes a tool work under a limit the sandbox sets, for every command
+const WORKAROUNDS = { gh, "git-add-dir": gitAddDir, "git-signing": gitSigning, "pre-commit": preCommit, "srt-vendor": srtVendor, tmpdir };
 
 // Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
 const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
@@ -75,7 +84,8 @@ const name = basename(args[0] ?? "");
 const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
 const config = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
 
-const sandbox = createSandbox(config, { addDirs });
+const workarounds = Object.values(WORKAROUNDS);
+const sandbox = createSandbox(config, workarounds.map((workaround) => workaround.grants?.({ addDirs }) ?? {}));
 
 if (printConfig) {
   console.log(JSON.stringify(config, null, 2));
@@ -89,21 +99,15 @@ if (printFileAccess) {
 
 const env = {
   ...process.env,
-  // gh exits on the unreadable ~/.config/gh instead of falling back to defaults
-  GH_CONFIG_DIR: `${CACHE}/gh`,
   UV_CACHE_DIR: `${CACHE}/uv`,
   npm_config_cache: `${CACHE}/npm`,
   PRE_COMMIT_HOME: `${CACHE}/pre-commit`,
-  // gpg can't reach ~/.gnupg under denyRead
-  GIT_CONFIG_COUNT: "1",
-  GIT_CONFIG_KEY_0: "commit.gpgsign",
-  GIT_CONFIG_VALUE_0: "false",
-  // srt sets http.proxyAuthMethod=basic through GIT_CONFIG_PARAMETERS, which pre-commit strips before cloning hook repos; srt's proxy aborts git's default credential-less CONNECT
-  GIT_HTTP_PROXY_AUTHMETHOD: "basic",
+  ...Object.assign({}, ...workarounds.map((workaround) => workaround.env?.() ?? {})),
   ...adapter.env?.(),
 };
 
 mkdirSync(CACHE, { recursive: true });
+for (const workaround of workarounds) workaround.prepare?.();
 adapter.prepare?.();
 
 await sandbox.run(adapter.args?.(args, { addDirs }) ?? args, env);

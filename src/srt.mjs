@@ -1,13 +1,11 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { spawn } from "node:child_process";
-import { fileURLToPath } from "node:url";
 
 const cwd = process.cwd();
 
-// srt sets the child's TMPDIR from this; /tmp alone fails Claude's Bash tool
-const TMPDIR = "/private/tmp";
-
-export function createSandbox(config, { addDirs }) {
+// grants are the workarounds' paths, given to srt but kept out of the printed config
+export function createSandbox(config, grants) {
+  const granted = (key) => grants.flatMap((grant) => grant[key] ?? []);
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
   const allowAllDomains = config.network.allowedDomains.includes("*");
   const srtConfig = {
@@ -15,11 +13,9 @@ export function createSandbox(config, { addDirs }) {
     network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") },
     filesystem: {
       ...config.filesystem,
-      // srt runs its apply-seccomp helper inside the sandbox, from wherever npm installed srt
-      allowRead: [...config.filesystem.allowRead, ...(process.platform === "linux" ? [fileURLToPath(new URL("../vendor", import.meta.resolve("@anthropic-ai/sandbox-runtime")))] : [])],
-      allowWrite: [...config.filesystem.allowWrite, TMPDIR],
-      // srt's built-in denies anchor on cwd only
-      denyWrite: [...config.filesystem.denyWrite, ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`])],
+      allowRead: [...config.filesystem.allowRead, ...granted("allowRead")],
+      allowWrite: [...config.filesystem.allowWrite, ...granted("allowWrite")],
+      denyWrite: [...config.filesystem.denyWrite, ...granted("denyWrite")],
     },
   };
   SandboxRuntimeConfigSchema.parse(srtConfig);
@@ -45,12 +41,11 @@ export function createSandbox(config, { addDirs }) {
     },
 
     async run(args, env) {
-      process.env.CLAUDE_CODE_TMPDIR = TMPDIR;
       await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
       const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
-      const child = spawn(command, { shell: true, stdio: "inherit", env: { ...env, CLAUDE_CODE_TMPDIR: TMPDIR } });
+      const child = spawn(command, { shell: true, stdio: "inherit", env });
 
       // The terminal sends Ctrl+C to the child too; the launcher must outlive it to keep srt's proxy up
       process.on("SIGINT", () => {});
