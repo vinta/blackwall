@@ -70,6 +70,7 @@ check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q
 echo "E2E_TOKEN=leak" >"$home/.blackwall/.env"
 check "--print-env shows workarounds, not .env keys" eval 'out=$(blackwall --print-env claude) && grep -q "^# workaround git-signing" <<<"$out" && ! grep -q E2E_TOKEN <<<"$out"'
 rm "$home/.blackwall/.env"
+check "--version" eval 'grep -q "\"version\": \"$(blackwall --version)\"" "$repo/package.json"'
 # Named claude so the claude adapter's grants and env apply, without needing a login
 printf '#!/bin/sh\necho x > "$CLAUDE_CONFIG_DIR/probe"\n' >"$proj/claude" && chmod +x "$proj/claude"
 check "write claude profile" eval 'blackwall ./claude && test -f "$home/.claude-blackwall/probe"'

@@ -22,6 +22,7 @@ blackwall --print-config claude               # show the merged config, after yo
 blackwall --print-file-access claude          # show what it can read and write, as srt sees it
 blackwall --print-env claude                  # show the env vars blackwall adds, and why
 blackwall --trust                             # trust .blackwall/config.json in the current folder
+blackwall --version                           # show the blackwall version
 ```
 
 By default, a sandboxed command:

@@ -5,6 +5,7 @@ import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
 import { parseEnv } from "node:util";
 
+import packageJson from "../package.json" with { type: "json" };
 import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
 import { CACHE, buildConfig, readIfExists, trustProjectConfig } from "./config.mjs";
@@ -16,7 +17,7 @@ import preCommit from "./workarounds/pre-commit.mjs";
 import srtVendor from "./workarounds/srt-vendor.mjs";
 import tmpdir from "./workarounds/tmpdir.mjs";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --trust] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --trust | --version] [--] <command> [args...]";
 const HOME = homedir();
 
 // Each adapter handles one command's quirks, matched by the command's name
@@ -67,6 +68,9 @@ while (true) {
     printEnv = true;
   } else if (args[0] === "--trust") {
     console.log(`blackwall: trusted ${trustProjectConfig()}`);
+    process.exit(0);
+  } else if (args[0] === "--version") {
+    console.log(packageJson.version);
     process.exit(0);
   } else {
     break;
