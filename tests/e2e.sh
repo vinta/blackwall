@@ -83,6 +83,9 @@ check "write ~/.codex denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.codex/A
 printf '#!/bin/sh\nset -e\ncat "$CODEX_HOME/skills/linked-skill/SKILL.md"\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
 check "codex reads user skill and writes profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'
 check "codex hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
+chmod 000 "$home/.codex/AGENTS.md"
+check "unreadable codex instructions block launch" eval '! blackwall codex --version'
+chmod 600 "$home/.codex/AGENTS.md"
 
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]
