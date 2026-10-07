@@ -4,6 +4,7 @@ import { copyFileSync, existsSync, mkdirSync, renameSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
 import { parseEnv } from "node:util";
+
 import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
 import { CACHE, DEFAULTS, buildConfig, readIfExists, trustProjectConfig } from "./config.mjs";
@@ -18,11 +19,9 @@ const ADAPTERS = { claude, codex };
 // Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
 const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
 
-if (basename(process.execPath) !== basename(SIGNED_NODE)) {
-  Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
-}
+Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
 
-// An ad-hoc-signed node copy gets its own code identity, so a firewall rule for blackwall doesn't cover every node script
+// Create an ad-hoc-signed node copy, so users can configure firewall rules for blackwall
 if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === "1" && basename(process.execPath) !== basename(SIGNED_NODE)) {
   if (!existsSync(SIGNED_NODE)) {
     mkdirSync(dirname(SIGNED_NODE), { recursive: true });
