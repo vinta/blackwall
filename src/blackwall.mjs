@@ -31,6 +31,9 @@ if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === "1" && basename(process.execP
     execFileSync("codesign", ["-f", "-s", "-", temp]);
     renameSync(temp, SIGNED_NODE);
   }
+
+  // Replaces this process in place, keeping its pid and stdio, so the terminal sees one process,
+  // so that blackwall runs in signed node, not plain node
   process.execve(SIGNED_NODE, [SIGNED_NODE, ...process.execArgv, ...process.argv.slice(1)]);
 }
 
