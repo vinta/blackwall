@@ -1,6 +1,6 @@
 # Changelog
 
-## vX.Y.Z / xxxx-xx-xx
+## v0.2.1 / 2026-10-08
 
 ### Arguments
 
