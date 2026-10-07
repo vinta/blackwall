@@ -21,7 +21,6 @@ blackwall npm test                            # any command works, not only clau
 blackwall --print-config claude               # show the merged config, after your config and the launch-time grants
 blackwall --print-file-access claude          # show what it can read and write, as srt sees it
 blackwall --print-env claude                  # show the env vars blackwall adds, and why
-blackwall --print-default-config              # show the shipped default config
 blackwall --trust                             # trust .blackwall/config.json in the current folder
 ```
 

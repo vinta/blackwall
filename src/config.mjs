@@ -14,7 +14,7 @@ const CONFIG = `${HOME}/.blackwall/config.json`;
 const PROJECT_CONFIG = `${cwd}/.blackwall/config.json`;
 const TRUSTED = `${HOME}/.blackwall/trusted`;
 
-export const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
+const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
 
 export function trustProjectConfig() {
   const text = readIfExists(PROJECT_CONFIG);

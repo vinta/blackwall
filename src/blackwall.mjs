@@ -7,7 +7,7 @@ import { parseEnv } from "node:util";
 
 import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
-import { CACHE, DEFAULTS, buildConfig, readIfExists, trustProjectConfig } from "./config.mjs";
+import { CACHE, buildConfig, readIfExists, trustProjectConfig } from "./config.mjs";
 import { createSandbox } from "./srt.mjs";
 import gh from "./workarounds/gh.mjs";
 import gitAddDir from "./workarounds/git-add-dir.mjs";
@@ -16,7 +16,7 @@ import preCommit from "./workarounds/pre-commit.mjs";
 import srtVendor from "./workarounds/srt-vendor.mjs";
 import tmpdir from "./workarounds/tmpdir.mjs";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --print-default-config | --trust] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --trust] [--] <command> [args...]";
 const HOME = homedir();
 
 // Each adapter handles one command's quirks, matched by the command's name
@@ -65,9 +65,6 @@ while (true) {
   } else if (args[0] === "--print-env") {
     args.shift();
     printEnv = true;
-  } else if (args[0] === "--print-default-config") {
-    console.log(JSON.stringify(DEFAULTS, null, 2));
-    process.exit(0);
   } else if (args[0] === "--trust") {
     console.log(`blackwall: trusted ${trustProjectConfig()}`);
     process.exit(0);
