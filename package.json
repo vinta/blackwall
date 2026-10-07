@@ -34,7 +34,7 @@
     "test": "node tests/shared.mjs && bash tests/e2e.sh"
   },
   "dependencies": {
-    "@anthropic-ai/sandbox-runtime": "0.0.77"
+    "@anthropic-ai/sandbox-runtime": "0.0.78"
   },
   "engines": {
     "node": ">=22.15.0"
