@@ -11,7 +11,7 @@
 ### Adapters
 
 - `blackwall claude` copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude` on every launch, and loads your plugins from `~/.claude/plugins` read-only
-- `blackwall codex` runs Codex with its own `~/.codex-blackwall` config folder, copies your `AGENTS.md`, `agents`, `prompts`, `rules`, and `skills` from `~/.codex` on every launch, and turns off Codex's own sandbox, which can't start inside blackwall's
+- `blackwall codex` runs Codex with its own `~/.codex-blackwall` config folder, copies your `AGENTS.md`, `agents`, `rules`, and `skills` from `~/.codex` on every launch, and turns off Codex's own sandbox, which can't start inside blackwall's
 
 ### Arguments
 

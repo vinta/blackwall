@@ -45,7 +45,7 @@ Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 
 `blackwall codex` uses `~/.codex-blackwall` as its config folder instead of `~/.codex`. A sandboxed run never writes to `~/.codex`, and reads only `~/.codex/packages`, where the standalone installer puts the `codex` binary.
 
-- Every launch copies your `AGENTS.md`, `agents`, `prompts`, `rules`, and `skills` from `~/.codex`, replacing what was there, so edits to those copies don't last
+- Every launch copies your `AGENTS.md`, `agents`, `rules`, and `skills` from `~/.codex`, replacing what was there, so edits to those copies don't last
 - Sessions, `config.toml`, and login stay separate
 - Codex's own sandbox is off (`-c sandbox_mode="danger-full-access"`), since it can't start inside blackwall's. blackwall is the sandbox
 

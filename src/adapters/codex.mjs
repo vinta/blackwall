@@ -5,7 +5,7 @@ import { copyShared } from "./shared.mjs";
 const HOME = homedir();
 const PROFILE = `${HOME}/.codex-blackwall`;
 // Copied into the profile on every launch
-const SHARED = ["AGENTS.md", "agents", "prompts", "rules", "skills"];
+const SHARED = ["AGENTS.md", "agents", "rules", "skills"];
 
 export default {
   config() {
