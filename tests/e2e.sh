@@ -11,7 +11,7 @@ case $(mkdir -p "$root" && cd "$root" && pwd -P) in
 esac
 rm -rf "$root/home" "$root/proj" "$root/added" "$root/elsewhere"
 home=$root/home proj=$root/proj added=$root/added elsewhere=$root/elsewhere
-mkdir -p "$home/.blackwall" "$home/.claude/skills" "$home/.codex" "$proj" "$added" "$elsewhere/linked-skill"
+mkdir -p "$home/.blackwall" "$home/.claude/skills" "$home/.codex" "$home/.agents/skills" "$proj" "$added" "$elsewhere/linked-skill"
 git -C "$proj" init -q
 
 # setup-node and the claude and codex installers put them outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
@@ -23,6 +23,7 @@ echo "# host instructions" >"$home/.claude/CLAUDE.md"
 echo "# host instructions" >"$home/.codex/AGENTS.md"
 printf -- '---\nname: linked-skill\ndescription: test\n---\nhi\n' >"$elsewhere/linked-skill/SKILL.md"
 ln -s "$elsewhere/linked-skill" "$home/.claude/skills/linked-skill"
+ln -s "$elsewhere/linked-skill" "$home/.agents/skills/linked-skill"
 ln -s "$elsewhere/missing" "$home/.claude/skills/dangling"
 echo '{"enabledPlugins":{"x@y":true},"hooks":{"PreToolUse":[]}}' >"$home/.claude/settings.json"
 
@@ -77,9 +78,10 @@ first=$(blackwall codex --version 2>&1)
 check "codex runs" eval 'grep -q "codex-cli" <<<"$first"'
 check "codex first run prints the notice" eval 'grep -q "blackwall: created" <<<"$first"'
 check "AGENTS.md copied" test -f "$home/.codex-blackwall/AGENTS.md"
+check "codex user skill copied as a folder" eval 'test -f "$home/.codex-blackwall/skills/linked-skill/SKILL.md" && ! test -L "$home/.codex-blackwall/skills/linked-skill"'
 check "write ~/.codex denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.codex/AGENTS.md\""; test "$(cat "$home/.codex/AGENTS.md")" = "# host instructions"'
-printf '#!/bin/sh\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
-check "write codex profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'
+printf '#!/bin/sh\nset -e\ncat "$CODEX_HOME/skills/linked-skill/SKILL.md"\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
+check "codex reads user skill and writes profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'
 check "codex hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
 
 echo "$pass passed, $fail failed"
