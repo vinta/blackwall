@@ -5,9 +5,9 @@ import { existsSync, rmSync } from "node:fs";
 export function copyShared(from, to, names) {
   for (const name of names) {
     const source = `${from}/${name}`;
-    if (!existsSync(source)) continue;
     // Removes a dotfile-manager link itself, never its target
     rmSync(`${to}/${name}`, { recursive: true, force: true });
+    if (!existsSync(source)) continue;
     // -L resolves nested links too (cpSync's dereference doesn't), since their targets are unreadable in the sandbox; cp reports a dangling one and copies the rest
     spawnSync("cp", ["-RL", source, `${to}/${name}`], { stdio: "inherit" });
   }
