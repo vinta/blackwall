@@ -16,7 +16,7 @@ import preCommit from "./workarounds/pre-commit.mjs";
 import srtVendor from "./workarounds/srt-vendor.mjs";
 import tmpdir from "./workarounds/tmpdir.mjs";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-default-config | --trust] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --print-default-config | --trust] [--] <command> [args...]";
 const HOME = homedir();
 
 // Each adapter handles one command's quirks, matched by the command's name
@@ -50,6 +50,7 @@ const args = process.argv.slice(2);
 const addDirs = [];
 let printConfig = false;
 let printFileAccess = false;
+let printEnv = false;
 while (true) {
   if (args[0] === "--add-dir") {
     args.shift();
@@ -61,6 +62,9 @@ while (true) {
   } else if (args[0] === "--print-file-access") {
     args.shift();
     printFileAccess = true;
+  } else if (args[0] === "--print-env") {
+    args.shift();
+    printEnv = true;
   } else if (args[0] === "--print-default-config") {
     console.log(JSON.stringify(DEFAULTS, null, 2));
     process.exit(0);
@@ -73,7 +77,7 @@ while (true) {
 }
 
 if (args[0] === "--") args.shift();
-if (!args[0] && !printConfig && !printFileAccess) exitWithUsage();
+if (!args[0] && !printConfig && !printFileAccess && !printEnv) exitWithUsage();
 
 function exitWithUsage() {
   console.error(USAGE);
@@ -97,14 +101,26 @@ if (printFileAccess) {
   process.exit(0);
 }
 
-const env = {
-  ...process.env,
-  UV_CACHE_DIR: `${CACHE}/uv`,
-  npm_config_cache: `${CACHE}/npm`,
-  PRE_COMMIT_HOME: `${CACHE}/pre-commit`,
-  ...Object.assign({}, ...workarounds.map((workaround) => workaround.env?.() ?? {})),
-  ...adapter.env?.(),
-};
+// Each label names where its vars come from, for --print-env
+const envSources = [
+  ["cache", { UV_CACHE_DIR: `${CACHE}/uv`, npm_config_cache: `${CACHE}/npm`, PRE_COMMIT_HOME: `${CACHE}/pre-commit` }],
+  ...Object.entries(WORKAROUNDS)
+    .filter(([, workaround]) => workaround.env)
+    .map(([workaroundName, workaround]) => [`workaround ${workaroundName}: ${workaround.why}`, workaround.env()]),
+  ...(adapter.env ? [[`adapter ${name}`, adapter.env()]] : []),
+];
+
+// Only blackwall's own vars, so keys from ~/.blackwall/.env never reach the terminal
+if (printEnv) {
+  for (const [label, vars] of envSources) {
+    console.log(`# ${label}`);
+    for (const [key, value] of Object.entries(vars)) console.log(`${key}=${value}`);
+  }
+  console.log("# srt adds its proxy, TMPDIR, and git vars at launch");
+  process.exit(0);
+}
+
+const env = { ...process.env, ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
 
 mkdirSync(CACHE, { recursive: true });
 for (const workaround of workarounds) workaround.prepare?.();

@@ -9,6 +9,7 @@
 - `BLACKWALL_USE_SELF_SIGNED_NODE=1` gives `blackwall` its own identity in firewall apps like Little Snitch
 - Per-project config in `.blackwall/config.json`, loaded only after `blackwall --trust`
 - `blackwall --print-file-access` shows what the sandbox can read and write
+- `blackwall --print-env` shows the env vars blackwall adds for each command, with the workaround each one is for
 - Linux: reads `/usr/local`, `/lib64`, and `/usr/lib64`, and `enableWeakerNestedSandbox` can be set for Docker
 
 ## v0.1.0 / 2026-10-01

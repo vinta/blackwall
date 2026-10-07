@@ -66,6 +66,9 @@ check "linked skill copied as a folder" eval 'test -f "$home/.claude-blackwall/s
 check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claude-blackwall/settings.json" && ! grep -q hooks "$home/.claude-blackwall/settings.json"'
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
 check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
+echo "E2E_TOKEN=leak" >"$home/.blackwall/.env"
+check "--print-env shows workarounds, not .env keys" eval 'out=$(blackwall --print-env claude) && grep -q "^# workaround git-signing" <<<"$out" && ! grep -q E2E_TOKEN <<<"$out"'
+rm "$home/.blackwall/.env"
 # Named claude so the claude adapter's grants and env apply, without needing a login
 printf '#!/bin/sh\necho x > "$CLAUDE_CONFIG_DIR/probe"\n' >"$proj/claude" && chmod +x "$proj/claude"
 check "write claude profile" eval 'blackwall ./claude && test -f "$home/.claude-blackwall/probe"'
