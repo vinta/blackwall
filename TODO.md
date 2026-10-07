@@ -11,7 +11,7 @@
 
 ## Features
 
-- In-sandbox test script (sandfence's `./test.sh`): run real commands inside the sandbox with a stub `HOME` and `.env`, and assert each allow/deny: cwd read/write, `~/.ssh` and `~/.zshrc` denied, `~/Desktop` write denied, cwd `.git/config` write denied, `--add-dir` `.git/hooks` denied, cache writable, curl 200, `gh` loads, config errors exit 2
+- e2e checks `tests/e2e.sh` still lacks: cwd `.git/config` write denied, `--add-dir` `.git/hooks` denied, cache writable, `gh` loads, config errors exit 2
 - Git worktree detection (agent-safehouse): when `git rev-parse --git-common-dir` is outside cwd and `--add-dir`s, grant it read/write and keep its `hooks/` and `config` in `denyWrite`
 - Escape hatch for commands that can't run sandboxed, e.g. playwright (enclave's `unboxexec`): a daemon on a Unix socket runs allowlisted commands outside. Exec argv directly, never through a shell
 - Agent skill or `autoMode.environment` entry telling the agent it's sandboxed (enclave's `enclave skill --install`); srt already sets `SANDBOX_RUNTIME=1`
@@ -22,7 +22,6 @@
 ## Unverified
 
 - WebFetch honoring srt's proxy (only curl, `gh api`, and the Claude API call were measured)
-- Hosts a `claude` run needs beyond `api.anthropic.com` when `allowedDomains` is a strict allowlist
 - Whether `/Library/Application Support/ClaudeCode` (managed settings) needs a read grant, so an unreadable file isn't taken for a broken policy
 - srt passes the profile inline to `sandbox-exec -p`, so very long path lists may hit ARG_MAX (Claude Code issue #73468)
 - The Keychain `securityd` Mach lookup inside the sandbox (only file reads of `~/Library/Keychains` were shown blocked)
