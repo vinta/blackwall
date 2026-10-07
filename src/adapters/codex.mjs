@@ -4,14 +4,20 @@ import { copyShared } from "./shared.mjs";
 
 const HOME = homedir();
 const PROFILE = `${HOME}/.codex-blackwall`;
+
 // Copied into the profile on every launch
 const SHARED = ["AGENTS.md", "agents", "rules"];
 
 export default {
   config() {
     return {
-      network: { allowedDomains: ["api.openai.com", "auth.openai.com", "chatgpt.com"] },
-      filesystem: { allowRead: [PROFILE, `${HOME}/.codex/packages`], allowWrite: [PROFILE] },
+      network: {
+        allowedDomains: ["api.openai.com", "auth.openai.com", "chatgpt.com"],
+      },
+      filesystem: {
+        allowRead: [PROFILE, `${HOME}/.codex/packages`],
+        allowWrite: [PROFILE],
+      },
     };
   },
 
