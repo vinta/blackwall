@@ -37,6 +37,6 @@
     "@anthropic-ai/sandbox-runtime": "0.0.77"
   },
   "engines": {
-    "node": ">=20.12.0"
+    "node": ">=22.15.0"
   }
 }
