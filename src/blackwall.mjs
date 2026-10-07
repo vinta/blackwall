@@ -86,7 +86,10 @@ const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
 const config = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
 
 const workarounds = Object.values(WORKAROUNDS);
-const sandbox = createSandbox(config, workarounds.map((workaround) => workaround.grants?.({ addDirs }) ?? {}));
+const sandbox = createSandbox(
+  config,
+  workarounds.map((workaround) => workaround.grants?.({ addDirs }) ?? {}),
+);
 
 if (printConfig) {
   console.log(JSON.stringify(config, null, 2));
@@ -100,7 +103,14 @@ if (printFileAccess) {
 
 // Each label names where its vars come from, for --print-env
 const envSources = [
-  ["cache", { UV_CACHE_DIR: `${CACHE}/uv`, NPM_CONFIG_CACHE: `${CACHE}/npm`, PRE_COMMIT_HOME: `${CACHE}/pre-commit` }],
+  [
+    "cache",
+    {
+      UV_CACHE_DIR: `${CACHE}/uv`,
+      NPM_CONFIG_CACHE: `${CACHE}/npm`,
+      PRE_COMMIT_HOME: `${CACHE}/pre-commit`,
+    },
+  ],
   ...Object.entries(WORKAROUNDS)
     .filter(([, workaround]) => workaround.env)
     .map(([workaroundName, workaround]) => [`workaround ${workaroundName}: ${workaround.why}`, workaround.env()]),
