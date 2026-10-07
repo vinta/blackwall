@@ -1,6 +1,6 @@
 # Changelog
 
-## vX.Y.Z / xxxx-xx-xx
+## v0.2.0 / 2026-10-08
 
 ### Changes
 
