@@ -38,7 +38,7 @@ const args = process.argv.slice(2);
 const addDirs = [];
 let printConfig = false;
 let printFileAccess = false;
-for (;;) {
+while (true) {
   if (args[0] === "--add-dir") {
     args.shift();
     if (!args[0]) exitWithUsage();
