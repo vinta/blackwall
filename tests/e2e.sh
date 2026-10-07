@@ -11,16 +11,19 @@ case $(mkdir -p "$root" && cd "$root" && pwd -P) in
 esac
 rm -rf "$root/home" "$root/proj" "$root/added" "$root/elsewhere"
 home=$root/home proj=$root/proj added=$root/added elsewhere=$root/elsewhere
-mkdir -p "$home/.blackwall" "$home/.claude/skills" "$proj" "$added" "$elsewhere/linked-skill"
+mkdir -p "$home/.blackwall" "$home/.claude/skills" "$home/.codex" "$home/.agents/skills" "$proj" "$added" "$elsewhere/linked-skill"
 git -C "$proj" init -q
 
-# setup-node and the claude installer put node and claude outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
+# setup-node and the claude and codex installers put them outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
 grants() { local path; path=$(command -v "$1"); printf '"%s","%s"' "$(dirname "$path")" "$(dirname "$(dirname "$(realpath "$path")")")"; }
-printf '{"filesystem":{"allowRead":[%s,%s]}}\n' "$(grants node)" "$(grants claude)" >"$home/.blackwall/config.json"
+# The codex adapter's ~/.codex/packages, where Codex's standalone installer links through a `current` folder, points into the stub HOME here
+printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
 echo secret >"$home/secret.txt"
 echo "# host instructions" >"$home/.claude/CLAUDE.md"
+echo "# host instructions" >"$home/.codex/AGENTS.md"
 printf -- '---\nname: linked-skill\ndescription: test\n---\nhi\n' >"$elsewhere/linked-skill/SKILL.md"
 ln -s "$elsewhere/linked-skill" "$home/.claude/skills/linked-skill"
+ln -s "$elsewhere/linked-skill" "$home/.agents/skills/linked-skill"
 ln -s "$elsewhere/missing" "$home/.claude/skills/dangling"
 echo '{"enabledPlugins":{"x@y":true},"hooks":{"PreToolUse":[]}}' >"$home/.claude/settings.json"
 
@@ -64,6 +67,25 @@ check "linked skill copied as a folder" eval 'test -f "$home/.claude-blackwall/s
 check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claude-blackwall/settings.json" && ! grep -q hooks "$home/.claude-blackwall/settings.json"'
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
 check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
+echo "E2E_TOKEN=leak" >"$home/.blackwall/.env"
+check "--print-env shows workarounds, not .env keys" eval 'out=$(blackwall --print-env claude) && grep -q "^# workaround git-signing" <<<"$out" && ! grep -q E2E_TOKEN <<<"$out"'
+rm "$home/.blackwall/.env"
+# Named claude so the claude adapter's grants and env apply, without needing a login
+printf '#!/bin/sh\necho x > "$CLAUDE_CONFIG_DIR/probe"\n' >"$proj/claude" && chmod +x "$proj/claude"
+check "write claude profile" eval 'blackwall ./claude && test -f "$home/.claude-blackwall/probe"'
+
+first=$(blackwall codex --version 2>&1)
+check "codex runs" eval 'grep -q "codex-cli" <<<"$first"'
+check "codex first run prints the notice" eval 'grep -q "blackwall: created" <<<"$first"'
+check "AGENTS.md copied" test -f "$home/.codex-blackwall/AGENTS.md"
+check "codex user skill copied as a folder" eval 'test -f "$home/.codex-blackwall/skills/linked-skill/SKILL.md" && ! test -L "$home/.codex-blackwall/skills/linked-skill"'
+check "write ~/.codex denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.codex/AGENTS.md\""; test "$(cat "$home/.codex/AGENTS.md")" = "# host instructions"'
+printf '#!/bin/sh\nset -e\ncat "$CODEX_HOME/skills/linked-skill/SKILL.md"\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
+check "codex reads user skill and writes profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'
+check "codex hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
+chmod 000 "$home/.codex/AGENTS.md"
+check "unreadable codex instructions block launch" eval '! blackwall codex --version'
+chmod 600 "$home/.codex/AGENTS.md"
 
 echo "$pass passed, $fail failed"
 [ "$fail" -eq 0 ]

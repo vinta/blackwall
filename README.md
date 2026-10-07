@@ -18,9 +18,9 @@ npm install -g blackwall-sandbox
 blackwall claude                              # run Claude Code in the sandbox
 blackwall --add-dir ../another-repo claude    # also let it write to another folder
 blackwall npm test                            # any command works, not only claude
-blackwall --print-config claude               # show the final config, after your config and the launch-time grants
-blackwall --print-file-access claude          # show what it can read and write, including the paths srt adds on its own
-blackwall --print-default-config              # show the shipped default config
+blackwall --print-config claude               # show the merged config, after your config and the launch-time grants
+blackwall --print-file-access claude          # show what it can read and write, as srt sees it
+blackwall --print-env claude                  # show the env vars blackwall adds, and why
 blackwall --trust                             # trust .blackwall/config.json in the current folder
 ```
 
@@ -28,7 +28,7 @@ By default, a sandboxed command:
 
 - Writes only to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
-- Connects only to the hosts in [presets](#presets)
+- Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
 ### Claude Code
 
@@ -40,6 +40,16 @@ By default, a sandboxed command:
 - `settings.json` starts with only your `enabledPlugins`, since your other settings, like hooks and permissions, assume no sandbox. After that it's yours to edit
 
 Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
+
+### Codex
+
+`blackwall codex` uses `~/.codex-blackwall` as its config folder instead of `~/.codex`. A sandboxed run never writes to `~/.codex`, and reads only `~/.codex/packages`, where the standalone installer puts the `codex` binary.
+
+- Every launch copies your `AGENTS.md`, `agents`, and `rules` from `~/.codex`, plus `skills` from `~/.agents`. These copies replace what was there, so edits to them don't last
+- Sessions, `config.toml`, and login stay separate
+- Codex's own sandbox is off (`-c sandbox_mode="danger-full-access"`), since it can't start inside blackwall's. blackwall is the sandbox
+
+Log in with `blackwall codex login --device-auth`, or `printenv OPENAI_API_KEY | blackwall codex login --with-api-key`.
 
 ### Env Vars
 
@@ -54,7 +64,7 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 ### Default Config
 
-[`configs/default-config.json`](configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
+[`src/configs/default-config.json`](src/configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
 
 - `presets: ["python", "npm", "github"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
@@ -64,14 +74,13 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 A preset adds hosts or read paths for one tool, with the same lists as a user config:
 
-- [python](configs/presets/python.json): PyPI, for `pip` and `uv`
-- [npm](configs/presets/npm.json): The npm registry
-- [github](configs/presets/github.json): GitHub, for `git`, `gh`, and raw files
-- [mac](configs/presets/mac.json): System paths macOS tools need, added on macOS
-- [linux](configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
-- [claude](configs/presets/claude.json): The hosts Claude Code needs, added when the command is `claude`
+- [python](src/configs/presets/python.json): PyPI, for `pip` and `uv`
+- [npm](src/configs/presets/npm.json): The npm registry
+- [github](src/configs/presets/github.json): GitHub, for `git`, `gh`, and raw files
+- [mac](src/configs/presets/mac.json): System paths macOS tools need, added on macOS
+- [linux](src/configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
 
-`mac`, `linux`, and `claude` aren't in the `presets` list, so overriding it can't drop them.
+`mac` and `linux` aren't in the `presets` list, so overriding it can't drop them.
 
 ### Custom Config
 
