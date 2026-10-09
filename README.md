@@ -31,7 +31,12 @@ By default, a sandboxed command:
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
+<details>
+<summary>
+
 ### Claude Code
+
+</summary>
 
 `blackwall claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. For security, a sandboxed run never writes to `~/.claude`, and reads only `~/.claude/plugins`.
 
@@ -42,7 +47,14 @@ By default, a sandboxed command:
 
 Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 
+</details>
+
+<details>
+<summary>
+
 ### Codex
+
+</summary>
 
 `blackwall codex` uses `~/.codex-blackwall` as its config folder instead of `~/.codex`. A sandboxed run never writes to `~/.codex`, and reads only `~/.codex/packages`, where the standalone installer puts the `codex` binary.
 
@@ -52,7 +64,9 @@ Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 
 Log in with `blackwall codex login --device-auth`, or `printenv OPENAI_API_KEY | blackwall codex login --with-api-key`.
 
-### Env Vars
+</details>
+
+### Environment Variables
 
 Put your env vars in `~/.blackwall/.env` if you need them.
 
@@ -63,7 +77,12 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 ## Configuration
 
+<details>
+<summary>
+
 ### Default Config
+
+</summary>
 
 [`src/configs/default-config.json`](src/configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
 
@@ -71,7 +90,14 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 
-### Presets
+</details>
+
+<details>
+<summary>
+
+### Config Presets
+
+</summary>
 
 A preset adds hosts or read paths for one tool, with the same lists as a user config:
 
@@ -83,7 +109,14 @@ A preset adds hosts or read paths for one tool, with the same lists as a user co
 
 `mac` and `linux` aren't in the `presets` list, so overriding it can't drop them.
 
-### Custom Config
+</details>
+
+<details>
+<summary>
+
+### User Config
+
+</summary>
 
 Put your customizations in `~/.blackwall/config.json`. Top-level lists are added to the defaults. To replace a default value, set it under `overrideDefaults`:
 
@@ -102,7 +135,14 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 - An overridden list stops getting new defaults when `blackwall` updates, so override only what you want to own
 - To allow every host, add `"*"` to `network.allowedDomains`
 
+</details>
+
+<details>
+<summary>
+
 ### Project Config
+
+</summary>
 
 Put a project's own config in `.blackwall/config.json` in that folder. It takes the same keys as `~/.blackwall/config.json`, e.g. to read a skill folder from another repo:
 
@@ -117,7 +157,14 @@ Put a project's own config in `.blackwall/config.json` in that folder. It takes 
 
 A cloned repo can ship one that widens the sandbox, so `blackwall` refuses to run until you review the file and run `blackwall --trust`. Like direnv, trust covers that path with that exact content, so run it again after every edit. Sandboxed commands can't write to `.blackwall` in the current folder.
 
-## Signed Node
+</details>
+
+<details>
+<summary>
+
+### Signed Node
+
+</summary>
 
 For firewall apps like Little Snitch. Every sandboxed command connects through a proxy inside `blackwall`, so the firewall sees all that traffic as `node`, the same `node` behind every other Node script. One rule covers them all.
 
@@ -128,6 +175,8 @@ BLACKWALL_USE_SELF_SIGNED_NODE=1 # put this in ~/.blackwall/.env, or export it
 ```
 
 Little Snitch then shows `blackwall_node` instead of `node`. It's an ad-hoc-signed copy of your `node` at `~/.blackwall/blackwall_node`, created on the first run and again whenever it's missing. Delete it after upgrading Node to get a fresh copy. Needs Node 22.15+.
+
+</details>
 
 ## License
 
