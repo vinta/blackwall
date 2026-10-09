@@ -31,12 +31,7 @@ By default, a sandboxed command:
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
-<details>
-<summary>
-
 ### Claude Code
-
-</summary>
 
 `blackwall claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. For security, a sandboxed run never writes to `~/.claude`, and reads only `~/.claude/plugins`.
 
@@ -47,14 +42,7 @@ By default, a sandboxed command:
 
 Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 
-</details>
-
-<details>
-<summary>
-
 ### Codex
-
-</summary>
 
 `blackwall codex` uses `~/.codex-blackwall` as its config folder instead of `~/.codex`. A sandboxed run never writes to `~/.codex`, and reads only `~/.codex/packages`, where the standalone installer puts the `codex` binary.
 
@@ -62,9 +50,7 @@ Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 - Sessions, `config.toml`, and login stay separate
 - Codex's own sandbox is off (`-c sandbox_mode="danger-full-access"`), since it can't start inside blackwall's. blackwall is the sandbox
 
-Log in with `blackwall codex login --device-auth`, or `printenv OPENAI_API_KEY | blackwall codex login --with-api-key`.
-
-</details>
+Log in with `blackwall codex login --device-auth`.
 
 ### Environment Variables
 
@@ -77,12 +63,7 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 ## Configuration
 
-<details>
-<summary>
-
-### Default Config
-
-</summary>
+### Default
 
 [`src/configs/default-config.json`](src/configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
 
@@ -90,14 +71,7 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 
-</details>
-
-<details>
-<summary>
-
-### Config Presets
-
-</summary>
+### Presets
 
 A preset adds hosts or read paths for one tool, with the same lists as a user config:
 
@@ -108,8 +82,6 @@ A preset adds hosts or read paths for one tool, with the same lists as a user co
 - [linux](src/configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
 
 `mac` and `linux` aren't in the `presets` list, so overriding it can't drop them.
-
-</details>
 
 <details>
 <summary>
@@ -130,10 +102,9 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 }
 ```
 
-- Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're added to the defaults
-- `overrideDefaults` takes any key in `default-config.json` and replaces its default value. It's applied first, then the top-level lists are added
-- An overridden list stops getting new defaults when `blackwall` updates, so override only what you want to own
+- Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults
 - To allow every host, add `"*"` to `network.allowedDomains`
+- `overrideDefaults` takes any key in `default-config.json` and **replaces** its default value. It's applied first, then the top-level lists are added
 
 </details>
 
