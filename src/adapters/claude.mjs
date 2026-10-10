@@ -8,6 +8,9 @@ const PROFILE = `${HOME}/.claude-blackwall`;
 // Claude plugins don't need copying; it's safe to read them directly
 const PLUGINS = `${HOME}/.claude/plugins`;
 
+// The native installer links ~/.local/bin/claude into it
+const VERSIONS = `${HOME}/.local/share/claude`;
+
 // Copied into the profile on every launch
 const SHARED = ["CLAUDE.md", "rules", "skills", "agents", "commands", "output-styles"];
 
@@ -28,7 +31,7 @@ export default {
         ],
       },
       filesystem: {
-        allowRead: [PROFILE, PLUGINS],
+        allowRead: [PROFILE, PLUGINS, VERSIONS],
         allowWrite: [PROFILE],
       },
     };

@@ -5,5 +5,10 @@
       "*.github.com",
       "*.githubusercontent.com"
     ]
+  },
+  "filesystem": {
+    "allowRead": [
+      "~/.local/share/gh/extensions"
+    ]
   }
 }

@@ -31,8 +31,7 @@
       "~/.gitconfig",
       "~/.gitignore_global",
       "~/.local/bin",
-      "~/.local/share",
-      "~/.local/state"
+      "~/.local/share/uv"
     ],
     "allowWrite": [],
     "denyWrite": []

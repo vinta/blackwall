@@ -70,6 +70,7 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 - `presets: ["python", "npm", "github"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
+- `filesystem.allowRead` opens only `~/.local/bin` and `~/.local/share/uv` under `~/.local`. Version managers like fnm or mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 
 ### Presets
 
