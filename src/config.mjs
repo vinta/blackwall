@@ -4,6 +4,8 @@ import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
+import PRESETS from "./presets/index.mjs";
+
 const HOME = homedir();
 const CWD = process.cwd();
 
@@ -43,14 +45,21 @@ export function buildConfig({ addDirs, additions }) {
     filesystem: { ...DEFAULTS.filesystem, ...user.overrides.filesystem, ...project.overrides.filesystem },
   };
 
-  // Platform presets aren't in the presets list, so overriding it can't drop them
-  const platformPresets = { darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [];
-  const presets = [...new Set([...platformPresets, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
+  // Always on, so overriding presets can't drop the sandbox's own needs
+  const ALWAYS = { darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [];
+  const names = [...new Set([...ALWAYS, ...basePresets, ...user.presets, ...project.presets])];
+  const presets = names.map((name) => {
+    if (!Object.hasOwn(PRESETS, name)) {
+      console.error(`blackwall: unknown preset ${name}`);
+      process.exit(2);
+    }
+    // env is a preset-only key, so it never reaches srt
+    const { env = {}, ...preset } = PRESETS[name];
+    return { name, ...preset, env: Object.fromEntries(Object.entries(env).map(([key, value]) => [key, value.replace(/^~(?=\/|$)/, HOME)])) };
+  });
   const layers = [...presets, user.additions, project.additions, additions];
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
-  // env is a preset-only key, so it never reaches srt
-  const env = Object.fromEntries(presets.flatMap((preset) => Object.entries(preset.env ?? {})).map(([key, value]) => [key, value.replace(/^~(?=\/|$)/, HOME)]));
   if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
     console.warn("blackwall: overrideDefaults.filesystem.denyRead no longer denies ~/, so your home directory is readable");
   }
@@ -92,7 +101,7 @@ export function buildConfig({ addDirs, additions }) {
     }
   }
 
-  return { config, env };
+  return { config, presets };
 }
 
 export function readProjectEnv() {
@@ -134,15 +143,6 @@ function parseConfig(file, text) {
   const { overrideDefaults: overrides = {}, presets = [], ...additions } = parsed;
   checkShape(file, overrides, DEFAULTS, "overrideDefaults.", false);
   return { additions, overrides, presets };
-}
-
-function readPreset(name) {
-  const text = readIfExists(new URL(`./configs/presets/${name}.json`, import.meta.url));
-  if (text === undefined) {
-    console.error(`blackwall: unknown preset ${name}`);
-    process.exit(2);
-  }
-  return JSON.parse(text);
 }
 
 // Keys and types mirror default-config.json: a misspelled key would otherwise drop its paths without a word, and a string would spread into characters

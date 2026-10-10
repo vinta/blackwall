@@ -76,11 +76,11 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 A preset adds hosts or read paths for one tool, with the same lists as a user config, plus `env` vars like its cache folder:
 
-- [python](src/configs/presets/python.json): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
-- [node](src/configs/presets/node.json): The npm registry, and Node.js installed by fnm
-- [github](src/configs/presets/github.json): GitHub, for `git`, `gh`, and raw files
-- [mac](src/configs/presets/mac.json): System paths macOS tools need, added on macOS
-- [linux](src/configs/presets/linux.json): `/usr/local` and the 64-bit lib folders, added on Linux
+- [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
+- [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
+- [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files
+- [mac](src/presets/mac.mjs): System paths macOS tools need, added on macOS
+- [linux](src/presets/linux.mjs): `/usr/local` and the 64-bit lib folders, added on Linux
 
 `mac` and `linux` aren't in the `presets` list, so overriding it can't drop them.
 

@@ -1,6 +1,7 @@
-{
-  "filesystem": {
-    "allowRead": [
+export default {
+  why: "macOS tools read system paths, Homebrew, and the Command Line Tools",
+  filesystem: {
+    allowRead: [
       "/System",
       "/tmp",
       "/private/etc",
@@ -9,7 +10,7 @@
       "/private/var/db/timezone",
       "/opt/homebrew",
       "/Library/Developer/CommandLineTools",
-      "~/Library/Caches/com.github.wasilibs"
-    ]
-  }
-}
+      "~/Library/Caches/com.github.wasilibs",
+    ],
+  },
+};

@@ -85,7 +85,7 @@ function exitWithUsage() {
 
 const name = basename(args[0] ?? "");
 const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
-const { config, env: presetEnv } = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
+const { config, presets } = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
 
 const workarounds = Object.values(WORKAROUNDS);
 const sandbox = createSandbox(
@@ -105,7 +105,7 @@ if (printFileAccess) {
 
 // Each label names where its vars come from, for --print-env
 const envSources = [
-  ["presets", presetEnv],
+  ["presets", Object.assign({}, ...presets.map((preset) => preset.env))],
   ...Object.entries(WORKAROUNDS)
     .filter(([, workaround]) => workaround.env)
     .map(([workaroundName, workaround]) => [`workaround ${workaroundName}: ${workaround.why}`, workaround.env()]),
