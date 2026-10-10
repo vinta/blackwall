@@ -3,20 +3,12 @@ import { spawn } from "node:child_process";
 
 const cwd = process.cwd();
 
-// grants are the workarounds' paths, given to srt but kept out of the printed config
-export function createSandbox(config, grants) {
-  const granted = (key) => grants.flatMap((grant) => grant[key] ?? []);
+export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
   const allowAllDomains = config.network.allowedDomains.includes("*");
   const srtConfig = {
     ...config,
     network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") },
-    filesystem: {
-      ...config.filesystem,
-      allowRead: [...config.filesystem.allowRead, ...granted("allowRead")],
-      allowWrite: [...config.filesystem.allowWrite, ...granted("allowWrite")],
-      denyWrite: [...config.filesystem.denyWrite, ...granted("denyWrite")],
-    },
   };
   SandboxRuntimeConfigSchema.parse(srtConfig);
 

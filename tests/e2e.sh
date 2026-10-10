@@ -80,7 +80,7 @@ check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claud
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
 check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
 echo "E2E_TOKEN=leak" >"$home/.blackwall/.env"
-check "--print-env shows workarounds, not .env keys" eval 'out=$(blackwall --print-env claude) && grep -q "^# workaround git-signing" <<<"$out" && ! grep -q E2E_TOKEN <<<"$out"'
+check "--print-env shows presets, not .env keys" eval 'out=$(blackwall --print-env claude) && grep -q "^# preset git:" <<<"$out" && ! grep -q E2E_TOKEN <<<"$out"'
 rm "$home/.blackwall/.env"
 check "--version" eval 'grep -q "\"version\": \"$(blackwall --version)\"" "$repo/package.json"'
 # Named claude so the claude adapter's grants and env apply, without needing a login

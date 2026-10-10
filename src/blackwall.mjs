@@ -10,19 +10,12 @@ import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
 import { CACHE, buildConfig, readIfExists, readProjectEnv, trustProjectConfig } from "./config.mjs";
 import { createSandbox } from "./srt.mjs";
-import gitSigning from "./workarounds/git-signing.mjs";
-import preCommit from "./workarounds/pre-commit.mjs";
-import srtVendor from "./workarounds/srt-vendor.mjs";
-import tmpdir from "./workarounds/tmpdir.mjs";
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --trust | --version] [--] <command> [args...]";
 const HOME = homedir();
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
-
-// Each workaround makes a tool work under a limit the sandbox sets, for every command
-const WORKAROUNDS = { "git-signing": gitSigning, "pre-commit": preCommit, "srt-vendor": srtVendor, tmpdir };
 
 // Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
 const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
@@ -87,11 +80,7 @@ const name = basename(args[0] ?? "");
 const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
 const { config, presets } = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
 
-const workarounds = Object.values(WORKAROUNDS);
-const sandbox = createSandbox(
-  config,
-  workarounds.map((workaround) => workaround.grants?.() ?? {}),
-);
+const sandbox = createSandbox(config);
 
 if (printConfig) {
   console.log(JSON.stringify(config, null, 2));
@@ -105,10 +94,7 @@ if (printFileAccess) {
 
 // Each label names where its vars come from, for --print-env
 const envSources = [
-  ["presets", Object.assign({}, ...presets.map((preset) => preset.env))],
-  ...Object.entries(WORKAROUNDS)
-    .filter(([, workaround]) => workaround.env)
-    .map(([workaroundName, workaround]) => [`workaround ${workaroundName}: ${workaround.why}`, workaround.env()]),
+  ...presets.filter((preset) => Object.keys(preset.env).length).map((preset) => [`preset ${preset.name}: ${preset.why}`, preset.env]),
   ...(adapter.env ? [[`adapter ${name}`, adapter.env()]] : []),
 ];
 
@@ -126,7 +112,7 @@ if (printEnv) {
 const env = { ...process.env, ...readProjectEnv(), ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
 
 mkdirSync(CACHE, { recursive: true });
-for (const workaround of workarounds) workaround.prepare?.();
+for (const preset of presets) preset.prepare?.();
 adapter.prepare?.();
 
 await sandbox.run(adapter.args?.(args, { addDirs }) ?? args, env);

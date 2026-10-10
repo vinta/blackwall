@@ -46,7 +46,7 @@ export function buildConfig({ addDirs, additions }) {
   };
 
   // Always on, so overriding presets can't drop the sandbox's own needs
-  const ALWAYS = { darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [];
+  const ALWAYS = ["tmpdir", ...({ darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [])];
   const names = [...new Set([...ALWAYS, ...basePresets, ...user.presets, ...project.presets])];
   const presets = names.map((name) => {
     if (!Object.hasOwn(PRESETS, name)) {

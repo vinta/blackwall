@@ -2,7 +2,9 @@
   "presets": [
     "python",
     "node",
-    "github"
+    "github",
+    "git",
+    "pre-commit"
   ],
   "network": {
     "allowedDomains": [],
