@@ -115,7 +115,7 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 
 </summary>
 
-Put a project's own config in `.blackwall/config.json` in that folder. It takes the same keys as `~/.blackwall/config.json`, e.g. to read a skill folder from another repo:
+Put a project's own config in `.blackwall/config.json`. It takes the same keys as `~/.blackwall/config.json`, e.g. to read a file from another repo:
 
 ```json
 {
