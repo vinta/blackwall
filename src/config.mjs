@@ -14,6 +14,7 @@ const CONFIG = `${HOME}/.blackwall/config.json`;
 // Loads only once trusted, since a cloned repo can ship one that widens the sandbox
 const PROJECT_CONFIG = `${cwd}/.blackwall/config.json`;
 const TRUSTED = `${HOME}/.blackwall/trusted`;
+
 // Gated by the project config's trust, not its own: a 1Password .env is a pipe that can be read only once, and its contents change on every rotation
 const PROJECT_ENV = `${cwd}/.blackwall/.env`;
 
@@ -67,8 +68,9 @@ export function buildConfig({ addDirs, additions }) {
       denyRead: [...base.filesystem.denyRead, ...added("filesystem", "denyRead")],
       allowRead: [cwd, ...addDirs, ...base.filesystem.allowRead, CACHE, ...added("filesystem", "allowRead")],
       allowWrite: [cwd, ...addDirs, ...base.filesystem.allowWrite, CACHE, ...added("filesystem", "allowWrite")],
-      // cwd/.blackwall keeps a run from writing a project config for you to trust
-      denyWrite: [...base.filesystem.denyWrite, `${cwd}/.blackwall`, ...added("filesystem", "denyWrite")],
+      // cwd/.blackwall keeps a run from writing a project config for you to trust, and ~/.blackwall from forging trust or replacing blackwall_node, even when
+      // cwd or an --add-dir covers it
+      denyWrite: [...base.filesystem.denyWrite, `${cwd}/.blackwall`, `${HOME}/.blackwall`, ...added("filesystem", "denyWrite")],
     },
   };
 
