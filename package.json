@@ -1,6 +1,6 @@
 {
   "name": "blackwall-sandbox",
-  "description": "Opinionated lightweight sandbox for daily dev tasks",
+  "description": "Opinionated lightweight sandbox for daily dev tasks with coding agents",
   "keywords": [
     "sandbox",
     "seatbelt",
