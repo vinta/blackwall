@@ -107,12 +107,6 @@ if (printFileAccess) {
 
 // Each label names where its vars come from, for --print-env
 const envSources = [
-  [
-    "cache",
-    {
-      PRE_COMMIT_HOME: `${CACHE}/pre-commit`,
-    },
-  ],
   ["presets", presetEnv],
   ...Object.entries(WORKAROUNDS)
     .filter(([, workaround]) => workaround.env)
