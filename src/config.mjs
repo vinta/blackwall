@@ -50,7 +50,7 @@ export function buildConfig({ addDirs, additions }) {
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
   // env is a preset-only key, so it never reaches srt
-  const env = Object.fromEntries(presets.flatMap((preset) => Object.entries(preset.env ?? {})).map(([key, value]) => [key, expandPath(value)]));
+  const env = Object.fromEntries(presets.flatMap((preset) => Object.entries(preset.env ?? {})).map(([key, value]) => [key, value.replace(/^~(?=\/|$)/, HOME)]));
   if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
     console.warn("blackwall: overrideDefaults.filesystem.denyRead no longer denies ~/, so your home directory is readable");
   }
