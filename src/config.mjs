@@ -7,16 +7,13 @@ import { parseEnv } from "node:util";
 const HOME = homedir();
 const CWD = process.cwd();
 
-// Private to blackwall runs: host tools later execute what lands in a package cache
 export const CACHE = `${HOME}/.cache/blackwall`;
 const CONFIG = `${HOME}/.blackwall/config.json`;
 
 // Loads only once trusted, since a cloned repo can ship one that widens the sandbox
 const PROJECT_CONFIG = `${CWD}/.blackwall/config.json`;
-const TRUSTED = `${HOME}/.blackwall/trusted`;
-
-// Gated by the project config's trust, not its own: a 1Password .env is a pipe that can be read only once, and its contents change on every rotation
 const PROJECT_ENV = `${CWD}/.blackwall/.env`;
+const TRUSTED = `${HOME}/.blackwall/trusted`;
 
 const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
 
