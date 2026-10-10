@@ -69,7 +69,14 @@ export function buildConfig({ addDirs, additions }) {
       allowWrite: [CWD, ...addDirs, ...base.filesystem.allowWrite, CACHE, ...added("filesystem", "allowWrite")],
       // cwd/.blackwall keeps a run from writing a project config for you to trust, and ~/.blackwall from forging trust or replacing blackwall_node, even when
       // cwd or an --add-dir covers it
-      denyWrite: [...base.filesystem.denyWrite, `${CWD}/.blackwall`, `${HOME}/.blackwall`, ...added("filesystem", "denyWrite")],
+      denyWrite: [
+        ...base.filesystem.denyWrite,
+        `${CWD}/.blackwall`,
+        `${HOME}/.blackwall`,
+        // srt's built-in .git denies anchor on cwd only
+        ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]),
+        ...added("filesystem", "denyWrite"),
+      ],
     },
   };
 
