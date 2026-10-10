@@ -27,7 +27,7 @@ blackwall --version                           # show the blackwall version
 
 By default, a sandboxed command:
 
-- Writes only to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`
+- Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, and `~/.cache/blackwall`
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 

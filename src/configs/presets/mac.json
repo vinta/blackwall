@@ -2,12 +2,12 @@
   "filesystem": {
     "allowRead": [
       "/System",
+      "/tmp",
       "/private/etc",
       "/private/var/run",
       "/private/var/select",
       "/private/var/db/timezone",
       "/opt/homebrew",
-      "/private/tmp",
       "/Library/Developer/CommandLineTools",
       "~/Library/Caches/com.github.wasilibs"
     ]

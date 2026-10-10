@@ -20,7 +20,6 @@
       "/dev",
       "/etc",
       "/sbin",
-      "/tmp",
       "/usr/bin",
       "/usr/lib",
       "/usr/libexec",

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Changes
+
+- Temp files go to `/tmp/claude` (`/private/tmp/claude` on macOS), the only part of `/tmp` a sandboxed command can read or write. The rest of `/tmp` holds scratch files that unsandboxed tools like Claude Code run later
+
 ### Environment Variables
 
 - Per-project env vars in `.blackwall/.env`, loaded only with a trusted `.blackwall/config.json`. They override `~/.blackwall/.env` and go only to the sandboxed command
