@@ -9,7 +9,7 @@
 ### Changes
 
 - Temp files go to `/tmp/claude` (`/private/tmp/claude` on macOS), the only part of `/tmp` a sandboxed command can read or write. The rest of `/tmp` holds scratch files that unsandboxed tools like Claude Code run later
-- Reads only `~/.local/share/uv` from `~/.local/share`, and nothing from `~/.local/state`. `blackwall claude` also reads `~/.local/share/claude`, and the `github` preset reads `~/.local/share/gh/extensions`. Add other tools' folders, like mise's, to `allowRead` in your user config
+- Reads only the `~/.local` folders tools need, not all of `~/.local/share` and `~/.local/state`: the `python` preset reads `~/.local/share/uv`, `blackwall claude` reads `~/.local/share/claude`, and the `github` preset reads `~/.local/share/gh/extensions`. Add other tools' folders, like mise's, to `allowRead` in your user config
 
 ### Environment Variables
 

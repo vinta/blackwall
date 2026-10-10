@@ -4,5 +4,11 @@
       "pypi.org",
       "files.pythonhosted.org"
     ]
+  },
+  "filesystem": {
+    "allowRead": [
+      "~/.config/uv/uv.toml",
+      "~/.local/share/uv"
+    ]
   }
 }

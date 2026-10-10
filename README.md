@@ -70,13 +70,13 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 - `presets: ["python", "node", "github"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
-- `filesystem.allowRead` opens only `~/.local/bin` and `~/.local/share/uv` under `~/.local`. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
+- `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 
 ### Presets
 
 A preset adds hosts or read paths for one tool, with the same lists as a user config:
 
-- [python](src/configs/presets/python.json): PyPI, for `pip` and `uv`
+- [python](src/configs/presets/python.json): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/configs/presets/node.json): The npm registry, and Node.js installed by fnm
 - [github](src/configs/presets/github.json): GitHub, for `git`, `gh`, and raw files
 - [mac](src/configs/presets/mac.json): System paths macOS tools need, added on macOS

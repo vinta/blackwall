@@ -27,11 +27,9 @@
       "/usr/share",
       "/var",
       "~/.config/git/ignore",
-      "~/.config/uv/uv.toml",
       "~/.gitconfig",
       "~/.gitignore_global",
-      "~/.local/bin",
-      "~/.local/share/uv"
+      "~/.local/bin"
     ],
     "allowWrite": [],
     "denyWrite": []
