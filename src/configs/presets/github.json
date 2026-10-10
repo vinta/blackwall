@@ -1,4 +1,7 @@
 {
+  "env": {
+    "GH_CONFIG_DIR": "~/.cache/blackwall/gh"
+  },
   "network": {
     "allowedDomains": [
       "github.com",

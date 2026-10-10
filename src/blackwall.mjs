@@ -10,7 +10,6 @@ import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
 import { CACHE, buildConfig, readIfExists, readProjectEnv, trustProjectConfig } from "./config.mjs";
 import { createSandbox } from "./srt.mjs";
-import gh from "./workarounds/gh.mjs";
 import gitAddDir from "./workarounds/git-add-dir.mjs";
 import gitSigning from "./workarounds/git-signing.mjs";
 import preCommit from "./workarounds/pre-commit.mjs";
@@ -24,7 +23,7 @@ const HOME = homedir();
 const ADAPTERS = { claude, codex };
 
 // Each workaround makes a tool work under a limit the sandbox sets, for every command
-const WORKAROUNDS = { gh, "git-add-dir": gitAddDir, "git-signing": gitSigning, "pre-commit": preCommit, "srt-vendor": srtVendor, tmpdir };
+const WORKAROUNDS = { "git-add-dir": gitAddDir, "git-signing": gitSigning, "pre-commit": preCommit, "srt-vendor": srtVendor, tmpdir };
 
 // Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
 const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
