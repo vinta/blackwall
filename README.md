@@ -128,7 +128,7 @@ Put a project's own config in `.blackwall/config.json` in that folder. It takes 
 
 A cloned repo can ship one that widens the sandbox, so `blackwall` refuses to run until you review the file and run `blackwall --trust`. Like direnv, trust covers that path with that exact content, so run it again after every edit. Sandboxed commands can't write to `.blackwall` in the current folder.
 
-Put a project's own env vars in `.blackwall/.env`, e.g. a `GH_TOKEN` that can merge PRs in that repo only:
+Put a project's own env vars in `.blackwall/.env`:
 
 - Its keys override `~/.blackwall/.env`, and go only to the sandboxed command, so `BLACKWALL_*` keys there don't configure `blackwall`
 - It loads only with a trusted `.blackwall/config.json` (`{}` is enough). Like direnv's `dotenv`, trust doesn't cover the `.env` itself, so edits to it need no new `--trust`
