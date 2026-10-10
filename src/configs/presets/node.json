@@ -1,0 +1,13 @@
+{
+  "network": {
+    "allowedDomains": [
+      "registry.npmjs.org"
+    ]
+  },
+  "filesystem": {
+    "allowRead": [
+      "~/.local/share/fnm",
+      "~/.local/state/fnm_multishells"
+    ]
+  }
+}

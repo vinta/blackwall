@@ -1,7 +1,7 @@
 {
   "presets": [
     "python",
-    "npm",
+    "node",
     "github"
   ],
   "network": {
