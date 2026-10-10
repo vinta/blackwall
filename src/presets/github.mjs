@@ -3,6 +3,10 @@ export default {
   env: {
     GH_CONFIG_DIR: "~/.cache/blackwall/gh",
   },
-  network: { allowedDomains: ["github.com", "*.github.com", "*.githubusercontent.com"] },
-  filesystem: { allowRead: ["~/.local/share/gh/extensions"] },
+  network: {
+    allowedDomains: ["github.com", "*.github.com", "*.githubusercontent.com"],
+  },
+  filesystem: {
+    allowRead: ["~/.local/share/gh/extensions"],
+  },
 };

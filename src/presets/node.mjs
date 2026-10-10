@@ -3,6 +3,10 @@ export default {
   env: {
     NPM_CONFIG_CACHE: "~/.cache/blackwall/npm",
   },
-  network: { allowedDomains: ["registry.npmjs.org"] },
-  filesystem: { allowRead: ["~/.local/share/fnm", "~/.local/state/fnm_multishells"] },
+  network: {
+    allowedDomains: ["registry.npmjs.org"],
+  },
+  filesystem: {
+    allowRead: ["~/.local/share/fnm", "~/.local/state/fnm_multishells"],
+  },
 };

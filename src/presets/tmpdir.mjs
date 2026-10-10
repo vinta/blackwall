@@ -8,7 +8,9 @@ export default {
   env: {
     CLAUDE_CODE_TMPDIR: TMPDIR,
   },
-  filesystem: { allowRead: [TMPDIR] },
+  filesystem: {
+    allowRead: [TMPDIR],
+  },
 
   // srt reads it from the launcher's own environment, not the child's
   prepare() {

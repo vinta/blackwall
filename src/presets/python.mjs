@@ -3,6 +3,10 @@ export default {
   env: {
     UV_CACHE_DIR: "~/.cache/blackwall/uv",
   },
-  network: { allowedDomains: ["pypi.org", "files.pythonhosted.org"] },
-  filesystem: { allowRead: ["~/.config/uv/uv.toml", "~/.local/share/uv"] },
+  network: {
+    allowedDomains: ["pypi.org", "files.pythonhosted.org"],
+  },
+  filesystem: {
+    allowRead: ["~/.config/uv/uv.toml", "~/.local/share/uv"],
+  },
 };
