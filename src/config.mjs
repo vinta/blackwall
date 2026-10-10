@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { resolve } from "node:path";
+import { parseEnv } from "node:util";
 
 const HOME = homedir();
 const cwd = process.cwd();
@@ -13,6 +14,8 @@ const CONFIG = `${HOME}/.blackwall/config.json`;
 // Loads only once trusted, since a cloned repo can ship one that widens the sandbox
 const PROJECT_CONFIG = `${cwd}/.blackwall/config.json`;
 const TRUSTED = `${HOME}/.blackwall/trusted`;
+// Gated by the project config's trust, not its own: a 1Password .env is a pipe that can be read only once, and its contents change on every rotation
+const PROJECT_ENV = `${cwd}/.blackwall/.env`;
 
 const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
 
@@ -82,6 +85,18 @@ export function buildConfig({ addDirs, additions }) {
   }
 
   return config;
+}
+
+export function readProjectEnv() {
+  // From ~, it's the user's own .env, already loaded
+  if (PROJECT_CONFIG === CONFIG) return {};
+  const env = readIfExists(PROJECT_ENV);
+  if (env === undefined) return {};
+  const config = readIfExists(PROJECT_CONFIG);
+  if (config === undefined || !existsSync(trustMarker(config))) {
+    exitWithConfigError(PROJECT_ENV, "loads only with a trusted .blackwall/config.json. Create one ({} is enough), review both, then run `blackwall --trust`");
+  }
+  return parseEnv(env);
 }
 
 export function readIfExists(file) {

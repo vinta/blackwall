@@ -55,7 +55,14 @@ check "untrusted project config refused" eval '! blackwall true'
 check "--trust" blackwall --trust
 check "trusted project config grants read" blackwall cat "$skill"
 check "write cwd .blackwall denied" eval 'blackwall sh -c "echo x >> .blackwall/config.json"; ! grep -q "^x" "$proj/.blackwall/config.json"'
+echo "E2E_TOKEN=user" >"$home/.blackwall/.env"
+printf 'E2E_TOKEN=project\nGH_CONFIG_DIR=elsewhere\n' >"$proj/.blackwall/.env"
+check "project .env overrides user .env" eval 'test "$(blackwall sh -c "echo \$E2E_TOKEN")" = project'
+check "project .env can't override blackwall vars" eval 'test "$(blackwall sh -c "echo \$GH_CONFIG_DIR")" = "$home/.cache/blackwall/gh"'
+rm "$home/.blackwall/.env"
 check "edited project config refused" eval 'echo "{}" >"$proj/.blackwall/config.json"; ! blackwall true'
+rm "$proj/.blackwall/config.json"
+check "project .env without config refused" eval '! blackwall true'
 rm -r "$proj/.blackwall"
 check "create cwd .blackwall denied" eval 'blackwall mkdir .blackwall; ! test -e "$proj/.blackwall"'
 

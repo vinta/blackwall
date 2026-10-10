@@ -8,7 +8,7 @@ import { parseEnv } from "node:util";
 import packageJson from "../package.json" with { type: "json" };
 import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
-import { CACHE, buildConfig, readIfExists, trustProjectConfig } from "./config.mjs";
+import { CACHE, buildConfig, readIfExists, readProjectEnv, trustProjectConfig } from "./config.mjs";
 import { createSandbox } from "./srt.mjs";
 import gh from "./workarounds/gh.mjs";
 import gitAddDir from "./workarounds/git-add-dir.mjs";
@@ -131,7 +131,8 @@ if (printEnv) {
   process.exit(0);
 }
 
-const env = { ...process.env, ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
+// The project's .env goes only to the command, never into process.env, so its NODE_OPTIONS can't reach an unsandboxed node. It overrides ~/.blackwall/.env but not blackwall's own vars
+const env = { ...process.env, ...readProjectEnv(), ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
 
 mkdirSync(CACHE, { recursive: true });
 for (const workaround of workarounds) workaround.prepare?.();

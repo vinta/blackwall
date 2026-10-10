@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Environment Variables
+
+- Per-project env vars in `.blackwall/.env`, loaded only with a trusted `.blackwall/config.json`. They override `~/.blackwall/.env` and go only to the sandboxed command
+
 ## v0.2.1 / 2026-10-08
 
 ### Arguments
