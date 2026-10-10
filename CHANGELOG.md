@@ -12,6 +12,9 @@
 - Reads only the `~/.local` folders tools need, not all of `~/.local/share` and `~/.local/state`: the `python` preset reads `~/.local/share/uv`, `blackwall claude` reads `~/.local/share/claude`, and the `github` preset reads `~/.local/share/gh/extensions`. Add other tools' folders, like mise's, to `allowRead` in your user config
 - Sandboxed commands can't write to `~/.blackwall`, even under `--add-dir ~` or when run from inside it, so they can't forge trust for a project config or replace `blackwall_node`
 - `UV_CACHE_DIR`, `NPM_CONFIG_CACHE`, and `GH_CONFIG_DIR` are set only with the `python`, `node`, and `github` presets, which now hold them
+- Workarounds are presets now: `git` (signing off), `pre-commit`, and `tmpdir` (`/tmp/claude`) join the others in `src/presets`, each with a `why` that `--print-env` prints. `git` and `pre-commit` sit in the default `presets` list, so `overrideDefaults.presets` can drop them; `tmpdir` stays on like `mac` and `linux`
+- `--print-config` includes the launch-time grants: `/tmp/claude`, srt's seccomp helper on Linux, and the `.git/hooks` and `.git/config` write denies in `--add-dir` folders
+- `--print-env` labels every preset as `# preset <name>: <why>`
 
 ### Environment Variables
 

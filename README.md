@@ -65,24 +65,27 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 ### Default
 
-[`src/configs/default-config.json`](src/configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt after `blackwall` adds the launch-time grants. srt settings missing from this file can't be set.
+[`src/configs/default-config.json`](src/configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt with the launch-time grants that `blackwall --print-config` shows. srt settings missing from this file can't be set.
 
-- `presets: ["python", "node", "github"]`: The [presets](#presets) on by default
+- `presets: ["python", "node", "github", "git", "pre-commit"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 
 ### Presets
 
-A preset adds hosts or read paths for one tool, with the same lists as a user config, plus `env` vars like its cache folder:
+A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why` that `blackwall --print-env` prints. Each is a module in [`src/presets`](src/presets):
 
 - [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
-- [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files
-- [mac](src/presets/mac.mjs): System paths macOS tools need, added on macOS
-- [linux](src/presets/linux.mjs): `/usr/local` and the 64-bit lib folders, added on Linux
+- [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
+- [git](src/presets/git.mjs): Commit signing off, since gpg can't reach `~/.gnupg`
+- [pre-commit](src/presets/pre-commit.mjs): Its own cache folder, and git proxy auth so hook repos clone through srt's proxy
+- [tmpdir](src/presets/tmpdir.mjs): `/tmp/claude` as the temp folder. Always on
+- [mac](src/presets/mac.mjs): System paths macOS tools need. Always on, on macOS
+- [linux](src/presets/linux.mjs): `/usr/local`, the 64-bit lib folders, and srt's seccomp helper. Always on, on Linux
 
-`mac` and `linux` aren't in the `presets` list, so overriding it can't drop them.
+`tmpdir`, `mac`, and `linux` aren't in the `presets` list, so overriding it can't drop them.
 
 <details>
 <summary>
