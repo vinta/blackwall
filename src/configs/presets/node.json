@@ -1,4 +1,7 @@
 {
+  "env": {
+    "NPM_CONFIG_CACHE": "~/.cache/blackwall/npm"
+  },
   "network": {
     "allowedDomains": [
       "registry.npmjs.org"

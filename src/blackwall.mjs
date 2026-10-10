@@ -87,7 +87,7 @@ function exitWithUsage() {
 
 const name = basename(args[0] ?? "");
 const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
-const config = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
+const { config, env: presetEnv } = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
 
 const workarounds = Object.values(WORKAROUNDS);
 const sandbox = createSandbox(
@@ -110,11 +110,10 @@ const envSources = [
   [
     "cache",
     {
-      UV_CACHE_DIR: `${CACHE}/uv`,
-      NPM_CONFIG_CACHE: `${CACHE}/npm`,
       PRE_COMMIT_HOME: `${CACHE}/pre-commit`,
     },
   ],
+  ["presets", presetEnv],
   ...Object.entries(WORKAROUNDS)
     .filter(([, workaround]) => workaround.env)
     .map(([workaroundName, workaround]) => [`workaround ${workaroundName}: ${workaround.why}`, workaround.env()]),

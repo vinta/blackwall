@@ -1,4 +1,7 @@
 {
+  "env": {
+    "UV_CACHE_DIR": "~/.cache/blackwall/uv"
+  },
   "network": {
     "allowedDomains": [
       "pypi.org",

@@ -45,10 +45,12 @@ export function buildConfig({ addDirs, additions }) {
 
   // Platform presets aren't in the presets list, so overriding it can't drop them
   const platformPresets = { darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [];
-  const layers = [...new Set([...platformPresets, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
-  layers.push(user.additions, project.additions, additions);
+  const presets = [...new Set([...platformPresets, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
+  const layers = [...presets, user.additions, project.additions, additions];
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
+  // env is a preset-only key, so it never reaches srt
+  const env = Object.fromEntries(presets.flatMap((preset) => Object.entries(preset.env ?? {})).map(([key, value]) => [key, expandPath(value)]));
   if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
     console.warn("blackwall: overrideDefaults.filesystem.denyRead no longer denies ~/, so your home directory is readable");
   }
@@ -83,7 +85,7 @@ export function buildConfig({ addDirs, additions }) {
     }
   }
 
-  return config;
+  return { config, env };
 }
 
 export function readProjectEnv() {

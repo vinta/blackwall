@@ -74,7 +74,7 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 ### Presets
 
-A preset adds hosts or read paths for one tool, with the same lists as a user config:
+A preset adds hosts or read paths for one tool, with the same lists as a user config, plus `env` vars like its cache folder:
 
 - [python](src/configs/presets/python.json): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/configs/presets/node.json): The npm registry, and Node.js installed by fnm
