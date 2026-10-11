@@ -11,7 +11,6 @@
 - Git worktree detection (agent-safehouse): when `git rev-parse --git-common-dir` is outside cwd and `--add-dir`s, grant it read/write and keep its `hooks/` and `config` in `denyWrite`. If it passes srt `git.safeDirectories`, srt numbers its `safe.directory` entries from the launcher's `GIT_CONFIG_COUNT`, not the child env's, so they overwrite the git preset's `commit.gpgsign=false`
 - Escape hatch for commands that can't run sandboxed, e.g. playwright (enclave's `unboxexec`): a daemon on a Unix socket runs allowlisted commands outside. Exec argv directly, never through a shell
 - Signed commits from sandboxed runs: gpg can't reach `~/.gnupg`, so commits are unsigned. Until then: `git rebase --exec 'git commit --amend --no-edit -S' <base>`
-- Presets assume the default XDG folders (`~/.config`, `~/.cache`, `~/.local/share`). With `XDG_CONFIG_HOME` pointing elsewhere and a git config there, sandboxed git dies with `unable to access`, since git treats EPERM as fatal. Fix: build preset paths on the `XDG_*` vars in `paths.mjs`
 
 ## Unverified
 

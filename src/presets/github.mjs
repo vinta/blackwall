@@ -1,4 +1,4 @@
-import { CACHE } from "../constants/paths.mjs";
+import { CACHE, XDG_DATA } from "../constants/paths.mjs";
 
 export default {
   why: "gh can't read or write its default ~/.config/gh; git, gh, and raw file downloads reach GitHub, and gh loads its extensions from ~/.local",
@@ -9,6 +9,6 @@ export default {
     allowedDomains: ["github.com", "*.github.com", "*.githubusercontent.com"],
   },
   filesystem: {
-    allowRead: ["~/.local/share/gh/extensions"],
+    allowRead: [`${XDG_DATA}/gh/extensions`],
   },
 };

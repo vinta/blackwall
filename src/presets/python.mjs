@@ -1,4 +1,4 @@
-import { CACHE } from "../constants/paths.mjs";
+import { CACHE, XDG_CONFIG, XDG_DATA } from "../constants/paths.mjs";
 
 export default {
   why: "uv can't write its default ~/.cache/uv; pip and uv fetch from PyPI, and uv reads its config, Python installs, and tools",
@@ -9,6 +9,6 @@ export default {
     allowedDomains: ["pypi.org", "files.pythonhosted.org"],
   },
   filesystem: {
-    allowRead: ["~/.config/uv/uv.toml", "~/.local/share/uv"],
+    allowRead: [`${XDG_CONFIG}/uv/uv.toml`, `${XDG_DATA}/uv`],
   },
 };

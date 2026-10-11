@@ -100,6 +100,8 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, env v
 
 `tmpdir`, `mac`, and `linux` aren't in the `presets` list, so overriding it can't drop them.
 
+Preset paths follow `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, and `XDG_CACHE_HOME` when you set them.
+
 <details>
 <summary>
 

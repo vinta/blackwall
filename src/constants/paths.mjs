@@ -5,6 +5,15 @@ import { fileURLToPath } from "node:url";
 export const HOME = homedir();
 export const CWD = process.cwd();
 
+// Where tools look when the user moved their XDG folders. The spec says to ignore a relative value
+const xdg = (name) => (process.env[name]?.startsWith("/") ? process.env[name] : undefined);
+export const XDG_CONFIG = xdg("XDG_CONFIG_HOME") ?? `${HOME}/.config`;
+export const XDG_DATA = xdg("XDG_DATA_HOME") ?? `${HOME}/.local/share`;
+export const XDG_STATE = xdg("XDG_STATE_HOME") ?? `${HOME}/.local/state`;
+export const XDG_CACHE = xdg("XDG_CACHE_HOME") ?? `${HOME}/.cache`;
+// Unset on macOS and on Linux without a login session, so it has no default
+export const XDG_RUNTIME = xdg("XDG_RUNTIME_DIR");
+
 // The package's own skills, copied into each agent profile so they match the running blackwall
 export const SKILLS = fileURLToPath(new URL("../../skills", import.meta.url));
 

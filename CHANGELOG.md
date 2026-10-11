@@ -19,6 +19,7 @@
 - The wasilibs cache that go-re2 hooks like betterleaks read moves from `mac` to `pre-commit`, and Linux's `~/.cache/com.github.wasilibs` is read too
 - `~/.gitconfig`, `~/.gitignore_global`, and `~/.config/git/ignore` move from the default `allowRead` to the `git` preset, so dropping `git` from `presets` drops them too
 - The `git` preset reads `~/.config/git/config` too. Git refuses to start when its config exists but can't be read, so every sandboxed `git` command failed for users who keep their config there
+- Presets follow `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, and `XDG_CACHE_HOME` when set, so git, uv, gh, and fnm find their files when you moved those folders. The `node` preset reads fnm's per-shell links under `XDG_RUNTIME_DIR` when it is set, where fnm puts them on most Linux desktops
 - Sandboxed commands get `BLACKWALL_SANDBOX=1`, so scripts and agent skills can tell blackwall from Claude Code's own sandbox, which also sets `TMPDIR=/tmp/claude`
 - `blackwall` inside a sandboxed command exits 2 with `can't run inside a sandbox`. It used to die with a stack trace on macOS
 - The `node` preset sets `NODE_USE_ENV_PROXY=1`. Without it, Node's `fetch` and `http` skipped srt's proxy and failed with `ENOTFOUND` for every host, allowed ones too. Needs Node 22.21+
