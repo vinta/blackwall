@@ -105,6 +105,7 @@ if (printEnv) {
 }
 
 // The project's .env goes only to the command, never into process.env, so its NODE_OPTIONS can't reach an unsandboxed node. It overrides ~/.blackwall/.env but not blackwall's own vars
+// Built before prepare() runs, so a process.env write there reaches srt, never the command
 const env = { ...process.env, ...readProjectEnv(), ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
 
 mkdirSync(CACHE, { recursive: true });
