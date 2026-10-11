@@ -1,4 +1,4 @@
-import { CACHE } from "../config/paths.mjs";
+import { CACHE } from "../constants/paths.mjs";
 
 export default {
   why: "npm can't write its default ~/.npm; npm fetches from the npm registry, and fnm keeps Node.js under ~/.local",

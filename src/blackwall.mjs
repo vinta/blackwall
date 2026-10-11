@@ -8,7 +8,7 @@ import packageJson from "../package.json" with { type: "json" };
 import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
 import { buildConfig, readIfExists, readProjectEnv, trustProjectConfig } from "./config/config.mjs";
-import { CACHE, HOME, SIGNED_NODE } from "./config/paths.mjs";
+import { CACHE, HOME, SIGNED_NODE } from "./constants/paths.mjs";
 import { createSandbox } from "./sandbox/srt.mjs";
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --trust | --version] [--] <command> [args...]";
