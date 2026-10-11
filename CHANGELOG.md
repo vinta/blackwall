@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 - The `npm` preset is now `node`, and also reads Node.js installed by fnm. Rename `npm` to `node` in your `presets`
+- `git` and `pre-commit` are presets in the default list now. If you set `overrideDefaults.presets`, add `git`, or git refuses to start when it can't read your `~/.gitconfig`
 
 ### Changes
 
