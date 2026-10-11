@@ -16,6 +16,7 @@
 - `--print-config` includes the launch-time grants: `/tmp/claude`, srt's seccomp helper on Linux, and the `.git/hooks` and `.git/config` write denies in `--add-dir` folders
 - `--print-env` labels every preset that sets env vars as `# preset <name>: <why>`
 - The wasilibs cache that go-re2 hooks like betterleaks read moves from `mac` to `pre-commit`, and Linux's `~/.cache/com.github.wasilibs` is read too
+- `~/.gitconfig`, `~/.gitignore_global`, and `~/.config/git/ignore` move from the default `allowRead` to the `git` preset, so dropping `git` from `presets` drops them too
 
 ### Environment Variables
 

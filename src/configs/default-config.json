@@ -28,9 +28,6 @@
       "/usr/sbin",
       "/usr/share",
       "/var",
-      "~/.config/git/ignore",
-      "~/.gitconfig",
-      "~/.gitignore_global",
       "~/.local/bin"
     ],
     "allowWrite": [],
