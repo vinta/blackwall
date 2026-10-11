@@ -37,6 +37,7 @@ Inside, treat `blackwall` as unavailable. On macOS every flag, `--version` inclu
 | `blackwall: …/.blackwall/.env: loads only with a trusted .blackwall/config.json` | project `.env` without a trusted config | add `.blackwall/config.json` (`{}` is enough), then `--trust` |
 | `blackwall: unknown preset <name>`; `blackwall: <file>: unknown key <key>`; `must be a list of strings` (exit 2) | config typo | fix the key; preset names are under Config |
 | `sandbox_apply: Operation not permitted` from `codex` | Seatbelt can't nest | `blackwall codex` already passes `-c sandbox_mode="danger-full-access"`; a codex started from inside another sandboxed command needs the same flag |
+| git: `could not write config file .git/config: Operation not permitted`. `git remote add`, `git config`, `git branch -m` fail; `git push -u`, `git branch -D`, `git switch -c` exit 0 but lose the tracking update | `.git/config` is write-denied, no grant lifts it | none. The user sets remotes and upstreams on the host; push with `git push origin HEAD` |
 
 Noise, harmless, the command still ran:
 
