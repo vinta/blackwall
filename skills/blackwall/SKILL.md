@@ -24,7 +24,7 @@ Inside a sandboxed session (`blackwall claude`, `blackwall codex`), one of these
 - `$GH_CONFIG_DIR`, `$UV_CACHE_DIR`, or `$NPM_CONFIG_CACHE` is under `~/.cache/blackwall`
 - `$TMPDIR` is exactly `/tmp/claude` (`/private/tmp/claude` on macOS)
 
-Inside, `blackwall` itself cannot run: every flag, `--version` included, dies with `EPERM: operation not permitted, open '…/.blackwall/.env'`, and `~/.blackwall/config.json` is unreadable too. Diagnose from the error text and the grant list above, read the project's `.blackwall/config.json` if one exists, then hand the user the exact edit and commands. Outside (a plain terminal, or an agent that isn't sandboxed), run the `--print-*` flags and edit the user config yourself.
+Inside, treat `blackwall` as unavailable. On macOS every flag, `--version` included, dies with `EPERM: operation not permitted, open '…/.blackwall/.env'`. On Linux `~/.blackwall` is hidden instead, so `--print-*` omits the user config and `--trust` writes a marker that vanishes with the run. Diagnose from the error text and the grant list above, read the project's `.blackwall/config.json` if one exists, then hand the user the exact edit and commands. Outside (a plain terminal, or an agent that isn't sandboxed), run the `--print-*` flags and edit the user config yourself.
 
 ## Reading a denial
 
