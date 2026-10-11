@@ -53,8 +53,7 @@ export function buildConfig({ addDirs, additions }) {
       process.exit(2);
     }
     // env is a preset-only key, so it never reaches srt
-    const { env = {}, ...preset } = PRESETS[name];
-    return { name, ...preset, env: Object.fromEntries(Object.entries(env).map(([key, value]) => [key, value.replace(/^~(?=\/|$)/, HOME)])) };
+    return { name, env: {}, ...PRESETS[name] };
   });
   const layers = [...presets, user.additions, project.additions, additions];
 

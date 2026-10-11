@@ -1,7 +1,9 @@
+import { CACHE } from "../paths.mjs";
+
 export default {
   why: "npm can't write its default ~/.npm; npm fetches from the npm registry, and fnm keeps Node.js under ~/.local",
   env: {
-    NPM_CONFIG_CACHE: "~/.cache/blackwall/npm",
+    NPM_CONFIG_CACHE: `${CACHE}/npm`,
   },
   network: {
     allowedDomains: ["registry.npmjs.org"],
