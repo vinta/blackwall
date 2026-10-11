@@ -14,5 +14,4 @@
 
 ## Unverified
 
-- The skill's Linux rows (denied dirs read as empty tmpfs, writes into them vanish) come from srt's README and `buildConfig`, not from a Linux run. Assert them in the Linux e2e job
 - Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)
