@@ -36,8 +36,13 @@ mkdir -p "$home/.config/git" && printf '[user]\n\temail = e2e@example.com\n' >"$
 blackwall() { (cd "$proj" && HOME=$home XDG_CONFIG_HOME=$home/.config node "$repo/src/blackwall.mjs" "$@"); }
 pass=0 fail=0
 check() {
-  local name=$1; shift
-  if "$@" >/dev/null 2>&1; then echo "PASS  $name"; pass=$((pass + 1)); else echo "FAIL  $name"; fail=$((fail + 1)); fi
+  local name=$1 out; shift
+  if out=$("$@" 2>&1); then
+    echo "PASS  $name"; pass=$((pass + 1))
+  else
+    echo "FAIL  $name"; fail=$((fail + 1))
+    tail -n 5 <<<"$out" | sed 's/^/      | /'
+  fi
 }
 
 # Every deny check passes when the sandbox can't start at all, so stop here if it can't
@@ -58,7 +63,7 @@ check "git reads \$XDG_CONFIG_HOME/git/config" eval 'test "$(cd "$proj" && HOME=
 check "write ~/.blackwall under --add-dir ~ denied" eval 'blackwall --add-dir "$home" sh -c "echo x > \"\$HOME/.blackwall/probe\""; ! test -e "$home/.blackwall/probe"'
 check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude/CLAUDE.md\""; test "$(cat "$home/.claude/CLAUDE.md")" = "# host instructions"'
 check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https://api.github.com
-check "other host blocked" eval '! blackwall curl -sS -o /dev/null --max-time 20 https://example.com'
+check "other host blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://example.com 2>&1)"'
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 node=$(realpath "$(command -v node)")
 check "nested blackwall refused" eval 'out=$(blackwall --add-dir "$repo" "$node" "$repo/src/blackwall.mjs" --version 2>&1); test $? -eq 2 && grep -q "can.t run inside a sandbox" <<<"$out"'
@@ -75,7 +80,7 @@ skill=$elsewhere/linked-skill/SKILL.md
 check "read outside grants denied" eval '! blackwall cat "$skill"'
 mkdir -p "$proj/.blackwall"
 printf '{"filesystem":{"allowRead":["%s"]}}\n' "$elsewhere" >"$proj/.blackwall/config.json"
-check "untrusted project config refused" eval '! blackwall true'
+check "untrusted project config refused" eval 'grep -q "not trusted" <<<"$(blackwall true 2>&1)"'
 check "--trust" blackwall --trust
 check "trusted project config grants read" blackwall cat "$skill"
 check "write cwd .blackwall denied" eval 'blackwall sh -c "echo x >> .blackwall/config.json"; ! grep -q "^x" "$proj/.blackwall/config.json"'
@@ -85,9 +90,9 @@ check "project .env overrides user .env" eval 'test "$(blackwall sh -c "echo \$E
 check "BLACKWALL_SANDBOX marks the sandbox" eval 'test "$(blackwall sh -c "echo \$BLACKWALL_SANDBOX")" = 1'
 check "project .env can't override blackwall vars" eval 'test "$(blackwall sh -c "echo \$GH_CONFIG_DIR")" = "$home/.cache/blackwall/gh"'
 rm "$home/.blackwall/.env"
-check "edited project config refused" eval 'echo "{}" >"$proj/.blackwall/config.json"; ! blackwall true'
+check "edited project config refused" eval 'echo "{}" >"$proj/.blackwall/config.json"; grep -q "not trusted" <<<"$(blackwall true 2>&1)"'
 rm "$proj/.blackwall/config.json"
-check "project .env without config refused" eval '! blackwall true'
+check "project .env without config refused" eval 'grep -q "loads only with a trusted" <<<"$(blackwall true 2>&1)"'
 rm -r "$proj/.blackwall"
 check "create cwd .blackwall denied" eval 'blackwall mkdir .blackwall; ! test -e "$proj/.blackwall"'
 
@@ -120,7 +125,7 @@ printf '#!/bin/sh\nset -e\ncat "$CODEX_HOME/skills/linked-skill/SKILL.md"\necho 
 check "codex reads user skill and writes profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'
 check "codex hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
 chmod 000 "$home/.codex/AGENTS.md"
-check "unreadable codex instructions block launch" eval '! blackwall codex --version'
+check "unreadable codex instructions block launch" eval 'grep -q EACCES <<<"$(blackwall codex --version 2>&1)"'
 chmod 600 "$home/.codex/AGENTS.md"
 
 echo "$pass passed, $fail failed"
