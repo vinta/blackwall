@@ -1,24 +1,20 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, renameSync } from "node:fs";
-import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
 import { parseEnv } from "node:util";
 
 import packageJson from "../package.json" with { type: "json" };
 import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
-import { CACHE, buildConfig, readIfExists, readProjectEnv, trustProjectConfig } from "./config.mjs";
+import { buildConfig, readIfExists, readProjectEnv, trustProjectConfig } from "./config.mjs";
+import { CACHE, HOME, SIGNED_NODE } from "./paths.mjs";
 import { createSandbox } from "./srt.mjs";
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --trust | --version] [--] <command> [args...]";
-const HOME = homedir();
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
-
-// Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
-const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
 
 Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
 

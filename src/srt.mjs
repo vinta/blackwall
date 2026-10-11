@@ -1,7 +1,7 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { spawn } from "node:child_process";
 
-const cwd = process.cwd();
+import { CWD } from "./paths.mjs";
 
 export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
@@ -20,7 +20,7 @@ export function createSandbox(config) {
       const write = SandboxManager.getFsWriteConfig();
       // Not in the package's index, but srt builds its mandatory write denies from these. Loaded only here, so an srt update that moves them breaks this flag, not every launch
       const { DANGEROUS_FILES, getDangerousDirectories } = await import("@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js");
-      const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), ".git/hooks", ".git/config"].map((name) => `${cwd}/**/${name}`);
+      const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), ".git/hooks", ".git/config"].map((name) => `${CWD}/**/${name}`);
       for (const [title, paths] of [
         ["read allowed", read.allowWithinDeny],
         ["read denied", read.denyOnly],

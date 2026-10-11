@@ -1,8 +1,7 @@
 import { existsSync, mkdirSync } from "node:fs";
-import { homedir } from "node:os";
+import { HOME } from "../paths.mjs";
 import { copyShared } from "./shared.mjs";
 
-const HOME = homedir();
 const PROFILE = `${HOME}/.codex-blackwall`;
 
 // Copied into the profile on every launch

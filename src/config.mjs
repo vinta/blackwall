@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
+import { CACHE, CONFIG, CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, TRUSTED } from "./paths.mjs";
 import git from "./presets/git.mjs";
 import github from "./presets/github.mjs";
 import linux from "./presets/linux.mjs";
@@ -12,17 +12,6 @@ import node from "./presets/node.mjs";
 import preCommit from "./presets/pre-commit.mjs";
 import python from "./presets/python.mjs";
 import tmpdir from "./presets/tmpdir.mjs";
-
-const HOME = homedir();
-const CWD = process.cwd();
-
-export const CACHE = `${HOME}/.cache/blackwall`;
-const CONFIG = `${HOME}/.blackwall/config.json`;
-
-// Loads only once trusted, since a cloned repo can ship one that widens the sandbox
-const PROJECT_CONFIG = `${CWD}/.blackwall/config.json`;
-const PROJECT_ENV = `${CWD}/.blackwall/.env`;
-const TRUSTED = `${HOME}/.blackwall/trusted`;
 
 const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
 

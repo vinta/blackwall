@@ -1,9 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { TMPDIR } from "../presets/tmpdir.mjs";
+import { HOME, TMPDIR } from "../paths.mjs";
 import { copyShared } from "./shared.mjs";
 
-const HOME = homedir();
 const PROFILE = `${HOME}/.claude-blackwall`;
 
 // Claude plugins don't need copying; it's safe to read them directly

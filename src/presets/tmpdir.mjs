@@ -1,7 +1,6 @@
-import { mkdirSync, realpathSync } from "node:fs";
+import { mkdirSync } from "node:fs";
 
-// srt already lets the sandbox write here, unlike the rest of /tmp, where unsandboxed tools like Claude Code keep scratch files they later run
-export const TMPDIR = `${realpathSync("/tmp")}/claude`;
+import { TMPDIR } from "../paths.mjs";
 
 export default {
   why: "srt sets every child's TMPDIR from the launcher's CLAUDE_CODE_TMPDIR, and Seatbelt sees /tmp/claude as /private/tmp/claude",
