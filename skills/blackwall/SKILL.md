@@ -58,7 +58,7 @@ Noise, harmless, the command still ran:
 
 ## Config
 
-`~/.blackwall/config.json` and `.blackwall/config.json` take the same keys. Lists add to the defaults, project over user. `overrideDefaults` replaces a default value and is applied first. `~` expands.
+`~/.blackwall/config.json` and `.blackwall/config.json` take the same keys. Lists from both are added to the defaults. `overrideDefaults` replaces a default value, the project's winning over the user's, and is applied first. `~` expands.
 
 ```json
 {
