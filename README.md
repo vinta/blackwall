@@ -8,6 +8,8 @@ Opinionated lightweight sandbox for daily dev tasks with coding agents. Built on
 
 ## Installation
 
+Needs Node.js 22.21 or later.
+
 ```bash
 npm install -g blackwall-sandbox
 ```
@@ -169,7 +171,7 @@ To give `blackwall` its own identity on macOS:
 BLACKWALL_USE_SELF_SIGNED_NODE=1 # put this in ~/.blackwall/.env, or export it
 ```
 
-Little Snitch then shows `blackwall_node` instead of `node`. It's an ad-hoc-signed copy of your `node` at `~/.blackwall/blackwall_node`, created on the first run and again whenever it's missing. Delete it after upgrading Node to get a fresh copy. Needs Node 22.15+.
+Little Snitch then shows `blackwall_node` instead of `node`. It's an ad-hoc-signed copy of your `node` at `~/.blackwall/blackwall_node`, created on the first run and again whenever it's missing. Delete it after upgrading Node to get a fresh copy.
 
 </details>
 

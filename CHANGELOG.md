@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Breaking Changes
+
+- Requires Node.js 22.21.0 or later, the first 22.x with `NODE_USE_ENV_PROXY`, so the `node` preset's proxy fix holds everywhere blackwall runs
+
 ## v0.3.0 / 2026-10-11
 
 ### Breaking Changes
