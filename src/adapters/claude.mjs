@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
+import { TMPDIR } from "../presets/tmpdir.mjs";
 import { copyShared } from "./shared.mjs";
 
 const HOME = homedir();
@@ -47,6 +48,8 @@ export default {
       CLAUDE_CONFIG_DIR: PROFILE,
       // Claude loads the host's plugins in place without writing there, and forces their auto-update off
       CLAUDE_CODE_PLUGIN_SEED_DIR: PLUGINS,
+      // Claude Code's own temp folder, /tmp/claude-<uid> by default, isn't writable in the sandbox
+      CLAUDE_CODE_TMPDIR: TMPDIR,
     };
   },
 
