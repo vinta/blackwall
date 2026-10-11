@@ -1,8 +1,12 @@
 import { realpathSync } from "node:fs";
 import { homedir } from "node:os";
+import { fileURLToPath } from "node:url";
 
 export const HOME = homedir();
 export const CWD = process.cwd();
+
+// The package's own skills, copied into each agent profile so they match the running blackwall
+export const SKILLS = fileURLToPath(new URL("../../skills", import.meta.url));
 
 export const CACHE = `${HOME}/.cache/blackwall`;
 export const CONFIG = `${HOME}/.blackwall/config.json`;

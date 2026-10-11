@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { HOME, TMPDIR } from "../constants/paths.mjs";
+import { HOME, SKILLS, TMPDIR } from "../constants/paths.mjs";
 import { copyShared } from "./shared.mjs";
 
 const PROFILE = `${HOME}/.claude-blackwall`;
@@ -71,10 +71,11 @@ export default {
     }
 
     if (firstRun) {
-      console.warn(`blackwall: created ${PROFILE} as claude's config folder. Every launch copies ${SHARED.join(", ")} from ~/.claude into it, and plugins load from ~/.claude/plugins read-only`);
+      console.warn(`blackwall: created ${PROFILE} as claude's config folder. Every launch copies ${SHARED.join(", ")} from ~/.claude and blackwall's own skill into it, and plugins load from ~/.claude/plugins read-only`);
       console.warn(`blackwall: sessions, settings, and login stay apart from ~/.claude. Settings go in ${PROFILE}/settings.json${seeded ? ", which starts with your enabledPlugins" : ""}`);
     }
 
     copyShared(`${HOME}/.claude`, PROFILE, SHARED);
+    copyShared(SKILLS, `${PROFILE}/skills`, ["blackwall"]);
   },
 };

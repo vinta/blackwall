@@ -26,6 +26,9 @@ printf -- '---\nname: linked-skill\ndescription: test\n---\nhi\n' >"$elsewhere/l
 ln -s "$elsewhere/linked-skill" "$home/.claude/skills/linked-skill"
 ln -s "$elsewhere/linked-skill" "$home/.agents/skills/linked-skill"
 ln -s "$elsewhere/missing" "$home/.claude/skills/dangling"
+# A stale host copy, as `npx skills add` leaves one, which the bundled skill must replace
+mkdir -p "$home/.claude/skills/blackwall" "$home/.agents/skills/blackwall"
+echo stale | tee "$home/.claude/skills/blackwall/SKILL.md" "$home/.agents/skills/blackwall/stale.md" >/dev/null
 echo '{"enabledPlugins":{"x@y":true},"hooks":{"PreToolUse":[]}}' >"$home/.claude/settings.json"
 mkdir -p "$home/.config/git" && printf '[user]\n\temail = e2e@example.com\n' >"$home/.config/git/config"
 
@@ -90,12 +93,14 @@ check "claude runs" eval 'grep -q "Claude Code" <<<"$first"'
 check "first run prints the notice" eval 'grep -q "blackwall: created" <<<"$first"'
 check "CLAUDE.md copied" test -f "$home/.claude-blackwall/CLAUDE.md"
 check "linked skill copied as a folder" eval 'test -f "$home/.claude-blackwall/skills/linked-skill/SKILL.md" && ! test -L "$home/.claude-blackwall/skills/linked-skill"'
+check "bundled skill replaces the host copy" cmp "$repo/skills/blackwall/SKILL.md" "$home/.claude-blackwall/skills/blackwall/SKILL.md"
 check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claude-blackwall/settings.json" && ! grep -q hooks "$home/.claude-blackwall/settings.json"'
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
 check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
 echo "E2E_TOKEN=leak" >"$home/.blackwall/.env"
 check "--print-env shows presets, not .env keys" eval 'out=$(blackwall --print-env claude) && grep -q "^# preset git:" <<<"$out" && ! grep -q E2E_TOKEN <<<"$out"'
 rm "$home/.blackwall/.env"
+check "package ships the skill" eval '(cd "$repo" && npm pack --dry-run --json) | grep -q "\"skills/blackwall/SKILL.md\""'
 check "--version" eval 'grep -q "\"version\": \"$(blackwall --version)\"" "$repo/package.json"'
 # Named claude so the claude adapter's grants and env apply, without needing a login
 printf '#!/bin/sh\necho x > "$CLAUDE_CONFIG_DIR/probe"\n' >"$proj/claude" && chmod +x "$proj/claude"
@@ -106,6 +111,7 @@ check "codex runs" eval 'grep -q "codex-cli" <<<"$first"'
 check "codex first run prints the notice" eval 'grep -q "blackwall: created" <<<"$first"'
 check "AGENTS.md copied" test -f "$home/.codex-blackwall/AGENTS.md"
 check "codex user skill copied as a folder" eval 'test -f "$home/.codex-blackwall/skills/linked-skill/SKILL.md" && ! test -L "$home/.codex-blackwall/skills/linked-skill"'
+check "codex bundled skill replaces the host copy" eval 'cmp "$repo/skills/blackwall/SKILL.md" "$home/.codex-blackwall/skills/blackwall/SKILL.md" && ! test -e "$home/.codex-blackwall/skills/blackwall/stale.md"'
 check "write ~/.codex denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.codex/AGENTS.md\""; test "$(cat "$home/.codex/AGENTS.md")" = "# host instructions"'
 printf '#!/bin/sh\nset -e\ncat "$CODEX_HOME/skills/linked-skill/SKILL.md"\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
 check "codex reads user skill and writes profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'

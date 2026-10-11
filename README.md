@@ -68,8 +68,10 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 [`skills/blackwall`](skills/blackwall/SKILL.md) teaches Claude Code and Codex to run, configure, and debug blackwall. Inside the sandbox, the agent can't run `blackwall` or edit its config, so the skill tells it how to read a denial and what to hand you.
 
+`blackwall claude` and `blackwall codex` copy it into their config folders on every launch, replacing any older copy, so it always matches your blackwall. For agents you run outside the sandbox:
+
 ```bash
-npx skills add vinta/blackwall -g   # user-level, so blackwall claude and blackwall codex copy it into their config folders on every launch
+npx skills add vinta/blackwall -g
 ```
 
 ## Configuration

@@ -21,7 +21,7 @@
 - The `git` preset reads `~/.config/git/config` too. Git refuses to start when its config exists but can't be read, so every sandboxed `git` command failed for users who keep their config there
 - Sandboxed commands get `BLACKWALL_SANDBOX=1`, so scripts and agent skills can tell blackwall from Claude Code's own sandbox, which also sets `TMPDIR=/tmp/claude`
 - The `node` preset sets `NODE_USE_ENV_PROXY=1`. Without it, Node's `fetch` and `http` skipped srt's proxy and failed with `ENOTFOUND` for every host, allowed ones too. Needs Node 22.21+
-- An agent skill in `skills/blackwall`, installed with `npx skills add vinta/blackwall -g`: teaches Claude Code and Codex to run, configure, and debug blackwall, and to read a denial from inside the sandbox
+- An agent skill in `skills/blackwall`: teaches Claude Code and Codex to run, configure, and debug blackwall, and to read a denial from inside the sandbox. `blackwall claude` and `blackwall codex` copy it into their config folders on every launch; for agents outside the sandbox, install it with `npx skills add vinta/blackwall -g`
 
 ### Environment Variables
 

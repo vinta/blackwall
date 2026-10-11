@@ -28,7 +28,8 @@
     "blackwall": "src/blackwall.mjs"
   },
   "files": [
-    "src/"
+    "src/",
+    "skills/"
   ],
   "scripts": {
     "test": "node tests/shared.mjs && bash tests/e2e.sh"

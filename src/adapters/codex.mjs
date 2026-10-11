@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync } from "node:fs";
-import { HOME } from "../constants/paths.mjs";
+import { HOME, SKILLS } from "../constants/paths.mjs";
 import { copyShared } from "./shared.mjs";
 
 const PROFILE = `${HOME}/.codex-blackwall`;
@@ -34,11 +34,12 @@ export default {
     mkdirSync(PROFILE, { recursive: true });
 
     if (firstRun) {
-      console.warn(`blackwall: created ${PROFILE} as codex's config folder. Every launch copies ${SHARED.join(", ")} from ~/.codex and skills from ~/.agents into it`);
+      console.warn(`blackwall: created ${PROFILE} as codex's config folder. Every launch copies ${SHARED.join(", ")} from ~/.codex, skills from ~/.agents, and blackwall's own skill into it`);
       console.warn(`blackwall: sessions, config.toml, and login stay apart from ~/.codex. Log in with \`blackwall codex login --device-auth\``);
     }
 
     copyShared(`${HOME}/.codex`, PROFILE, SHARED);
     copyShared(`${HOME}/.agents`, PROFILE, ["skills"]);
+    copyShared(SKILLS, `${PROFILE}/skills`, ["blackwall"]);
   },
 };
