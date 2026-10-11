@@ -79,7 +79,7 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, env v
 - [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
 - [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
-- [git](src/presets/git.mjs): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`
+- [git](src/presets/git.mjs): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
 - [pre-commit](src/presets/pre-commit.mjs): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
 - [tmpdir](src/presets/tmpdir.mjs): `/tmp/claude` as the temp folder. Always on
 - [mac](src/presets/mac.mjs): System paths macOS tools need. Always on, on macOS
@@ -100,7 +100,7 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 {
   "filesystem": { "allowRead": ["~/.npmrc"] },
   "overrideDefaults": {
-    "presets": ["github"],
+    "presets": ["github", "git"],
     "allowPty": false
   }
 }
