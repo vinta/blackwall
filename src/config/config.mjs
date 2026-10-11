@@ -3,15 +3,15 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFile
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
+import git from "../presets/git.mjs";
+import github from "../presets/github.mjs";
+import linux from "../presets/linux.mjs";
+import mac from "../presets/mac.mjs";
+import node from "../presets/node.mjs";
+import preCommit from "../presets/pre-commit.mjs";
+import python from "../presets/python.mjs";
+import tmpdir from "../presets/tmpdir.mjs";
 import { CACHE, CONFIG, CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, TRUSTED } from "./paths.mjs";
-import git from "./presets/git.mjs";
-import github from "./presets/github.mjs";
-import linux from "./presets/linux.mjs";
-import mac from "./presets/mac.mjs";
-import node from "./presets/node.mjs";
-import preCommit from "./presets/pre-commit.mjs";
-import python from "./presets/python.mjs";
-import tmpdir from "./presets/tmpdir.mjs";
 
 const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
 

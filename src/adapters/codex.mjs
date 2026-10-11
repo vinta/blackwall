@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync } from "node:fs";
-import { HOME } from "../paths.mjs";
+import { HOME } from "../config/paths.mjs";
 import { copyShared } from "./shared.mjs";
 
 const PROFILE = `${HOME}/.codex-blackwall`;

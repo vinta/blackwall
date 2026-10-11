@@ -1,4 +1,4 @@
-import { CACHE } from "../paths.mjs";
+import { CACHE } from "../config/paths.mjs";
 
 export default {
   why: "gh can't read or write its default ~/.config/gh; git, gh, and raw file downloads reach GitHub, and gh loads its extensions from ~/.local",

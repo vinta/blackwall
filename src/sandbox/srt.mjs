@@ -1,7 +1,7 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { spawn } from "node:child_process";
 
-import { CWD } from "./paths.mjs";
+import { CWD } from "../config/paths.mjs";
 
 export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
