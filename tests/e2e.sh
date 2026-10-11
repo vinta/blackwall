@@ -53,6 +53,11 @@ check "write in cwd" eval 'blackwall sh -c "echo x > f" && test -f "$proj/f"'
 check "write in --add-dir" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/f\"" && test -f "$added/f"'
 check "write to ~ never reaches it" eval 'blackwall sh -c "echo x > \"\$HOME/outside\""; ! test -e "$home/outside"'
 check "read ~ denied" eval '! blackwall cat "$home/secret.txt" | grep -q secret'
+# The skill's Linux row: a denied dir is an empty writable tmpfs, so reads say ENOENT and writes land there and vanish with the run
+if [ "$(uname)" = Linux ]; then
+  check "denied read reads as missing" eval 'blackwall cat "$home/secret.txt" 2>&1 | grep -q "No such file"'
+  check "denied write succeeds inside and vanishes" eval 'blackwall sh -c "echo x > \"\$HOME/outside\" && test -f \"\$HOME/outside\"" && ! test -e "$home/outside"'
+fi
 check "write cwd .git/hooks denied" eval 'blackwall sh -c "echo x > .git/hooks/pre-commit"; ! test -e "$proj/.git/hooks/pre-commit"'
 check "write cwd .git/config denied" eval 'blackwall sh -c "echo x >> .git/config"; ! grep -q "^x" "$proj/.git/config"'
 check "write --add-dir .git/hooks denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.git/hooks/pre-commit\""; ! test -e "$added/.git/hooks/pre-commit"'
