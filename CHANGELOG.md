@@ -15,6 +15,7 @@
 - Workarounds are presets now: `git` (signing off), `pre-commit`, and `tmpdir` (`/tmp/claude`) join the others in `src/presets`, each with a `why`. `git` and `pre-commit` sit in the default `presets` list, so `overrideDefaults.presets` can drop them; `tmpdir` stays on like `mac` and `linux`
 - `--print-config` includes the launch-time grants: `/tmp/claude`, srt's seccomp helper on Linux, and the `.git/hooks` and `.git/config` write denies in `--add-dir` folders
 - `--print-env` labels every preset that sets env vars as `# preset <name>: <why>`
+- The wasilibs cache that go-re2 hooks like betterleaks read moves from `mac` to `pre-commit`, and Linux's `~/.cache/com.github.wasilibs` is read too
 
 ### Environment Variables
 

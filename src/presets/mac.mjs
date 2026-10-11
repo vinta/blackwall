@@ -10,7 +10,6 @@ export default {
       "/private/var/db/timezone",
       "/opt/homebrew",
       "/Library/Developer/CommandLineTools",
-      "~/Library/Caches/com.github.wasilibs",
     ],
   },
 };
