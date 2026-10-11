@@ -8,10 +8,15 @@
 
 ### Changes
 
-- Temp files go to `/tmp/claude` (`/private/tmp/claude` on macOS), the only part of `/tmp` a sandboxed command can read or write. The rest of `/tmp` holds scratch files that unsandboxed tools like Claude Code run later
+- Temp files go to `/tmp/claude` (`/private/tmp/claude` on macOS), the only part of `/tmp` a sandboxed command can write, and on macOS the only part it can read. The rest of `/tmp` holds scratch files that unsandboxed tools like Claude Code run later. On Linux the rest of `/tmp` stays readable, since srt's proxy sockets live there
 - Reads only the `~/.local` folders tools need, not all of `~/.local/share` and `~/.local/state`: the `python` preset reads `~/.local/share/uv`, `blackwall claude` reads `~/.local/share/claude`, and the `github` preset reads `~/.local/share/gh/extensions`. Add other tools' folders, like mise's, to `allowRead` in your user config
 - Sandboxed commands can't write to `~/.blackwall`, even under `--add-dir ~` or when run from inside it, so they can't forge trust for a project config or replace `blackwall_node`
 - `UV_CACHE_DIR`, `NPM_CONFIG_CACHE`, and `GH_CONFIG_DIR` are set only with the `python`, `node`, and `github` presets, which now hold them
+- Workarounds are presets now: `git` (signing off), `pre-commit`, and `tmpdir` (`/tmp/claude`) join the others in `src/presets`, each with a `why`. `git` and `pre-commit` sit in the default `presets` list, so `overrideDefaults.presets` can drop them; `tmpdir` stays on like `mac` and `linux`
+- `--print-config` includes the launch-time grants: `/tmp/claude`, srt's seccomp helper on Linux, and the `.git/hooks` and `.git/config` write denies in `--add-dir` folders
+- `--print-env` labels every preset that sets env vars as `# preset <name>: <why>`
+- The wasilibs cache that go-re2 hooks like betterleaks read moves from `mac` to `pre-commit`, and Linux's `~/.cache/com.github.wasilibs` is read too
+- `~/.gitconfig`, `~/.gitignore_global`, and `~/.config/git/ignore` move from the default `allowRead` to the `git` preset, so dropping `git` from `presets` drops them too
 
 ### Environment Variables
 

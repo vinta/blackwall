@@ -2,7 +2,9 @@
   "presets": [
     "python",
     "node",
-    "github"
+    "github",
+    "git",
+    "pre-commit"
   ],
   "network": {
     "allowedDomains": [],
@@ -26,9 +28,6 @@
       "/usr/sbin",
       "/usr/share",
       "/var",
-      "~/.config/git/ignore",
-      "~/.gitconfig",
-      "~/.gitignore_global",
       "~/.local/bin"
     ],
     "allowWrite": [],

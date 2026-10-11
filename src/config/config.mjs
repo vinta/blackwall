@@ -1,21 +1,22 @@
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
-const HOME = homedir();
-const CWD = process.cwd();
+import { CACHE, CONFIG, CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, TRUSTED } from "../constants/paths.mjs";
+import git from "../presets/git.mjs";
+import github from "../presets/github.mjs";
+import linux from "../presets/linux.mjs";
+import mac from "../presets/mac.mjs";
+import node from "../presets/node.mjs";
+import preCommit from "../presets/pre-commit.mjs";
+import python from "../presets/python.mjs";
+import tmpdir from "../presets/tmpdir.mjs";
 
-export const CACHE = `${HOME}/.cache/blackwall`;
-const CONFIG = `${HOME}/.blackwall/config.json`;
+const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
 
-// Loads only once trusted, since a cloned repo can ship one that widens the sandbox
-const PROJECT_CONFIG = `${CWD}/.blackwall/config.json`;
-const PROJECT_ENV = `${CWD}/.blackwall/.env`;
-const TRUSTED = `${HOME}/.blackwall/trusted`;
-
-const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
+// A config picks a preset only by name from this list, never a file by path
+const PRESETS = { git, github, linux, mac, node, "pre-commit": preCommit, python, tmpdir };
 
 export function trustProjectConfig() {
   const text = readIfExists(PROJECT_CONFIG);
@@ -43,14 +44,20 @@ export function buildConfig({ addDirs, additions }) {
     filesystem: { ...DEFAULTS.filesystem, ...user.overrides.filesystem, ...project.overrides.filesystem },
   };
 
-  // Platform presets aren't in the presets list, so overriding it can't drop them
-  const platformPresets = { darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [];
-  const presets = [...new Set([...platformPresets, ...basePresets, ...user.presets, ...project.presets])].map(readPreset);
+  // Always on, so overriding presets can't drop the sandbox's own needs
+  const ALWAYS = ["tmpdir", ...({ darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [])];
+  const names = [...new Set([...ALWAYS, ...basePresets, ...user.presets, ...project.presets])];
+  const presets = names.map((name) => {
+    if (!Object.hasOwn(PRESETS, name)) {
+      console.error(`blackwall: unknown preset ${name}`);
+      process.exit(2);
+    }
+    // env is a preset-only key, so it never reaches srt
+    return { name, env: {}, ...PRESETS[name] };
+  });
   const layers = [...presets, user.additions, project.additions, additions];
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
-  // env is a preset-only key, so it never reaches srt
-  const env = Object.fromEntries(presets.flatMap((preset) => Object.entries(preset.env ?? {})).map(([key, value]) => [key, expandPath(value)]));
   if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
     console.warn("blackwall: overrideDefaults.filesystem.denyRead no longer denies ~/, so your home directory is readable");
   }
@@ -69,7 +76,14 @@ export function buildConfig({ addDirs, additions }) {
       allowWrite: [CWD, ...addDirs, ...base.filesystem.allowWrite, CACHE, ...added("filesystem", "allowWrite")],
       // cwd/.blackwall keeps a run from writing a project config for you to trust, and ~/.blackwall from forging trust or replacing blackwall_node, even when
       // cwd or an --add-dir covers it
-      denyWrite: [...base.filesystem.denyWrite, `${CWD}/.blackwall`, `${HOME}/.blackwall`, ...added("filesystem", "denyWrite")],
+      denyWrite: [
+        ...base.filesystem.denyWrite,
+        `${CWD}/.blackwall`,
+        `${HOME}/.blackwall`,
+        // srt's built-in .git denies anchor on cwd only
+        ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]),
+        ...added("filesystem", "denyWrite"),
+      ],
     },
   };
 
@@ -85,7 +99,7 @@ export function buildConfig({ addDirs, additions }) {
     }
   }
 
-  return { config, env };
+  return { config, presets };
 }
 
 export function readProjectEnv() {
@@ -127,15 +141,6 @@ function parseConfig(file, text) {
   const { overrideDefaults: overrides = {}, presets = [], ...additions } = parsed;
   checkShape(file, overrides, DEFAULTS, "overrideDefaults.", false);
   return { additions, overrides, presets };
-}
-
-function readPreset(name) {
-  const text = readIfExists(new URL(`./configs/presets/${name}.json`, import.meta.url));
-  if (text === undefined) {
-    console.error(`blackwall: unknown preset ${name}`);
-    process.exit(2);
-  }
-  return JSON.parse(text);
 }
 
 // Keys and types mirror default-config.json: a misspelled key would otherwise drop its paths without a word, and a string would spread into characters

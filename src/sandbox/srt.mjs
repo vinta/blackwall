@@ -1,22 +1,14 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { spawn } from "node:child_process";
 
-const cwd = process.cwd();
+import { CWD } from "../constants/paths.mjs";
 
-// grants are the workarounds' paths, given to srt but kept out of the printed config
-export function createSandbox(config, grants) {
-  const granted = (key) => grants.flatMap((grant) => grant[key] ?? []);
+export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
   const allowAllDomains = config.network.allowedDomains.includes("*");
   const srtConfig = {
     ...config,
     network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") },
-    filesystem: {
-      ...config.filesystem,
-      allowRead: [...config.filesystem.allowRead, ...granted("allowRead")],
-      allowWrite: [...config.filesystem.allowWrite, ...granted("allowWrite")],
-      denyWrite: [...config.filesystem.denyWrite, ...granted("denyWrite")],
-    },
   };
   SandboxRuntimeConfigSchema.parse(srtConfig);
 
@@ -28,7 +20,7 @@ export function createSandbox(config, grants) {
       const write = SandboxManager.getFsWriteConfig();
       // Not in the package's index, but srt builds its mandatory write denies from these. Loaded only here, so an srt update that moves them breaks this flag, not every launch
       const { DANGEROUS_FILES, getDangerousDirectories } = await import("@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js");
-      const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), ".git/hooks", ".git/config"].map((name) => `${cwd}/**/${name}`);
+      const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), ".git/hooks", ".git/config"].map((name) => `${CWD}/**/${name}`);
       for (const [title, paths] of [
         ["read allowed", read.allowWithinDeny],
         ["read denied", read.denyOnly],
