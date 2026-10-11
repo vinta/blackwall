@@ -58,24 +58,31 @@ if [ "$(uname)" = Linux ]; then
   check "denied read reads as missing" eval 'blackwall cat "$home/secret.txt" 2>&1 | grep -q "No such file"'
   check "denied write succeeds inside and vanishes" eval 'blackwall sh -c "echo x > \"\$HOME/outside\" && test -f \"\$HOME/outside\"" && ! test -e "$home/outside"'
 fi
+
 check "write cwd .git/hooks denied" eval 'blackwall sh -c "echo x > .git/hooks/pre-commit"; ! test -e "$proj/.git/hooks/pre-commit"'
 check "write cwd .git/config denied" eval 'blackwall sh -c "echo x >> .git/config"; ! grep -q "^x" "$proj/.git/config"'
 check "write --add-dir .git/hooks denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.git/hooks/pre-commit\""; ! test -e "$added/.git/hooks/pre-commit"'
 check "write --add-dir .git/config denied" eval 'blackwall --add-dir "$added" sh -c "echo x >> \"$added/.git/config\""; ! grep -q "^x" "$added/.git/config"'
+
 check "git reads ~/.config/git/config" eval 'test "$(blackwall git config --get user.email)" = e2e@example.com'
 mkdir -p "$elsewhere/xdg/git" && printf '[user]\n\temail = xdg@example.com\n' >"$elsewhere/xdg/git/config"
 check "git reads \$XDG_CONFIG_HOME/git/config" eval 'test "$(cd "$proj" && HOME=$home XDG_CONFIG_HOME=$elsewhere/xdg node "$repo/src/blackwall.mjs" git config --get user.email)" = xdg@example.com'
+
 check "write ~/.blackwall under --add-dir ~ denied" eval 'blackwall --add-dir "$home" sh -c "echo x > \"\$HOME/.blackwall/probe\""; ! test -e "$home/.blackwall/probe"'
 check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude/CLAUDE.md\""; test "$(cat "$home/.claude/CLAUDE.md")" = "# host instructions"'
+
 check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https://api.github.com
 check "other host blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://example.com 2>&1)"'
+
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 node=$(realpath "$(command -v node)")
 check "nested blackwall refused" eval 'out=$(blackwall --add-dir "$repo" "$node" "$repo/src/blackwall.mjs" --version 2>&1); test $? -eq 2 && grep -q "can.t run inside a sandbox" <<<"$out"'
 check "node fetch reaches preset host" blackwall "$node" -e 'fetch("https://api.github.com")'
 check "node fetch to other host blocked" eval 'blackwall "$node" -e "fetch(\"https://example.com\").catch((e) => console.log(e.cause.message))" | grep -q "Request was cancelled"'
+
 check "write cache" eval 'blackwall sh -c "mkdir -p \"\$GH_CONFIG_DIR\" && echo x > \"\$GH_CONFIG_DIR/probe\"" && test -f "$home/.cache/blackwall/gh/probe"'
 check "gh runs" blackwall gh --version
+
 cp "$home/.blackwall/config.json" "$root/config.json"
 echo '{"filesystem":{"allowRead":"/"}}' >"$home/.blackwall/config.json"
 check "config error exits 2" eval 'blackwall true; test $? -eq 2'
@@ -89,12 +96,14 @@ check "untrusted project config refused" eval 'grep -q "not trusted" <<<"$(black
 check "--trust" blackwall --trust
 check "trusted project config grants read" blackwall cat "$skill"
 check "write cwd .blackwall denied" eval 'blackwall sh -c "echo x >> .blackwall/config.json"; ! grep -q "^x" "$proj/.blackwall/config.json"'
+
 echo "E2E_TOKEN=user" >"$home/.blackwall/.env"
 printf 'E2E_TOKEN=project\nGH_CONFIG_DIR=elsewhere\n' >"$proj/.blackwall/.env"
 check "project .env overrides user .env" eval 'test "$(blackwall sh -c "echo \$E2E_TOKEN")" = project'
 check "BLACKWALL_SANDBOX marks the sandbox" eval 'test "$(blackwall sh -c "echo \$BLACKWALL_SANDBOX")" = 1'
 check "project .env can't override blackwall vars" eval 'test "$(blackwall sh -c "echo \$GH_CONFIG_DIR")" = "$home/.cache/blackwall/gh"'
 rm "$home/.blackwall/.env"
+
 check "edited project config refused" eval 'echo "{}" >"$proj/.blackwall/config.json"; grep -q "not trusted" <<<"$(blackwall true 2>&1)"'
 rm "$proj/.blackwall/config.json"
 check "project .env without config refused" eval 'grep -q "loads only with a trusted" <<<"$(blackwall true 2>&1)"'
@@ -109,12 +118,15 @@ check "linked skill copied as a folder" eval 'test -f "$home/.claude-blackwall/s
 check "bundled skill replaces the host copy" cmp "$repo/skills/blackwall/SKILL.md" "$home/.claude-blackwall/skills/blackwall/SKILL.md"
 check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claude-blackwall/settings.json" && ! grep -q hooks "$home/.claude-blackwall/settings.json"'
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
+
 check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
 echo "E2E_TOKEN=leak" >"$home/.blackwall/.env"
 check "--print-env shows presets, not .env keys" eval 'out=$(blackwall --print-env claude) && grep -q "^# preset git:" <<<"$out" && ! grep -q E2E_TOKEN <<<"$out"'
 rm "$home/.blackwall/.env"
+
 check "package ships the skill" eval '(cd "$repo" && npm pack --dry-run --json) | grep -q "\"skills/blackwall/SKILL.md\""'
 check "--version" eval 'grep -q "\"version\": \"$(blackwall --version)\"" "$repo/package.json"'
+
 # Named claude so the claude adapter's grants and env apply, without needing a login
 printf '#!/bin/sh\necho x > "$CLAUDE_CONFIG_DIR/probe"\n' >"$proj/claude" && chmod +x "$proj/claude"
 check "write claude profile" eval 'blackwall ./claude && test -f "$home/.claude-blackwall/probe"'
@@ -129,6 +141,7 @@ check "write ~/.codex denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.codex/A
 printf '#!/bin/sh\nset -e\ncat "$CODEX_HOME/skills/linked-skill/SKILL.md"\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
 check "codex reads user skill and writes profile" eval 'blackwall ./codex && test -f "$home/.codex-blackwall/probe"'
 check "codex hosts" eval 'blackwall --print-config codex | grep -q "\"chatgpt.com\""'
+
 chmod 000 "$home/.codex/AGENTS.md"
 check "unreadable codex instructions block launch" eval 'grep -q EACCES <<<"$(blackwall codex --version 2>&1)"'
 chmod 600 "$home/.codex/AGENTS.md"
