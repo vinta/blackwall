@@ -27,6 +27,7 @@ ln -s "$elsewhere/linked-skill" "$home/.claude/skills/linked-skill"
 ln -s "$elsewhere/linked-skill" "$home/.agents/skills/linked-skill"
 ln -s "$elsewhere/missing" "$home/.claude/skills/dangling"
 echo '{"enabledPlugins":{"x@y":true},"hooks":{"PreToolUse":[]}}' >"$home/.claude/settings.json"
+mkdir -p "$home/.config/git" && printf '[user]\n\temail = e2e@example.com\n' >"$home/.config/git/config"
 
 blackwall() { (cd "$proj" && HOME=$home node "$repo/src/blackwall.mjs" "$@"); }
 pass=0 fail=0
@@ -47,6 +48,7 @@ check "write cwd .git/hooks denied" eval 'blackwall sh -c "echo x > .git/hooks/p
 check "write cwd .git/config denied" eval 'blackwall sh -c "echo x >> .git/config"; ! grep -q "^x" "$proj/.git/config"'
 check "write --add-dir .git/hooks denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.git/hooks/pre-commit\""; ! test -e "$added/.git/hooks/pre-commit"'
 check "write --add-dir .git/config denied" eval 'blackwall --add-dir "$added" sh -c "echo x >> \"$added/.git/config\""; ! grep -q "^x" "$added/.git/config"'
+check "git reads ~/.config/git/config" eval 'test "$(blackwall git config --get user.email)" = e2e@example.com'
 check "write ~/.blackwall under --add-dir ~ denied" eval 'blackwall --add-dir "$home" sh -c "echo x > \"\$HOME/.blackwall/probe\""; ! test -e "$home/.blackwall/probe"'
 check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude/CLAUDE.md\""; test "$(cat "$home/.claude/CLAUDE.md")" = "# host instructions"'
 check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https://api.github.com

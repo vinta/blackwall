@@ -6,6 +6,6 @@ export default {
     GIT_CONFIG_VALUE_0: "false",
   },
   filesystem: {
-    allowRead: ["~/.config/git/ignore", "~/.gitconfig", "~/.gitignore_global"],
+    allowRead: ["~/.config/git/config", "~/.config/git/ignore", "~/.gitconfig", "~/.gitignore_global"],
   },
 };
