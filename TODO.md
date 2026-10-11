@@ -13,11 +13,7 @@
 - Signed commits from sandboxed runs: gpg can't reach `~/.gnupg`, so commits are unsigned. Until then: `git rebase --exec 'git commit --amend --no-edit -S' <base>`
 - Presets assume the default XDG folders (`~/.config`, `~/.cache`, `~/.local/share`). With `XDG_CONFIG_HOME` pointing elsewhere and a git config there, sandboxed git dies with `unable to access`, since git treats EPERM as fatal. Fix: build preset paths on the `XDG_*` vars in `paths.mjs`
 
-## Skill
-
-- `readIfExists` treats EPERM like ENOENT, so `blackwall` inside a sandbox fails with a clear nesting message instead of a stack trace from reading `~/.blackwall/.env`
-
 ## Unverified
 
-- The skill's Linux rows (denied dirs read as empty tmpfs, writes into them vanish, `--print-*` inside omits the user config, `--trust` writes a marker that vanishes) come from srt's README and `buildConfig`, not from a Linux run. Assert them in the Linux e2e job
+- The skill's Linux rows (denied dirs read as empty tmpfs, writes into them vanish) come from srt's README and `buildConfig`, not from a Linux run. Assert them in the Linux e2e job
 - Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)

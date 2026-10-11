@@ -16,6 +16,12 @@ const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-fil
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
 
+// Seatbelt can't nest, and inside, ~/.blackwall is unreadable on macOS and empty on Linux
+if (process.env.BLACKWALL_SANDBOX === "1") {
+  console.error("blackwall: can't run inside a sandbox; run it from a plain terminal");
+  process.exit(2);
+}
+
 Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
 
 // Create an ad-hoc-signed node copy, so users can configure firewall rules for blackwall

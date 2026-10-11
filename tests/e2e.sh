@@ -59,6 +59,7 @@ check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https:
 check "other host blocked" eval '! blackwall curl -sS -o /dev/null --max-time 20 https://example.com'
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 node=$(realpath "$(command -v node)")
+check "nested blackwall refused" eval 'out=$(blackwall --add-dir "$repo" "$node" "$repo/src/blackwall.mjs" --version 2>&1); test $? -eq 2 && grep -q "can.t run inside a sandbox" <<<"$out"'
 check "node fetch reaches preset host" blackwall "$node" -e 'fetch("https://api.github.com")'
 check "node fetch to other host blocked" eval 'blackwall "$node" -e "fetch(\"https://example.com\").catch((e) => console.log(e.cause.message))" | grep -q "Request was cancelled"'
 check "write cache" eval 'blackwall sh -c "mkdir -p \"\$GH_CONFIG_DIR\" && echo x > \"\$GH_CONFIG_DIR/probe\"" && test -f "$home/.cache/blackwall/gh/probe"'

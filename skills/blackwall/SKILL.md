@@ -1,6 +1,6 @@
 ---
 name: blackwall
-description: "Run, configure, and debug blackwall, the sandbox for claude, codex, and other dev commands (srt: Seatbelt on macOS, bubblewrap on Linux). Use when the user mentions blackwall, wants a command run sandboxed, or wants the sandbox to reach a path, host, or tool: ~/.blackwall/config.json, .blackwall/config.json, presets, --add-dir, --trust. Also use inside a sandboxed session when a command fails with `Operation not permitted` on a path that exists, `CONNECT tunnel failed, response 403`, ENOTFOUND or `nodename nor servname provided` for every host, a write under /tmp or ~ that fails or vanishes, or blackwall itself dies with EPERM on ~/.blackwall/.env: those are blackwall denials, not project bugs. Not for Claude Code's built-in sandbox or Codex's sandbox_mode."
+description: "Run, configure, and debug blackwall, the sandbox for claude, codex, and other dev commands (srt: Seatbelt on macOS, bubblewrap on Linux). Use when the user mentions blackwall, wants a command run sandboxed, or wants the sandbox to reach a path, host, or tool: ~/.blackwall/config.json, .blackwall/config.json, presets, --add-dir, --trust. Also use inside a sandboxed session when a command fails with `Operation not permitted` on a path that exists, `CONNECT tunnel failed, response 403`, ENOTFOUND or `nodename nor servname provided` for every host, a write under /tmp or ~ that fails or vanishes, or blackwall itself refuses with `can't run inside a sandbox`: those are blackwall denials, not project bugs. Not for Claude Code's built-in sandbox or Codex's sandbox_mode."
 license: MIT
 compatibility: Node.js 22.15+; macOS (Seatbelt) or Linux (bubblewrap)
 allowed-tools: Bash(blackwall --print-config:*) Bash(blackwall --print-file-access:*) Bash(blackwall --print-env:*) Bash(blackwall --version)
@@ -24,7 +24,7 @@ Inside a sandboxed session (`blackwall claude`, `blackwall codex`), `$BLACKWALL_
 - `$GH_CONFIG_DIR`, `$UV_CACHE_DIR`, or `$NPM_CONFIG_CACHE` is under `~/.cache/blackwall`
 - `$TMPDIR` is exactly `/tmp/claude` (`/private/tmp/claude` on macOS)
 
-Inside, treat `blackwall` as unavailable. On macOS every flag, `--version` included, dies with `EPERM: operation not permitted, open '…/.blackwall/.env'`. On Linux `~/.blackwall` is hidden instead, so `--print-*` omits the user config and `--trust` writes a marker that vanishes with the run. Diagnose from the error text and the grant list above, read the project's `.blackwall/config.json` if one exists, then hand the user the exact edit and commands. Outside (a plain terminal, or an agent that isn't sandboxed), run the `--print-*` flags and edit the user config yourself.
+Inside, `blackwall` is unavailable: every flag, `--version` included, exits 2 with `blackwall: can't run inside a sandbox; run it from a plain terminal`. Diagnose from the error text and the grant list above, read the project's `.blackwall/config.json` if one exists, then hand the user the exact edit and commands. Outside (a plain terminal, or an agent that isn't sandboxed), run the `--print-*` flags and edit the user config yourself.
 
 ## Reading a denial
 
