@@ -54,6 +54,10 @@ check "write ~/.blackwall under --add-dir ~ denied" eval 'blackwall --add-dir "$
 check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude/CLAUDE.md\""; test "$(cat "$home/.claude/CLAUDE.md")" = "# host instructions"'
 check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https://api.github.com
 check "other host blocked" eval '! blackwall curl -sS -o /dev/null --max-time 20 https://example.com'
+# fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
+node=$(realpath "$(command -v node)")
+check "node fetch reaches preset host" blackwall "$node" -e 'fetch("https://api.github.com")'
+check "node fetch to other host blocked" eval 'blackwall "$node" -e "fetch(\"https://example.com\").catch((e) => console.log(e.cause.message))" | grep -q "Request was cancelled"'
 check "write cache" eval 'blackwall sh -c "mkdir -p \"\$GH_CONFIG_DIR\" && echo x > \"\$GH_CONFIG_DIR/probe\"" && test -f "$home/.cache/blackwall/gh/probe"'
 check "gh runs" blackwall gh --version
 cp "$home/.blackwall/config.json" "$root/config.json"
