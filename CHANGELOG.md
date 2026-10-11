@@ -19,6 +19,7 @@
 - The wasilibs cache that go-re2 hooks like betterleaks read moves from `mac` to `pre-commit`, and Linux's `~/.cache/com.github.wasilibs` is read too
 - `~/.gitconfig`, `~/.gitignore_global`, and `~/.config/git/ignore` move from the default `allowRead` to the `git` preset, so dropping `git` from `presets` drops them too
 - The `git` preset reads `~/.config/git/config` too. Git refuses to start when its config exists but can't be read, so every sandboxed `git` command failed for users who keep their config there
+- An agent skill in `skills/blackwall`, installed with `npx skills add vinta/blackwall -g`: teaches Claude Code and Codex to run, configure, and debug blackwall, and to read a denial from inside the sandbox
 
 ### Environment Variables
 

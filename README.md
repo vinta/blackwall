@@ -61,6 +61,14 @@ GH_TOKEN=xxx                  # generate a read-only PAT from https://github.com
 CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 ```
 
+### Agent Skill
+
+[`skills/blackwall`](skills/blackwall/SKILL.md) teaches Claude Code and Codex to run, configure, and debug blackwall. Inside the sandbox, the agent can't run `blackwall` or edit its config, so the skill tells it how to read a denial and what to hand you.
+
+```bash
+npx skills add vinta/blackwall -g   # user-level, so blackwall claude and blackwall codex copy it into their config folders on every launch
+```
+
 ## Configuration
 
 ### Default
