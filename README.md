@@ -65,7 +65,7 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 ### Default
 
-[`src/configs/default-config.json`](src/configs/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt with the launch-time grants that `blackwall --print-config` shows. srt settings missing from this file can't be set.
+[`src/default-config.json`](src/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt with the launch-time grants that `blackwall --print-config` shows. srt settings missing from this file can't be set.
 
 - `presets: ["python", "node", "github", "git", "pre-commit"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it

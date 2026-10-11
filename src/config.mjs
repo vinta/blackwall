@@ -13,7 +13,7 @@ import preCommit from "./presets/pre-commit.mjs";
 import python from "./presets/python.mjs";
 import tmpdir from "./presets/tmpdir.mjs";
 
-const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
+const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
 
 // A config picks a preset only by name from this list, never a file by path
 const PRESETS = { git, github, linux, mac, node, "pre-commit": preCommit, python, tmpdir };
