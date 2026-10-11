@@ -1,5 +1,5 @@
 export default {
-  why: "npm fetches from the npm registry, and fnm keeps Node.js under ~/.local",
+  why: "npm can't write its default ~/.npm; npm fetches from the npm registry, and fnm keeps Node.js under ~/.local",
   env: {
     NPM_CONFIG_CACHE: "~/.cache/blackwall/npm",
   },

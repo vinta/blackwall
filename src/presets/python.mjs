@@ -1,5 +1,5 @@
 export default {
-  why: "pip and uv fetch from PyPI, and uv reads its config, Python installs, and tools under ~/.config and ~/.local",
+  why: "uv can't write its default ~/.cache/uv; pip and uv fetch from PyPI, and uv reads its config, Python installs, and tools",
   env: {
     UV_CACHE_DIR: "~/.cache/blackwall/uv",
   },
