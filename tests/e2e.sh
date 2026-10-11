@@ -29,7 +29,8 @@ ln -s "$elsewhere/missing" "$home/.claude/skills/dangling"
 echo '{"enabledPlugins":{"x@y":true},"hooks":{"PreToolUse":[]}}' >"$home/.claude/settings.json"
 mkdir -p "$home/.config/git" && printf '[user]\n\temail = e2e@example.com\n' >"$home/.config/git/config"
 
-blackwall() { (cd "$proj" && HOME=$home node "$repo/src/blackwall.mjs" "$@"); }
+# Ubuntu runners set XDG_CONFIG_HOME to the real home, so git would read its config from outside the stub
+blackwall() { (cd "$proj" && HOME=$home XDG_CONFIG_HOME=$home/.config node "$repo/src/blackwall.mjs" "$@"); }
 pass=0 fail=0
 check() {
   local name=$1; shift
