@@ -74,7 +74,7 @@ CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
 
 ### Presets
 
-A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why` that `blackwall --print-env` prints. Each is a module in [`src/presets`](src/presets):
+A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars. Each is a module in [`src/presets`](src/presets):
 
 - [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
