@@ -13,6 +13,14 @@
 - Signed commits from sandboxed runs: gpg can't reach `~/.gnupg`, so commits are unsigned. Until then: `git rebase --exec 'git commit --amend --no-edit -S' <base>`
 - Presets assume the default XDG folders (`~/.config`, `~/.cache`, `~/.local/share`). With `XDG_CONFIG_HOME` pointing elsewhere and a git config there, sandboxed git dies with `unable to access`, since git treats EPERM as fatal. Fix: build preset paths on the `XDG_*` vars in `paths.mjs`
 
+## Skill
+
+- `BLACKWALL=1` in every sandboxed command's env, so skills and scripts can tell blackwall from Claude Code's own srt sandbox without reading `CLAUDE_CONFIG_DIR` or the cache dirs (nono's `NONO_CAP_FILE`, enclave's `ENCLAVE_SANDBOX=1`)
+- Copy `skills/blackwall` into the claude and codex profiles at launch, so every sandboxed agent has the skill without `npx skills add` (enclave's `skill --install`; Sentry embeds its skill in the CLI). Needs `skills/` in package.json `files`
+- `NODE_USE_ENV_PROXY=1` in the `node` preset: Node's global `fetch` ignores `HTTPS_PROXY`, so every host fails with ENOTFOUND. Node 24+. Check it doesn't double-proxy Claude Code, which reads the proxy vars itself
+- `readIfExists` treats EPERM like ENOENT, so `blackwall` inside a sandbox fails with a clear nesting message instead of a stack trace from reading `~/.blackwall/.env`
+
 ## Unverified
 
+- The skill's Linux rows (denied dirs read as empty tmpfs, writes into them vanish, `--print-*` inside omits the user config, `--trust` writes a marker that vanishes) come from srt's README and `buildConfig`, not from a Linux run. Assert them in the Linux e2e job
 - Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)
