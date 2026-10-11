@@ -55,7 +55,7 @@ check "write to ~ never reaches it" eval 'blackwall sh -c "echo x > \"\$HOME/out
 check "read ~ denied" eval '! blackwall cat "$home/secret.txt" | grep -q secret'
 # The skill's Linux row: a denied dir is an empty writable tmpfs, so reads say ENOENT and writes land there and vanish with the run
 if [ "$(uname)" = Linux ]; then
-  check "denied read reads as missing" eval 'blackwall cat "$home/secret.txt" 2>&1 | grep -q "No such file"'
+  check "denied read reads as missing" eval 'grep -q "No such file" <<<"$(blackwall cat "$home/secret.txt" 2>&1)"'
   check "denied write succeeds inside and vanishes" eval 'blackwall sh -c "echo x > \"\$HOME/outside\" && test -f \"\$HOME/outside\"" && ! test -e "$home/outside"'
 fi
 
