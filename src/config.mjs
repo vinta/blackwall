@@ -4,7 +4,14 @@ import { homedir } from "node:os";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
-import PRESETS from "./presets/index.mjs";
+import git from "./presets/git.mjs";
+import github from "./presets/github.mjs";
+import linux from "./presets/linux.mjs";
+import mac from "./presets/mac.mjs";
+import node from "./presets/node.mjs";
+import preCommit from "./presets/pre-commit.mjs";
+import python from "./presets/python.mjs";
+import tmpdir from "./presets/tmpdir.mjs";
 
 const HOME = homedir();
 const CWD = process.cwd();
@@ -18,6 +25,9 @@ const PROJECT_ENV = `${CWD}/.blackwall/.env`;
 const TRUSTED = `${HOME}/.blackwall/trusted`;
 
 const DEFAULTS = JSON.parse(readFileSync(new URL("./configs/default-config.json", import.meta.url), "utf8"));
+
+// A config picks a preset only by name from this list, never a file by path
+const PRESETS = { git, github, linux, mac, node, "pre-commit": preCommit, python, tmpdir };
 
 export function trustProjectConfig() {
   const text = readIfExists(PROJECT_CONFIG);
