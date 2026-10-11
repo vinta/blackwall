@@ -18,7 +18,7 @@ A denial is the policy working. The fix is a grant plus a relaunch, never a retr
 
 ## Inside or outside?
 
-Inside a sandboxed session (`blackwall claude`, `blackwall codex`), one of these holds:
+Inside a sandboxed session (`blackwall claude`, `blackwall codex`), `$BLACKWALL_SANDBOX` is `1`. blackwall 0.2.1 and older don't set it; there, one of these holds:
 
 - `$CLAUDE_CONFIG_DIR` is `~/.claude-blackwall`, or `$CODEX_HOME` is `~/.codex-blackwall`
 - `$GH_CONFIG_DIR`, `$UV_CACHE_DIR`, or `$NPM_CONFIG_CACHE` is under `~/.cache/blackwall`

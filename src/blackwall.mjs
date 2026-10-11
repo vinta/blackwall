@@ -90,6 +90,7 @@ if (printFileAccess) {
 
 // Each label names where its vars come from, for --print-env
 const envSources = [
+  ["blackwall: tells scripts they run inside blackwall", { BLACKWALL_SANDBOX: "1" }],
   ...presets.filter((preset) => Object.keys(preset.env).length).map((preset) => [`preset ${preset.name}: ${preset.why}`, preset.env]),
   ...(adapter.env ? [[`adapter ${name}`, adapter.env()]] : []),
 ];

@@ -15,7 +15,6 @@
 
 ## Skill
 
-- `BLACKWALL=1` in every sandboxed command's env, so skills and scripts can tell blackwall from Claude Code's own srt sandbox without reading `CLAUDE_CONFIG_DIR` or the cache dirs (nono's `NONO_CAP_FILE`, enclave's `ENCLAVE_SANDBOX=1`)
 - Copy `skills/blackwall` into the claude and codex profiles at launch, so every sandboxed agent has the skill without `npx skills add` (enclave's `skill --install`; Sentry embeds its skill in the CLI). Needs `skills/` in package.json `files`
 - `readIfExists` treats EPERM like ENOENT, so `blackwall` inside a sandbox fails with a clear nesting message instead of a stack trace from reading `~/.blackwall/.env`
 

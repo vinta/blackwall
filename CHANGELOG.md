@@ -19,6 +19,7 @@
 - The wasilibs cache that go-re2 hooks like betterleaks read moves from `mac` to `pre-commit`, and Linux's `~/.cache/com.github.wasilibs` is read too
 - `~/.gitconfig`, `~/.gitignore_global`, and `~/.config/git/ignore` move from the default `allowRead` to the `git` preset, so dropping `git` from `presets` drops them too
 - The `git` preset reads `~/.config/git/config` too. Git refuses to start when its config exists but can't be read, so every sandboxed `git` command failed for users who keep their config there
+- Sandboxed commands get `BLACKWALL_SANDBOX=1`, so scripts and agent skills can tell blackwall from Claude Code's own sandbox, which also sets `TMPDIR=/tmp/claude`
 - The `node` preset sets `NODE_USE_ENV_PROXY=1`. Without it, Node's `fetch` and `http` skipped srt's proxy and failed with `ENOTFOUND` for every host, allowed ones too. Needs Node 22.21+
 - An agent skill in `skills/blackwall`, installed with `npx skills add vinta/blackwall -g`: teaches Claude Code and Codex to run, configure, and debug blackwall, and to read a denial from inside the sandbox
 

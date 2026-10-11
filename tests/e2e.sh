@@ -76,6 +76,7 @@ check "write cwd .blackwall denied" eval 'blackwall sh -c "echo x >> .blackwall/
 echo "E2E_TOKEN=user" >"$home/.blackwall/.env"
 printf 'E2E_TOKEN=project\nGH_CONFIG_DIR=elsewhere\n' >"$proj/.blackwall/.env"
 check "project .env overrides user .env" eval 'test "$(blackwall sh -c "echo \$E2E_TOKEN")" = project'
+check "BLACKWALL_SANDBOX marks the sandbox" eval 'test "$(blackwall sh -c "echo \$BLACKWALL_SANDBOX")" = 1'
 check "project .env can't override blackwall vars" eval 'test "$(blackwall sh -c "echo \$GH_CONFIG_DIR")" = "$home/.cache/blackwall/gh"'
 rm "$home/.blackwall/.env"
 check "edited project config refused" eval 'echo "{}" >"$proj/.blackwall/config.json"; ! blackwall true'
