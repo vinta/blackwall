@@ -18,7 +18,7 @@ git -C "$added" init -q
 # setup-node and the claude and codex installers put them outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
 grants() { local path; path=$(command -v "$1"); printf '"%s","%s"' "$(dirname "$path")" "$(dirname "$(dirname "$(realpath "$path")")")"; }
 # The codex adapter's ~/.codex/packages, where Codex's standalone installer links through a `current` folder, points into the stub HOME here
-printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]},"network":{"deniedResolvedAddresses":["192.0.2.0/24"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
+printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]},"network":{"allowedDomains":["*.sslip.io"],"deniedResolvedAddresses":["192.0.2.0/24"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
 echo secret >"$home/secret.txt"
 echo "# host instructions" >"$home/.claude/CLAUDE.md"
 echo "# host instructions" >"$home/.codex/AGENTS.md"
@@ -73,6 +73,7 @@ check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude
 
 check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https://api.github.com
 check "other host blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://example.com 2>&1)"'
+check "host resolving into RFC 1918 blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://10.0.0.1.sslip.io 2>&1)"'
 check "user config adds deniedResolvedAddresses" eval 'blackwall --print-config true | grep -q "\"192.0.2.0/24\""'
 
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant

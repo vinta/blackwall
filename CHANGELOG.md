@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 - Requires Node.js 22.21.0 or later, the first 22.x with `NODE_USE_ENV_PROXY`, so the `node` preset's proxy fix holds everywhere blackwall runs
+- `private-network` is a preset in the default list now. A host that resolves into RFC 1918, CGNAT, or IPv6 ULA ranges is refused, so sandboxed commands can't reach your LAN. To reach a LAN host, add its IP and port to `network.allowedDomains`, e.g. `192.168.1.10:8080`. If you set `overrideDefaults.presets`, add `private-network`, or private ranges stay open
 
 ### Changes
 

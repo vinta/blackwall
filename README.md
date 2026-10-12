@@ -82,7 +82,7 @@ npx skills add vinta/blackwall -g
 
 [`src/config/default-config.json`](src/config/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt with the launch-time grants that `blackwall --print-config` shows. srt settings missing from this file can't be set.
 
-- `presets: ["python", "node", "github", "git", "pre-commit"]`: The [presets](#presets) on by default
+- `presets: ["python", "node", "github", "git", "pre-commit", "private-network"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
 - `network.deniedResolvedAddresses: []`: IP ranges an allowed host must not resolve to, on top of srt's own denies like loopback, link-local, cloud metadata, and your machine's own addresses. Lists in your user and project configs are added to it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
@@ -97,6 +97,7 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, env v
 - [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
 - [git](src/presets/git.mjs): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
 - [pre-commit](src/presets/pre-commit.mjs): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
+- [private-network](src/presets/private-network.mjs): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedDomains`, e.g. `192.168.1.10:8080`
 - [tmpdir](src/presets/tmpdir.mjs): `/tmp/claude` as the temp folder. Always on
 - [mac](src/presets/mac.mjs): System paths macOS tools need. Always on, on macOS
 - [linux](src/presets/linux.mjs): `/usr/local`, the 64-bit lib folders, srt's seccomp helper, and `/tmp`, where srt keeps its proxy sockets. Always on, on Linux

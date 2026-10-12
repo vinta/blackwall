@@ -69,7 +69,7 @@ Noise, harmless, the command still ran:
 }
 ```
 
-- Presets: `python`, `node`, `github`, `git`, `pre-commit` are on by default; `tmpdir`, `mac`, `linux` are always on. Each is one tool's hosts, read paths, and env vars. What each grants: https://github.com/vinta/blackwall#presets
+- Presets: `python`, `node`, `github`, `git`, `pre-commit`, `private-network` are on by default; `tmpdir`, `mac`, `linux` are always on. Each is one tool's hosts, read paths, and env vars. What each grants: https://github.com/vinta/blackwall#presets
 - Dropping `git` from `presets` makes every sandboxed `git` refuse to start when `~/.gitconfig` exists.
 - `.blackwall/.env` keys override `~/.blackwall/.env` and reach only the sandboxed command.
 - Verify outside: `blackwall --print-config claude` (merged config with the launch-time grants), `blackwall --print-file-access claude` (srt's view), `blackwall --print-env claude` (env vars blackwall adds, each with its why).

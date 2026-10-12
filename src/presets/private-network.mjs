@@ -1,0 +1,6 @@
+export default {
+  why: "an allowed host, or any host under an allow-all network, can resolve into your LAN; srt leaves private ranges open so intranet hosts can be allow-listed",
+  network: {
+    deniedResolvedAddresses: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "100.64.0.0/10", "fc00::/7"],
+  },
+};

@@ -4,7 +4,8 @@
     "node",
     "github",
     "git",
-    "pre-commit"
+    "pre-commit",
+    "private-network"
   ],
   "network": {
     "allowedDomains": [],
