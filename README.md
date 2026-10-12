@@ -84,6 +84,7 @@ npx skills add vinta/blackwall -g
 
 - `presets: ["python", "node", "github", "git", "pre-commit"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
+- `network.deniedResolvedAddresses: []`: IP ranges an allowed host must not resolve to, on top of srt's own denies like loopback, link-local, cloud metadata, and your machine's own addresses. Lists in your user and project configs are added to it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 

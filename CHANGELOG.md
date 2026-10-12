@@ -9,6 +9,7 @@
 ### Changes
 
 - Upgrades srt to 0.0.79. On 0.0.78, a folder with `[` and `]` in its name, like `[wip] app`, voided every deny inside it, so a sandboxed command could write the project's `.git/hooks`
+- `network.deniedResolvedAddresses` can be set: IP ranges an allowed host must not resolve to, on top of srt's own denies. Add them in your user or project config
 
 ## v0.3.0 / 2026-10-11
 

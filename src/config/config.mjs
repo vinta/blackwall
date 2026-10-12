@@ -69,6 +69,7 @@ export function buildConfig({ addDirs, additions }) {
     network: {
       allowedDomains: [...base.network.allowedDomains, ...added("network", "allowedDomains")],
       deniedDomains: [...base.network.deniedDomains, ...added("network", "deniedDomains")],
+      deniedResolvedAddresses: [...base.network.deniedResolvedAddresses, ...added("network", "deniedResolvedAddresses")],
     },
     filesystem: {
       denyRead: [...base.filesystem.denyRead, ...added("filesystem", "denyRead")],
