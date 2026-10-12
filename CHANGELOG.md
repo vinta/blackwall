@@ -6,6 +6,10 @@
 
 - Requires Node.js 22.21.0 or later, the first 22.x with `NODE_USE_ENV_PROXY`, so the `node` preset's proxy fix holds everywhere blackwall runs
 
+### Changes
+
+- Upgrades srt to 0.0.79. On 0.0.78, a folder with `[` and `]` in its name, like `[wip] app`, voided every deny inside it, so a sandboxed command could write the project's `.git/hooks`
+
 ## v0.3.0 / 2026-10-11
 
 ### Breaking Changes
