@@ -80,13 +80,15 @@ npx skills add vinta/blackwall -g
 
 ### Default
 
-[`src/config/default-config.json`](src/config/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt with the launch-time grants that `blackwall --print-config` shows. srt settings missing from this file can't be set.
+[`src/config/default-config.json`](src/config/default-config.json) is the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`.
 
 - `presets: ["python", "node", "github", "git", "pre-commit", "private-network"]`: The [presets](#presets) on by default
 - `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every public host; srt itself rejects `"*"`, so `blackwall` handles it. IP literals, `localhost`, and names resolving into loopback or private ranges stay denied. To reach a local server, add its IP literal with the port, e.g. `127.0.0.1:8000`
 - `network.deniedResolvedAddresses: []`: IP ranges an allowed host must not resolve to, on top of srt's own denies like loopback, link-local, cloud metadata, and your machine's own addresses. Lists in your user and project configs are added to it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
+
+Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), **most of them** passed to srt directly. However, blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
 
 ### Presets
 
