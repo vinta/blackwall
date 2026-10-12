@@ -6,6 +6,7 @@
 
 - Requires Node.js 22.21.0 or later, the first 22.x with `NODE_USE_ENV_PROXY`, so the `node` preset's proxy fix holds everywhere blackwall runs
 - `private-network` is a preset in the default list now. A host that resolves into RFC 1918, CGNAT, or IPv6 ULA ranges is refused, so sandboxed commands can't reach your LAN. To reach a LAN host, add its IP and port to `network.allowedDomains`, e.g. `192.168.1.10:8080`. If you set `overrideDefaults.presets`, add `private-network`, or private ranges stay open
+- `"*"` in `network.allowedDomains` allows only DNS names now. IP literals, public ones too, and `localhost` are refused: `"*"` used to let a command that skipped `NO_PROXY` reach servers on your machine and LAN through srt's proxy. To reach a local server, add its IP and port, e.g. `127.0.0.1:8000`
 
 ### Changes
 

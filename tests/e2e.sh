@@ -9,9 +9,9 @@ root=${E2E_ROOT:-$repo/tests/.e2e}
 case $(mkdir -p "$root" && cd "$root" && pwd -P) in
   /tmp* | /private/tmp* | /var/folders* | /private/var/folders*) echo "e2e: E2E_ROOT must be outside /tmp and /var/folders" >&2; exit 2 ;;
 esac
-rm -rf "$root/home" "$root/proj" "$root/added" "$root/elsewhere"
-home=$root/home proj=$root/proj added=$root/added elsewhere=$root/elsewhere
-mkdir -p "$home/.blackwall" "$home/.claude/skills" "$home/.codex" "$home/.agents/skills" "$proj" "$added" "$elsewhere/linked-skill"
+rm -rf "$root/home" "$root/proj" "$root/added" "$root/elsewhere" "$root/open"
+home=$root/home proj=$root/proj added=$root/added elsewhere=$root/elsewhere open=$root/open
+mkdir -p "$home/.blackwall" "$home/.claude/skills" "$home/.codex" "$home/.agents/skills" "$proj" "$added" "$elsewhere/linked-skill" "$open/.blackwall"
 git -C "$proj" init -q
 git -C "$added" init -q
 
@@ -81,6 +81,20 @@ node=$(realpath "$(command -v node)")
 check "nested blackwall refused" eval 'out=$(blackwall --add-dir "$repo" "$node" "$repo/src/blackwall.mjs" --version 2>&1); test $? -eq 2 && grep -q "can.t run inside a sandbox" <<<"$out"'
 check "node fetch reaches preset host" blackwall "$node" -e 'fetch("https://api.github.com")'
 check "node fetch to other host blocked" eval 'blackwall "$node" -e "fetch(\"https://example.com\").catch((e) => console.log(e.cause.message))" | grep -q "Request was cancelled"'
+
+# "*" gets its own folder, so $proj keeps its closed network. srt's NO_PROXY sends loopback around the proxy, so curl clears it
+blackwall_open() { (cd "$open" && HOME=$home XDG_CONFIG_HOME=$home/.config node "$repo/src/blackwall.mjs" "$@"); }
+http_code() { blackwall_open sh -c 'curl -sS -o /dev/null --max-time 10 --noproxy "" --proxy "$HTTP_PROXY" -w "%{http_code}" "$1"' sh "$1"; }
+read -r port listener < <(node -e 'const server = require("http").createServer((q, s) => s.end("ok")).listen(0, "127.0.0.1", () => console.log(server.address().port, process.pid))')
+echo '{"network":{"allowedDomains":["*"]}}' >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
+check '127.0.0.1 blocked under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 403'
+check 'localhost blocked under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 403'
+check '[::1] blocked under "*"' eval 'test "$(http_code "http://[::1]:$port/")" = 403'
+check 'public host allowed under "*"' eval 'test "$(http_code https://example.com/)" = 200'
+printf '{"network":{"allowedDomains":["*","127.0.0.1:%s"]}}\n' "$port" >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
+check 'listed IP literal allowed under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 200'
+# INT, since bash prints a Terminated line for a child killed by TERM
+kill -INT "$listener"
 
 check "write cache" eval 'blackwall sh -c "mkdir -p \"\$GH_CONFIG_DIR\" && echo x > \"\$GH_CONFIG_DIR/probe\"" && test -f "$home/.cache/blackwall/gh/probe"'
 check "gh runs" blackwall gh --version

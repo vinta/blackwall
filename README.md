@@ -83,7 +83,7 @@ npx skills add vinta/blackwall -g
 [`src/config/default-config.json`](src/config/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt with the launch-time grants that `blackwall --print-config` shows. srt settings missing from this file can't be set.
 
 - `presets: ["python", "node", "github", "git", "pre-commit", "private-network"]`: The [presets](#presets) on by default
-- `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
+- `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every public host; srt itself rejects `"*"`, so `blackwall` handles it. IP literals, `localhost`, and names resolving into loopback or private ranges stay denied. To reach a local server, add its IP literal with the port, e.g. `127.0.0.1:8000`
 - `network.deniedResolvedAddresses: []`: IP ranges an allowed host must not resolve to, on top of srt's own denies like loopback, link-local, cloud metadata, and your machine's own addresses. Lists in your user and project configs are added to it
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
@@ -126,7 +126,7 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 ```
 
 - Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults
-- To allow every host, add `"*"` to `network.allowedDomains`
+- To allow every public host, add `"*"` to `network.allowedDomains`. IP literals, `localhost`, and names resolving into loopback or private ranges stay denied, so add a local server as its IP literal with the port, e.g. `127.0.0.1:8000`
 - `overrideDefaults` takes any key in `default-config.json` and **replaces** its default value. It's applied first, then the top-level lists are added
 
 </details>

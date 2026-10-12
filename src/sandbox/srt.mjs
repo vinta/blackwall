@@ -1,10 +1,12 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { spawn } from "node:child_process";
+import { isIP } from "node:net";
 
 import { CWD } from "../constants/paths.mjs";
 
 export function createSandbox(config) {
-  // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
+  // srt rejects "*", so blackwall turns it into an ask callback that allows every DNS name no rule matches
+  // IP literals and localhost stay denied: srt's resolved-address guard skips literals and lets localhost reach loopback
   const allowAllDomains = config.network.allowedDomains.includes("*");
   const srtConfig = {
     ...config,
@@ -33,7 +35,12 @@ export function createSandbox(config) {
     },
 
     async run(args, env) {
-      await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
+      await SandboxManager.initialize(srtConfig, async ({ host }) => {
+        const bare = host.replace(/^\[(.*)\]$/, "$1");
+        // Spelled the way srt dials it, so 127.1 and 0 count as IPv4 literals and localhost.. as localhost
+        const canonicalHost = (URL.parse(`http://${bare}`)?.hostname ?? bare).toLowerCase().replace(/\.+$/, "");
+        return allowAllDomains && !isIP(canonicalHost) && canonicalHost !== "localhost" && !canonicalHost.endsWith(".localhost");
+      });
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
       const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
