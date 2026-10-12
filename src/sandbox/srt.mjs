@@ -10,7 +10,7 @@ export function createSandbox(config) {
   const allowAllDomains = config.network.allowedDomains.includes("*");
   const srtConfig = {
     ...config,
-    network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") },
+    network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*"), strictAllowlist: !allowAllDomains },
   };
   SandboxRuntimeConfigSchema.parse(srtConfig);
 
