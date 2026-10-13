@@ -5,6 +5,22 @@
 ### Breaking Changes
 
 - Requires Node.js 22.21.0 or later, the first 22.x with `NODE_USE_ENV_PROXY`, so the `node` preset's proxy fix holds everywhere blackwall runs
+- `network.allowedHosts` and `network.deniedHosts` replace `network.allowedDomains`, `network.deniedDomains`, and `network.deniedResolvedAddresses`. There are no aliases: the old keys are config errors, so rename them in your configs
+- An entry is a name, like `example.com` or `*.example.com`, an IP literal, or a range, like `10.0.0.0/8`. A name in `allowedHosts` or `deniedHosts` can take a port, and so can an IP literal in `allowedHosts`, e.g. `127.0.0.1:8000`. A name in `deniedHosts` is refused under `"*"`. An IP literal or a range in `deniedHosts` is refused as a literal, and also when an allowed name resolves into it
+- A denied name no longer beats an allowed one: an `allowedHosts` entry wins over a `deniedHosts` name, so to deny a host a preset allows, drop the preset. Ranges still win: a `deniedHosts` range is overridden only by that IP itself in `allowedHosts`
+- `"*"` in `network.allowedHosts` no longer reaches your machine or private ranges. It used to let a command that skipped `NO_PROXY` reach them through srt's proxy. Now an IP literal in loopback, unspecified, link-local, multicast, broadcast, cloud metadata, your machine's own addresses, or a `deniedHosts` range is refused. Public IP literals like `1.1.1.1` still connect
+- `local-network` is a preset in the default list now. It denies `localhost` and `*.localhost` by name under `"*"`. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`. If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`
+- `private-network` is a preset in the default list now. A host that resolves into RFC 1918, CGNAT, or IPv6 ULA ranges is refused. To reach a LAN host, add its IP and port to `network.allowedHosts`, e.g. `192.168.1.10:8080`. If you set `overrideDefaults.presets`, add `private-network`, or private ranges stay open
+- `agent-files` is a preset in the default list now. Sandboxed commands can't write `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or an `--add-dir` folder. An unsandboxed `claude` in the same folder runs what they hold, the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest, so a sandboxed command could plant commands that run on the host. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. A sandboxed `claude` can't save project permission rules to `.claude/settings.local.json` either. If you set `overrideDefaults.presets`, add `agent-files`, or those writes open again
+- The sandbox cache moves from `~/.cache/blackwall` to `~/.cache-blackwall`, so `gh`, `uv`, `npm`, and `pre-commit` start with empty caches and pre-commit clones its hook repos again. Delete `~/.cache/blackwall`, nothing reads it anymore
+- The ad-hoc-signed node copy is `~/.blackwall/node-blackwall`, shown as `node-blackwall` in Little Snitch. Delete `~/.blackwall/blackwall_node`, nothing reads it anymore
+
+### Changes
+
+- Upgrades srt to 0.0.79. On 0.0.78, a folder with `[` and `]` in its name, like `[wip] app`, voided every deny inside it, so a sandboxed command could write the project's `.git/hooks`
+- Config values are checked when each config file is read, so a bad range or name pattern is reported with the path of the file it's in. `allowedHosts` entries and ranges follow srt's rules; `deniedHosts` names follow blackwall's: `example.com` or `*.example.com` with an optional port, single-label wildcards like `*.localhost` included
+- A relative `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
+- Without `"*"` in `network.allowedHosts`, srt enforces the allowlist itself and denies unlisted hosts without asking blackwall's callback, so a bug in the callback can't let a host through
 
 ## v0.3.0 / 2026-10-11
 

@@ -1,16 +1,46 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
+import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
+import { matchesDomainPatternWithPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
+import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
+import { createResolvedAddressGuard } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
 import { spawn } from "node:child_process";
+import { isIP } from "node:net";
 
 import { CWD } from "../constants/paths.mjs";
 
 export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
-  const allowAllDomains = config.network.allowedDomains.includes("*");
+  // deniedHosts names and IP literals are the callback's job: srt's deniedDomains would beat allowedHosts, and its resolved-address guard skips literals
+  const { allowedHosts, deniedHosts, ...network } = config.network;
+  const allowAllDomains = allowedHosts.includes("*");
+  // srt matches allowedHosts names and literals itself; denied ranges it checks at dial time, for names only
+  const { ranges: deniedRanges = [], names: deniedNames = [] } = Object.groupBy(deniedHosts, (entry) => (parseAddressRange(entry) ? "ranges" : "names"));
   const srtConfig = {
     ...config,
-    network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*") },
+    network: {
+      ...network,
+      allowedDomains: allowedHosts.filter((host) => host !== "*"),
+      deniedDomains: [],
+      deniedResolvedAddresses: deniedRanges,
+      strictAllowlist: !allowAllDomains,
+    },
   };
   SandboxRuntimeConfigSchema.parse(srtConfig);
+
+  // Without "*", strictAllowlist makes srt deny every host no rule matches, and it never asks
+  let askCallback;
+  if (allowAllDomains) {
+    const guard = createResolvedAddressGuard(srtConfig.network);
+    askCallback = async ({ host, port }) => {
+      // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
+      const canonicalHost = canonicalizeHost(host) ?? host;
+      // canonicalizeHost strips one trailing dot, so a dot left means the raw host had an empty label: no resolver accepts it, but srt dials the one-dot spelling, which does resolve
+      if (/\.$|\.\./.test(canonicalHost)) return false;
+      if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return false;
+      // A dummy non-IP hostname makes the guard judge the address as a resolved answer, the way it would for a name resolving there
+      return isIP(canonicalHost) ? guard.permits("literal", canonicalHost, port) : true;
+    };
+  }
 
   return {
     async printFileAccess() {
@@ -18,7 +48,7 @@ export function createSandbox(config) {
       SandboxManager.updateConfig(srtConfig);
       const read = SandboxManager.getFsReadConfig();
       const write = SandboxManager.getFsWriteConfig();
-      // Not in the package's index, but srt builds its mandatory write denies from these. Loaded only here, so an srt update that moves them breaks this flag, not every launch
+      // Not in the package's index, but srt builds its mandatory write denies from these. tests/config.mjs checks the dist imports on the launch path; this one stays lazy since only --print-file-access needs it
       const { DANGEROUS_FILES, getDangerousDirectories } = await import("@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js");
       const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), ".git/hooks", ".git/config"].map((name) => `${CWD}/**/${name}`);
       for (const [title, paths] of [
@@ -33,7 +63,7 @@ export function createSandbox(config) {
     },
 
     async run(args, env) {
-      await SandboxManager.initialize(srtConfig, async () => allowAllDomains);
+      await SandboxManager.initialize(srtConfig, askCallback);
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
       const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));

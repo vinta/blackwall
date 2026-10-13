@@ -17,16 +17,16 @@ export const XDG_RUNTIME = xdg("XDG_RUNTIME_DIR");
 // The package's own skills, copied into each agent profile so they match the running blackwall
 export const SKILLS = fileURLToPath(new URL("../../skills", import.meta.url));
 
-export const CACHE = `${HOME}/.cache/blackwall`;
-export const CONFIG = `${HOME}/.blackwall/config.json`;
+export const SANDBOX_CACHE = `${HOME}/.cache-blackwall`;
+export const USER_CONFIG = `${HOME}/.blackwall/config.json`;
 
 // Loads only once trusted, since a cloned repo can ship one that widens the sandbox
 export const PROJECT_CONFIG = `${CWD}/.blackwall/config.json`;
 export const PROJECT_ENV = `${CWD}/.blackwall/.env`;
-export const TRUSTED = `${HOME}/.blackwall/trusted`;
+export const TRUST_MARKERS = `${HOME}/.blackwall/trusted`;
 
-// Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike CACHE or the package folder
-export const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
+// Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike SANDBOX_CACHE or the package folder
+export const SIGNED_NODE = `${HOME}/.blackwall/node-blackwall`;
 
 // srt already lets the sandbox write here, unlike the rest of /tmp, where unsandboxed tools like Claude Code keep scratch files they later run
 export const TMPDIR = `${realpathSync("/tmp")}/claude`;

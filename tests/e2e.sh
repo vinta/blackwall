@@ -9,16 +9,16 @@ root=${E2E_ROOT:-$repo/tests/.e2e}
 case $(mkdir -p "$root" && cd "$root" && pwd -P) in
   /tmp* | /private/tmp* | /var/folders* | /private/var/folders*) echo "e2e: E2E_ROOT must be outside /tmp and /var/folders" >&2; exit 2 ;;
 esac
-rm -rf "$root/home" "$root/proj" "$root/added" "$root/elsewhere"
-home=$root/home proj=$root/proj added=$root/added elsewhere=$root/elsewhere
-mkdir -p "$home/.blackwall" "$home/.claude/skills" "$home/.codex" "$home/.agents/skills" "$proj" "$added" "$elsewhere/linked-skill"
+rm -rf "$root/home" "$root/proj" "$root/added" "$root/elsewhere" "$root/open"
+home=$root/home proj=$root/proj added=$root/added elsewhere=$root/elsewhere open=$root/open
+mkdir -p "$home/.blackwall" "$home/.claude/skills" "$home/.codex" "$home/.agents/skills" "$proj" "$added" "$elsewhere/linked-skill" "$open/.blackwall"
 git -C "$proj" init -q
 git -C "$added" init -q
 
 # setup-node and the claude and codex installers put them outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
 grants() { local path; path=$(command -v "$1"); printf '"%s","%s"' "$(dirname "$path")" "$(dirname "$(dirname "$(realpath "$path")")")"; }
 # The codex adapter's ~/.codex/packages, where Codex's standalone installer links through a `current` folder, points into the stub HOME here
-printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
+printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]},"network":{"allowedHosts":["*.sslip.io"],"deniedHosts":["192.0.2.0/24"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
 echo secret >"$home/secret.txt"
 echo "# host instructions" >"$home/.claude/CLAUDE.md"
 echo "# host instructions" >"$home/.codex/AGENTS.md"
@@ -61,8 +61,18 @@ fi
 
 check "write cwd .git/hooks denied" eval 'blackwall sh -c "echo x > .git/hooks/pre-commit"; ! test -e "$proj/.git/hooks/pre-commit"'
 check "write cwd .git/config denied" eval 'blackwall sh -c "echo x >> .git/config"; ! grep -q "^x" "$proj/.git/config"'
+mkdir -p "$proj/.claude"
+check "write cwd .claude/settings.local.json denied" eval 'blackwall sh -c "echo x > .claude/settings.local.json"; ! test -e "$proj/.claude/settings.local.json"'
+check "write cwd .claude/hooks denied" eval 'blackwall sh -c "mkdir -p .claude/hooks"; ! test -e "$proj/.claude/hooks"'
+check "write cwd .claude/other allowed" eval 'blackwall sh -c "echo x > .claude/other" && test -f "$proj/.claude/other"'
 check "write --add-dir .git/hooks denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.git/hooks/pre-commit\""; ! test -e "$added/.git/hooks/pre-commit"'
 check "write --add-dir .git/config denied" eval 'blackwall --add-dir "$added" sh -c "echo x >> \"$added/.git/config\""; ! grep -q "^x" "$added/.git/config"'
+mkdir -p "$added/.claude"
+check "write --add-dir .claude/settings.json denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.claude/settings.json\""; ! test -e "$added/.claude/settings.json"'
+check "write --add-dir .mcp.json denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.mcp.json\""; ! test -e "$added/.mcp.json"'
+check "write --add-dir .claude/commands denied" eval 'blackwall --add-dir "$added" sh -c "mkdir -p \"$added/.claude/commands\" && echo x > \"$added/.claude/commands/x.md\""; ! test -e "$added/.claude/commands/x.md"'
+check "write --add-dir .claude/agents denied" eval 'blackwall --add-dir "$added" sh -c "mkdir -p \"$added/.claude/agents\" && echo x > \"$added/.claude/agents/x.md\""; ! test -e "$added/.claude/agents/x.md"'
+check "create --add-dir .blackwall denied" eval 'blackwall --add-dir "$added" mkdir "$added/.blackwall"; ! test -e "$added/.blackwall"'
 
 check "git reads ~/.config/git/config" eval 'test "$(blackwall git config --get user.email)" = e2e@example.com'
 mkdir -p "$elsewhere/xdg/git" && printf '[user]\n\temail = xdg@example.com\n' >"$elsewhere/xdg/git/config"
@@ -73,6 +83,10 @@ check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude
 
 check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https://api.github.com
 check "other host blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://example.com 2>&1)"'
+check "host resolving into RFC 1918 blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://10.0.0.1.sslip.io 2>&1)"'
+check "user config adds deniedHosts" eval 'blackwall --print-config true | grep -q "\"192.0.2.0/24\""'
+check "local-network preset denies localhost" eval 'blackwall --print-config true | grep -q "\"localhost\""'
+check "agent-files preset in --print-config" eval 'blackwall --print-config true | grep -q "/.claude/hooks\""'
 
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 node=$(realpath "$(command -v node)")
@@ -80,12 +94,46 @@ check "nested blackwall refused" eval 'out=$(blackwall --add-dir "$repo" "$node"
 check "node fetch reaches preset host" blackwall "$node" -e 'fetch("https://api.github.com")'
 check "node fetch to other host blocked" eval 'blackwall "$node" -e "fetch(\"https://example.com\").catch((e) => console.log(e.cause.message))" | grep -q "Request was cancelled"'
 
-check "write cache" eval 'blackwall sh -c "mkdir -p \"\$GH_CONFIG_DIR\" && echo x > \"\$GH_CONFIG_DIR/probe\"" && test -f "$home/.cache/blackwall/gh/probe"'
+# "*" gets its own folder, so $proj keeps its closed network. srt's NO_PROXY sends loopback around the proxy, so curl clears it
+blackwall_open() { (cd "$open" && HOME=$home XDG_CONFIG_HOME=$home/.config node "$repo/src/blackwall.mjs" "$@"); }
+http_code() { blackwall_open sh -c 'curl -sS -o /dev/null --max-time 10 --noproxy "" --proxy "$HTTP_PROXY" -w "%{http_code}" "$1"' sh "$1"; }
+read -r port listener < <(node -e 'const server = require("http").createServer((q, s) => s.end("ok")).listen(0, "127.0.0.1", () => console.log(server.address().port, process.pid))')
+echo '{"network":{"allowedHosts":["*"]}}' >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
+check '127.0.0.1 blocked under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 403'
+check 'localhost blocked under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 403'
+check 'foo.localhost blocked under "*"' eval 'test "$(http_code "http://foo.localhost:$port/")" = 403'
+check 'localhost.. blocked under "*"' eval 'test "$(http_code "http://localhost..:$port/")" = 403'
+check 'foo.localhost.. blocked under "*"' eval 'test "$(http_code "http://foo.localhost..:$port/")" = 403'
+check '[::1] blocked under "*"' eval 'test "$(http_code "http://[::1]:$port/")" = 403'
+check 'public host allowed under "*"' eval 'test "$(http_code https://example.com/)" = 200'
+# 1.1.1.1 may answer 200 or 301; only the proxy's 403 matters
+check 'public IP literal allowed under "*"' eval 'test "$(http_code https://1.1.1.1/)" != 403'
+check '169.254.169.254 blocked under "*"' eval 'test "$(http_code http://169.254.169.254/)" = 403'
+check '0.0.0.0 blocked under "*"' eval 'test "$(http_code "http://0.0.0.0:$port/")" = 403'
+printf '{"network":{"allowedHosts":["*","127.0.0.1:%s","localhost:%s"]}}\n' "$port" "$port" >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
+check 'listed IP literal allowed under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 200'
+check 'listed localhost port allowed under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 200'
+# INT, since bash prints a Terminated line for a child killed by TERM
+kill -INT "$listener"
+
+check "write cache" eval 'blackwall sh -c "mkdir -p \"\$GH_CONFIG_DIR\" && echo x > \"\$GH_CONFIG_DIR/probe\"" && test -f "$home/.cache-blackwall/gh/probe"'
 check "gh runs" blackwall gh --version
 
 cp "$home/.blackwall/config.json" "$root/config.json"
 echo '{"filesystem":{"allowRead":"/"}}' >"$home/.blackwall/config.json"
 check "config error exits 2" eval 'blackwall true; test $? -eq 2'
+echo '{"network":{"deniedHosts":["*"]}}' >"$home/.blackwall/config.json"
+check '"*" in deniedHosts exits 2' eval 'blackwall true; test $? -eq 2'
+echo '{"network":{"deniedHosts":["1.2.3.4:443"]}}' >"$home/.blackwall/config.json"
+check "IP literal with port in deniedHosts exits 2" eval 'blackwall true; test $? -eq 2'
+echo '{"network":{"allowLocalBinding":true}}' >"$home/.blackwall/config.json"
+check "unexposed srt key exits 2" eval 'blackwall true; test $? -eq 2'
+check "unexposed srt key named as unknown key" eval 'grep -q "unknown key network.allowLocalBinding" <<<"$(blackwall true 2>&1)"'
+echo '{"network":{"allowedDomains":["x.com"]}}' >"$home/.blackwall/config.json"
+check "old allowedDomains key exits 2" eval 'blackwall true; test $? -eq 2'
+echo '{"filesystem":{"denyRead":["secrets"]}}' >"$home/.blackwall/config.json"
+mkdir -p "$added/secrets" && echo secret >"$added/secrets/key"
+check "read --add-dir relative denyRead denied" eval '! blackwall --add-dir "$added" cat "$added/secrets/key" | grep -q secret'
 mv "$root/config.json" "$home/.blackwall/config.json"
 
 skill=$elsewhere/linked-skill/SKILL.md
@@ -101,7 +149,7 @@ echo "E2E_TOKEN=user" >"$home/.blackwall/.env"
 printf 'E2E_TOKEN=project\nGH_CONFIG_DIR=elsewhere\n' >"$proj/.blackwall/.env"
 check "project .env overrides user .env" eval 'test "$(blackwall sh -c "echo \$E2E_TOKEN")" = project'
 check "BLACKWALL_SANDBOX marks the sandbox" eval 'test "$(blackwall sh -c "echo \$BLACKWALL_SANDBOX")" = 1'
-check "project .env can't override blackwall vars" eval 'test "$(blackwall sh -c "echo \$GH_CONFIG_DIR")" = "$home/.cache/blackwall/gh"'
+check "project .env can't override blackwall vars" eval 'test "$(blackwall sh -c "echo \$GH_CONFIG_DIR")" = "$home/.cache-blackwall/gh"'
 rm "$home/.blackwall/.env"
 
 check "edited project config refused" eval 'echo "{}" >"$proj/.blackwall/config.json"; grep -q "not trusted" <<<"$(blackwall true 2>&1)"'

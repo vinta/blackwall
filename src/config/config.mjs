@@ -3,27 +3,41 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFile
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
-import { CACHE, CONFIG, CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, TRUSTED } from "../constants/paths.mjs";
+import { CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, SANDBOX_CACHE, TRUST_MARKERS, USER_CONFIG } from "../constants/paths.mjs";
+import agentFiles from "../presets/agent-files.mjs";
 import git from "../presets/git.mjs";
 import github from "../presets/github.mjs";
 import linux from "../presets/linux.mjs";
+import localNetwork from "../presets/local-network.mjs";
 import mac from "../presets/mac.mjs";
 import node from "../presets/node.mjs";
 import preCommit from "../presets/pre-commit.mjs";
+import privateNetwork from "../presets/private-network.mjs";
 import python from "../presets/python.mjs";
 import tmpdir from "../presets/tmpdir.mjs";
-
-const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
+import { CONFIG_SCHEMA, configErrorMap, DEFAULTS } from "./schema.mjs";
 
 // A config picks a preset only by name from this list, never a file by path
-const PRESETS = { git, github, linux, mac, node, "pre-commit": preCommit, python, tmpdir };
+export const PRESETS = {
+  "agent-files": agentFiles,
+  git,
+  github,
+  linux,
+  "local-network": localNetwork,
+  mac,
+  node,
+  "pre-commit": preCommit,
+  "private-network": privateNetwork,
+  python,
+  tmpdir,
+};
 
 export function trustProjectConfig() {
   const text = readIfExists(PROJECT_CONFIG);
   if (text === undefined) exitWithConfigError(PROJECT_CONFIG, "not found");
   // A malformed file fails now rather than on the next launch
   parseConfig(PROJECT_CONFIG, text);
-  mkdirSync(TRUSTED, { recursive: true });
+  mkdirSync(TRUST_MARKERS, { recursive: true });
   writeFileSync(trustMarker(text), "");
   return PROJECT_CONFIG;
 }
@@ -31,9 +45,9 @@ export function trustProjectConfig() {
 // additions is the adapter's layer, added after every config file's lists
 export function buildConfig({ addDirs, additions }) {
   // overrideDefaults replaces default values, the project's over the user's, then the presets and the top-level lists of both are added on top
-  const user = readConfig(CONFIG);
+  const user = readConfig(USER_CONFIG);
   // From ~, both paths name the user config
-  const project = PROJECT_CONFIG === CONFIG ? { additions: {}, overrides: {}, presets: [] } : readConfig(PROJECT_CONFIG, true);
+  const project = PROJECT_CONFIG === USER_CONFIG ? { additions: {}, overrides: {}, presets: [] } : readConfig(PROJECT_CONFIG, true);
 
   // presets is blackwall's own key, so it never reaches srt
   const { presets: basePresets, ...base } = {
@@ -55,35 +69,77 @@ export function buildConfig({ addDirs, additions }) {
     // env is a preset-only key, so it never reaches srt
     return { name, env: {}, ...PRESETS[name] };
   });
-  const layers = [...presets, user.additions, project.additions, additions];
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
   if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
     console.warn("blackwall: overrideDefaults.filesystem.denyRead no longer denies ~/, so your home directory is readable");
   }
 
-  const added = (section, key) => layers.flatMap((layer) => layer[section]?.[key] ?? []);
+  const entriesOf = (layer, section, key) => layer[section]?.[key] ?? [];
+  const fromPresets = (section, key) => presets.flatMap((preset) => entriesOf(preset, section, key));
+  const fromUserConfig = (section, key) => entriesOf(user.additions, section, key);
+  const fromProjectConfig = (section, key) => entriesOf(project.additions, section, key);
+  const fromAdapter = (section, key) => entriesOf(additions, section, key);
+
+  // A relative entry applies to the current folder and every --add-dir folder
+  const applyToEachDir = (path) => (/^[~/]/.test(path) ? [path] : [CWD, ...addDirs].map((dir) => `${dir}/${path}`));
 
   const config = {
     ...base,
     network: {
-      allowedDomains: [...base.network.allowedDomains, ...added("network", "allowedDomains")],
-      deniedDomains: [...base.network.deniedDomains, ...added("network", "deniedDomains")],
+      allowedHosts: [
+        ...base.network.allowedHosts,
+        ...fromPresets("network", "allowedHosts"),
+        ...fromUserConfig("network", "allowedHosts"),
+        ...fromProjectConfig("network", "allowedHosts"),
+        ...fromAdapter("network", "allowedHosts"),
+      ],
+      deniedHosts: [
+        ...base.network.deniedHosts,
+        ...fromPresets("network", "deniedHosts"),
+        ...fromUserConfig("network", "deniedHosts"),
+        ...fromProjectConfig("network", "deniedHosts"),
+        ...fromAdapter("network", "deniedHosts"),
+      ],
     },
     filesystem: {
-      denyRead: [...base.filesystem.denyRead, ...added("filesystem", "denyRead")],
-      allowRead: [CWD, ...addDirs, ...base.filesystem.allowRead, CACHE, ...added("filesystem", "allowRead")],
-      allowWrite: [CWD, ...addDirs, ...base.filesystem.allowWrite, CACHE, ...added("filesystem", "allowWrite")],
-      // cwd/.blackwall keeps a run from writing a project config for you to trust, and ~/.blackwall from forging trust or replacing blackwall_node, even when
-      // cwd or an --add-dir covers it
-      denyWrite: [
-        ...base.filesystem.denyWrite,
-        `${CWD}/.blackwall`,
-        `${HOME}/.blackwall`,
-        // srt's built-in .git denies anchor on cwd only
-        ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]),
-        ...added("filesystem", "denyWrite"),
+      // Listed in srt's precedence: a later key wins where it overlaps an earlier one, except a denyRead nested inside an allowRead
+      denyRead: [
+        ...base.filesystem.denyRead,
+        ...fromPresets("filesystem", "denyRead"),
+        ...fromUserConfig("filesystem", "denyRead"),
+        ...fromProjectConfig("filesystem", "denyRead"),
+        ...fromAdapter("filesystem", "denyRead"),
+      ].flatMap(applyToEachDir),
+      allowRead: [
+        SANDBOX_CACHE,
+        CWD,
+        ...addDirs,
+        ...base.filesystem.allowRead,
+        ...fromPresets("filesystem", "allowRead"),
+        ...fromUserConfig("filesystem", "allowRead"),
+        ...fromProjectConfig("filesystem", "allowRead"),
+        ...fromAdapter("filesystem", "allowRead"),
       ],
+      allowWrite: [
+        SANDBOX_CACHE,
+        CWD,
+        ...addDirs,
+        ...base.filesystem.allowWrite,
+        ...fromPresets("filesystem", "allowWrite"),
+        ...fromUserConfig("filesystem", "allowWrite"),
+        ...fromProjectConfig("filesystem", "allowWrite"),
+        ...fromAdapter("filesystem", "allowWrite"),
+      ],
+      denyWrite: [
+        `${HOME}/.blackwall`, // a sandboxed command must not edit the user's blackwall setups
+        ".blackwall", // same as above, but applies to CWD and any --add-dir folder
+        ...base.filesystem.denyWrite,
+        ...fromPresets("filesystem", "denyWrite"),
+        ...fromUserConfig("filesystem", "denyWrite"),
+        ...fromProjectConfig("filesystem", "denyWrite"),
+        ...fromAdapter("filesystem", "denyWrite"),
+      ].flatMap(applyToEachDir),
     },
   };
 
@@ -104,7 +160,7 @@ export function buildConfig({ addDirs, additions }) {
 
 export function readProjectEnv() {
   // From ~, it's the user's own .env, already loaded
-  if (PROJECT_CONFIG === CONFIG) return {};
+  if (PROJECT_CONFIG === USER_CONFIG) return {};
   const env = readIfExists(PROJECT_ENV);
   if (env === undefined) return {};
   const config = readIfExists(PROJECT_CONFIG);
@@ -132,39 +188,19 @@ function readConfig(file, requireTrust = false) {
 
 // Like direnv, trust covers this path with these exact contents, so any edit needs a new --trust
 function trustMarker(text) {
-  return `${TRUSTED}/${createHash("sha256").update(`${PROJECT_CONFIG}\n${text}`).digest("hex")}`;
+  return `${TRUST_MARKERS}/${createHash("sha256").update(`${PROJECT_CONFIG}\n${text}`).digest("hex")}`;
 }
 
 function parseConfig(file, text) {
   const parsed = JSON.parse(text);
-  checkShape(file, parsed, { ...DEFAULTS, overrideDefaults: {} }, "", true, ["overrideDefaults"]);
+  const result = CONFIG_SCHEMA.safeParse(parsed, { errorMap: configErrorMap });
+  if (!result.success) {
+    const [issue] = result.error.issues;
+    const path = issue.path.join(".");
+    exitWithConfigError(file, path && issue.code !== "unrecognized_keys" ? `${path}: ${issue.message}` : issue.message);
+  }
   const { overrideDefaults: overrides = {}, presets = [], ...additions } = parsed;
-  checkShape(file, overrides, DEFAULTS, "overrideDefaults.", false);
   return { additions, overrides, presets };
-}
-
-// Keys and types mirror default-config.json: a misspelled key would otherwise drop its paths without a word, and a string would spread into characters
-function checkShape(file, value, shape, prefix, listsOnly, skip = []) {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    exitWithConfigError(file, `${prefix.slice(0, -1) || "the file"} must be an object`);
-  }
-  for (const [key, item] of Object.entries(value)) {
-    if (skip.includes(key)) continue;
-    const name = `${prefix}${key}`;
-    if (!Object.hasOwn(shape, key)) exitWithConfigError(file, `unknown key ${name}`);
-    const expected = shape[key];
-    if (Array.isArray(expected)) {
-      if (!Array.isArray(item) || !item.every((entry) => typeof entry === "string")) {
-        exitWithConfigError(file, `${name} must be a list of strings`);
-      }
-    } else if (typeof expected === "object") {
-      checkShape(file, item, expected, `${name}.`, listsOnly);
-    } else if (listsOnly) {
-      exitWithConfigError(file, `${name} can only be set under overrideDefaults`);
-    } else if (typeof item !== typeof expected) {
-      exitWithConfigError(file, `${name} must be a ${typeof expected}`);
-    }
-  }
 }
 
 function exitWithConfigError(file, message) {

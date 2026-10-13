@@ -17,7 +17,7 @@ export default {
   config() {
     return {
       network: {
-        allowedDomains: [
+        allowedHosts: [
           "api.anthropic.com",
           "bridge.claudeusercontent.com",
           "*.frame.claudeusercontent.com",

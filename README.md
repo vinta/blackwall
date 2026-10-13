@@ -29,8 +29,9 @@ blackwall --version                           # show the blackwall version
 
 By default, a sandboxed command:
 
-- Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, and `~/.cache/blackwall`
+- Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, and `~/.cache-blackwall`
 - Never writes `.git/config` or `.git/hooks`, in the current or `--add-dir` folders. `git remote add`, `git config`, and `git branch -m` fail; `git push -u`, `git branch -D`, and `git switch -c` lose their tracking update. Set remotes and upstreams on the host, or push with `git push origin HEAD`
+- Never writes `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
@@ -80,22 +81,28 @@ npx skills add vinta/blackwall -g
 
 ### Default
 
-[`src/config/default-config.json`](src/config/default-config.json) is the default layer, and your `~/.blackwall/config.json` goes on top of it. Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt with the launch-time grants that `blackwall --print-config` shows. srt settings missing from this file can't be set.
+[`src/config/default-config.json`](src/config/default-config.json) is the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`.
 
-- `presets: ["python", "node", "github", "git", "pre-commit"]`: The [presets](#presets) on by default
-- `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every host; srt itself rejects `"*"`, so `blackwall` handles it
+- `presets: ["agent-files", "python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
+- `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. Add `"*"` to allow every public host and public IP literal; srt itself rejects `"*"`, so `blackwall` handles it. srt also refuses, for every name, loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses. blackwall applies the same to IP literals under `"*"`. These aren't in `--print-config`
+- `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`; without `"*"`, an unlisted host is refused anyway. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name, so `localhost:8000` in `allowedHosts` is reachable though the `local-network` preset denies `localhost`. A range is overridden only by that IP itself in `allowedHosts`. Both lists from presets, your user config, and the project config are added together
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
+
+Every key except `presets`, `network.allowedHosts`, and `network.deniedHosts` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt directly. blackwall translates the two host lists into srt's own lists. An srt setting blackwall doesn't expose is a config error, `unknown key`. However, blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
 
 ### Presets
 
 A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars. Each is a module in [`src/presets`](src/presets):
 
+- [agent-files](src/presets/agent-files.mjs): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. Drop it and a sandboxed command can plant commands that run on the host
 - [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
 - [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
-- [git](src/presets/git.mjs): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
+- [git](src/presets/git.mjs): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Denies writes to `.git/hooks` and `.git/config` in `--add-dir` folders, since srt denies them in the current folder only. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
 - [pre-commit](src/presets/pre-commit.mjs): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
+- [local-network](src/presets/local-network.mjs): Denies `localhost` and `*.localhost` by name under `"*"`. srt's own denies already cover loopback addresses. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`
+- [private-network](src/presets/private-network.mjs): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedHosts`, e.g. `192.168.1.10:8080`
 - [tmpdir](src/presets/tmpdir.mjs): `/tmp/claude` as the temp folder. Always on
 - [mac](src/presets/mac.mjs): System paths macOS tools need. Always on, on macOS
 - [linux](src/presets/linux.mjs): `/usr/local`, the 64-bit lib folders, srt's seccomp helper, and `/tmp`, where srt keeps its proxy sockets. Always on, on Linux
@@ -123,9 +130,10 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 }
 ```
 
-- Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults
-- To allow every host, add `"*"` to `network.allowedDomains`
+- Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults. A relative `filesystem.denyRead` or `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
+- To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`. Loopback, private ranges, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
 - `overrideDefaults` takes any key in `default-config.json` and **replaces** its default value. It's applied first, then the top-level lists are added
+- If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open. Add `agent-files` too, or sandboxed commands can write the settings and hooks an unsandboxed `claude` runs, and `.mcp.json`, `.claude/commands`, and `.claude/agents` in `--add-dir` folders
 
 </details>
 
@@ -171,7 +179,7 @@ To give `blackwall` its own identity on macOS:
 BLACKWALL_USE_SELF_SIGNED_NODE=1 # put this in ~/.blackwall/.env, or export it
 ```
 
-Little Snitch then shows `blackwall_node` instead of `node`. It's an ad-hoc-signed copy of your `node` at `~/.blackwall/blackwall_node`, created on the first run and again whenever it's missing. Delete it after upgrading Node to get a fresh copy.
+Little Snitch then shows `node-blackwall` instead of `node`. It's an ad-hoc-signed copy of your `node` at `~/.blackwall/node-blackwall`, created on the first run and again whenever it's missing. Delete it after upgrading Node to get a fresh copy.
 
 </details>
 

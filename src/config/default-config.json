@@ -1,14 +1,17 @@
 {
   "presets": [
+    "agent-files",
     "python",
     "node",
     "github",
     "git",
-    "pre-commit"
+    "pre-commit",
+    "local-network",
+    "private-network"
   ],
   "network": {
-    "allowedDomains": [],
-    "deniedDomains": []
+    "allowedHosts": [],
+    "deniedHosts": []
   },
   "enableWeakerNetworkIsolation": true,
   "enableWeakerNestedSandbox": false,
