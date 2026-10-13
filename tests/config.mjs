@@ -26,6 +26,11 @@ for (const host of ["example.com:0", "example.com:99999", "exa mple.com", "*.loc
   rejects({ network: { deniedHosts: [host] } }, /must be a name like/);
 }
 
+for (const key of ["denyRead", "allowRead", "allowWrite", "denyWrite"]) {
+  const [issue] = parse({ filesystem: { [key]: [{ path: "x", literal: true }] } }).error.issues;
+  assert.equal(issue.path.join("."), `filesystem.${key}.0`);
+}
+
 rejects({ allowPty: false }, /can only be set under overrideDefaults/);
 accepts({ overrideDefaults: { allowPty: false } });
 rejects({ network: { allowLocalBinding: true } }, /is an srt setting/);

@@ -1,6 +1,6 @@
 import { isIP } from "node:net";
 
-import { FilesystemConfigSchema, NetworkConfigSchema, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
+import { NetworkConfigSchema, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { z } from "zod";
 
@@ -33,13 +33,16 @@ const deniedHost = z.string().superRefine((value, ctx) => {
   if (message) ctx.addIssue({ code: "custom", message });
 });
 
+const paths = z.array(z.string().min(1));
+
 const LISTS = z
   .object({
     network: z
       .object({ allowedHosts: z.array(allowedHost), deniedHosts: z.array(deniedHost) })
       .partial()
       .strict(),
-    filesystem: FilesystemConfigSchema.pick({ denyRead: true, allowRead: true, allowWrite: true, denyWrite: true }).partial().strict(),
+    // Not srt's element, which also takes { path, literal } objects that buildConfig would treat as strings
+    filesystem: z.object({ denyRead: paths, allowRead: paths, allowWrite: paths, denyWrite: paths }).partial().strict(),
     presets: z.array(z.string()),
   })
   .partial()
