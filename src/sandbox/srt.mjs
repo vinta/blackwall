@@ -14,8 +14,7 @@ export function createSandbox(config) {
   const { allowedHosts, deniedHosts, ...network } = config.network;
   const allowAllDomains = allowedHosts.includes("*");
   // srt matches allowedHosts names and literals itself; denied ranges it checks at dial time, for names only
-  const deniedRanges = deniedHosts.filter((entry) => parseAddressRange(entry));
-  const deniedNames = deniedHosts.filter((entry) => !parseAddressRange(entry));
+  const { ranges: deniedRanges = [], names: deniedNames = [] } = Object.groupBy(deniedHosts, (entry) => (parseAddressRange(entry) ? "ranges" : "names"));
   const srtConfig = {
     ...config,
     network: {
@@ -27,7 +26,21 @@ export function createSandbox(config) {
     },
   };
   SandboxRuntimeConfigSchema.parse(srtConfig);
-  const guard = createResolvedAddressGuard(srtConfig.network);
+
+  // Without "*", strictAllowlist makes srt deny every host no rule matches, and it never asks
+  let askCallback;
+  if (allowAllDomains) {
+    const guard = createResolvedAddressGuard(srtConfig.network);
+    askCallback = async ({ host, port }) => {
+      // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
+      const canonicalHost = canonicalizeHost(host) ?? host;
+      // canonicalizeHost strips one trailing dot, so a dot left means the raw host had an empty label: no resolver accepts it, but srt dials the one-dot spelling, which does resolve
+      if (/\.$|\.\./.test(canonicalHost)) return false;
+      if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return false;
+      // A dummy non-IP hostname makes the guard judge the address as a resolved answer, the way it would for a name resolving there
+      return isIP(canonicalHost) ? guard.permits("literal", canonicalHost, port) : true;
+    };
+  }
 
   return {
     async printFileAccess() {
@@ -50,16 +63,7 @@ export function createSandbox(config) {
     },
 
     async run(args, env) {
-      await SandboxManager.initialize(srtConfig, async ({ host, port }) => {
-        if (!allowAllDomains) return false;
-        // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
-        const canonicalHost = canonicalizeHost(host) ?? host;
-        // canonicalizeHost strips one trailing dot, so a dot left means the raw host had an empty label: no resolver accepts it, but srt dials the one-dot spelling, which does resolve
-        if (/\.$|\.\./.test(canonicalHost)) return false;
-        if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return false;
-        // A dummy non-IP hostname makes the guard judge the address as a resolved answer, the way it would for a name resolving there
-        return isIP(canonicalHost) ? guard.permits("literal", canonicalHost, port) : true;
-      });
+      await SandboxManager.initialize(srtConfig, askCallback);
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
       const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
