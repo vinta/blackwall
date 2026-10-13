@@ -20,6 +20,10 @@ rejects({ network: { allowedHosts: ["*:22"] } });
 for (const host of ["*", "*:22", "1.2.3.4:443", "[::1]"]) rejects({ network: { deniedHosts: [host] } });
 accepts({ network: { deniedHosts: ["10.0.0.0/8", "1.2.3.4", "localhost", "*.corp.internal"] } });
 rejects({ network: { deniedHosts: ["10.0.0.0/33"] } }, /CIDR/);
+accepts({ network: { deniedHosts: ["*.localhost", "*.test", "LOCALHOST", "example.com:8080", "_dmarc.example.com"] } });
+for (const host of ["example.com:0", "example.com:99999", "exa mple.com", "*.localhost:", ".com", "localhost."]) {
+  rejects({ network: { deniedHosts: [host] } }, /must be a name like/);
+}
 
 rejects({ allowPty: false }, /can only be set under overrideDefaults/);
 accepts({ overrideDefaults: { allowPty: false } });

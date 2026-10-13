@@ -39,12 +39,15 @@ const PRESETS = {
 // srt's top-level schema is a zod 3 ZodEffects; innerType() reaches the object
 const SRT = SandboxRuntimeConfigSchema.innerType();
 const RANGE = NetworkConfigSchema.shape.deniedResolvedAddresses.unwrap().element;
-const DOMAIN = NetworkConfigSchema.shape.deniedDomains.element;
 
 // srt rejects "*", but blackwall handles it before srt sees the list
 const allowedHost = z.union([z.literal("*"), NetworkConfigSchema.shape.allowedDomains.element]);
 
-// A zod 3 union reports the first branch that fails a refine, so the range check would hide the domain message
+// No trailing dot: srt's canonicalizeHost strips it from the destination, so such a pattern would never match
+const NAME = /^(\*\.)?[a-z0-9_-]+(\.[a-z0-9_-]+)*$/i;
+
+// Not srt's deniedDomains element: its broadness rule (no *.localhost) guards lists srt matches, and blackwall matches deniedHosts names itself
+// A zod 3 union reports the first branch that fails a refine, so the range check would hide the name message
 const deniedHost = z.string().superRefine((value, ctx) => {
   const range = RANGE.safeParse(value);
   if (range.success) return;
@@ -56,7 +59,9 @@ const deniedHost = z.string().superRefine((value, ctx) => {
       ? `"${value}" is not allowed, since every host not in allowedHosts is already denied`
       : isIP(hostPattern)
         ? `"${value}" must be a bare IP address or CIDR, without a port or brackets`
-        : DOMAIN.safeParse(value).error?.issues[0].message;
+        : NAME.test(hostPattern)
+          ? undefined
+          : `"${value}" must be a name like example.com or *.example.com, with an optional :port, an IP address, or a CIDR range`;
   if (message) ctx.addIssue({ code: "custom", message });
 });
 
