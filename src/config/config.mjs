@@ -109,7 +109,7 @@ export function buildConfig({ addDirs, additions }) {
         ...fromUserConfig("filesystem", "denyRead"),
         ...fromProjectConfig("filesystem", "denyRead"),
         ...fromAdapter("filesystem", "denyRead"),
-      ],
+      ].flatMap(applyToEachDir),
       allowRead: [
         CWD,
         ...addDirs,

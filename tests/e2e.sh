@@ -130,6 +130,9 @@ check "unexposed srt key exits 2" eval 'blackwall true; test $? -eq 2'
 check "unexposed srt key named as unknown key" eval 'grep -q "unknown key network.allowLocalBinding" <<<"$(blackwall true 2>&1)"'
 echo '{"network":{"allowedDomains":["x.com"]}}' >"$home/.blackwall/config.json"
 check "old allowedDomains key exits 2" eval 'blackwall true; test $? -eq 2'
+echo '{"filesystem":{"denyRead":["secrets"]}}' >"$home/.blackwall/config.json"
+mkdir -p "$added/secrets" && echo secret >"$added/secrets/key"
+check "read --add-dir relative denyRead denied" eval '! blackwall --add-dir "$added" cat "$added/secrets/key" | grep -q secret'
 mv "$root/config.json" "$home/.blackwall/config.json"
 
 skill=$elsewhere/linked-skill/SKILL.md
