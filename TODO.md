@@ -5,9 +5,16 @@
 - Per-command env files: `~/.blackwall/<command>.env` (e.g. `claude.env`, `codex.env`) goes only to that command, so tokens like `CLAUDE_CODE_OAUTH_TOKEN` stay away from every other sandboxed command without app-specific code in `blackwall.mjs`
 - `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` strips credentials from Claude's Bash tool, hooks, and MCP children, but since v2.1.251 it also strips `CLAUDE_CONFIG_DIR` (nested `claude` calls lose the profile) and likely `GH_TOKEN`
 - `HTTP_PROXY`/`HTTPS_PROXY` in the launcher env or `~/.blackwall/.env` makes srt route through that parent proxy and skip its resolved-address check (`sandbox-config.js:666`), so `deniedHosts` ranges and srt's built-in classes aren't enforced for names on that path; only IP literals under `"*"` are still judged by the callback. Options: refuse to start with a parent proxy, or warn, or document it in README and CHANGELOG
+- Publish the next version: the global npm install is on 0.3.0, which still has the allow-all loopback hole
+
+## Upstream (srt)
+
+- `deniedDomains` has the same trailing-dot edge blackwall fixed in its callback: `canonicalizeHost` strips one dot, so `evil.com..` matches no deny entry and dials `evil.com.`
+- srt's mandatory denies cover `.claude/commands` and `.claude/agents` but not `.claude/settings.json` hooks or `.claude/skills`, which execute by the same criterion
 
 ## Features
 
+- Skill trigger evals via skill-creator: the description is 767 chars and untested against Claude Code's own sandbox errors as near-misses
 - `--print-network-access`: the effective network policy as text in evaluation order, the twin of `--print-file-access`, including srt's built-in refused classes that `--print-config` leaves out
 - CIDR ranges in `network.allowedHosts`: the callback allows an IP literal inside the range. Needs `strictAllowlist` off whenever a CIDR is present, and a README note that it matches literal requests only, never a name resolving into the range
 - Expose `network.allowLocalBinding` under `overrideDefaults`, for dev servers that bind a port inside the sandbox
