@@ -116,7 +116,7 @@ check 'listed localhost port allowed under "*"' eval 'test "$(http_code "http://
 # INT, since bash prints a Terminated line for a child killed by TERM
 kill -INT "$listener"
 
-check "write cache" eval 'blackwall sh -c "mkdir -p \"\$GH_CONFIG_DIR\" && echo x > \"\$GH_CONFIG_DIR/probe\"" && test -f "$home/.cache/blackwall/gh/probe"'
+check "write cache" eval 'blackwall sh -c "mkdir -p \"\$GH_CONFIG_DIR\" && echo x > \"\$GH_CONFIG_DIR/probe\"" && test -f "$home/.cache-blackwall/gh/probe"'
 check "gh runs" blackwall gh --version
 
 cp "$home/.blackwall/config.json" "$root/config.json"
@@ -149,7 +149,7 @@ echo "E2E_TOKEN=user" >"$home/.blackwall/.env"
 printf 'E2E_TOKEN=project\nGH_CONFIG_DIR=elsewhere\n' >"$proj/.blackwall/.env"
 check "project .env overrides user .env" eval 'test "$(blackwall sh -c "echo \$E2E_TOKEN")" = project'
 check "BLACKWALL_SANDBOX marks the sandbox" eval 'test "$(blackwall sh -c "echo \$BLACKWALL_SANDBOX")" = 1'
-check "project .env can't override blackwall vars" eval 'test "$(blackwall sh -c "echo \$GH_CONFIG_DIR")" = "$home/.cache/blackwall/gh"'
+check "project .env can't override blackwall vars" eval 'test "$(blackwall sh -c "echo \$GH_CONFIG_DIR")" = "$home/.cache-blackwall/gh"'
 rm "$home/.blackwall/.env"
 
 check "edited project config refused" eval 'echo "{}" >"$proj/.blackwall/config.json"; grep -q "not trusted" <<<"$(blackwall true 2>&1)"'

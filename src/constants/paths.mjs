@@ -17,7 +17,7 @@ export const XDG_RUNTIME = xdg("XDG_RUNTIME_DIR");
 // The package's own skills, copied into each agent profile so they match the running blackwall
 export const SKILLS = fileURLToPath(new URL("../../skills", import.meta.url));
 
-export const SANDBOX_CACHE = `${HOME}/.cache/blackwall`;
+export const SANDBOX_CACHE = `${HOME}/.cache-blackwall`;
 export const USER_CONFIG = `${HOME}/.blackwall/config.json`;
 
 // Loads only once trusted, since a cloned repo can ship one that widens the sandbox

@@ -10,7 +10,7 @@ allowed-tools: Bash(blackwall --print-config:*) Bash(blackwall --print-file-acce
 
 `blackwall <command>` runs the command under [srt](https://github.com/anthropics/sandbox-runtime) with a policy fixed at launch:
 
-- Writes: the current folder, `--add-dir` folders, `/tmp/claude`, `~/.cache/blackwall`. Write-denied even inside those: `~/.blackwall`, `.blackwall`, `.git/hooks`, `.git/config`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders (srt covers the last three in the current folder only, so the preset adds them for `--add-dir` folders), and srt's own list for the current folder (`.zshrc`, `.gitconfig`, `.vscode`, …), which `blackwall --print-file-access` prints.
+- Writes: the current folder, `--add-dir` folders, `/tmp/claude`, `~/.cache-blackwall`. Write-denied even inside those: `~/.blackwall`, `.blackwall`, `.git/hooks`, `.git/config`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders (srt covers the last three in the current folder only, so the preset adds them for `--add-dir` folders), and srt's own list for the current folder (`.zshrc`, `.gitconfig`, `.vscode`, …), which `blackwall --print-file-access` prints.
 - Reads: those folders, the system paths and preset paths in the default config, and `allowRead` entries from the user and project configs. The rest of `~` is invisible.
 - Network: only hosts from presets, the `claude` and `codex` adapters, and `network.allowedHosts`, all through srt's proxy. The sandbox has no direct DNS, so a tool that ignores `HTTPS_PROXY` can't resolve any host.
 
@@ -21,7 +21,7 @@ A denial is the policy working. The fix is a grant plus a relaunch, never a retr
 Inside a sandboxed session (`blackwall claude`, `blackwall codex`), `$BLACKWALL_SANDBOX` is `1`. blackwall 0.2.1 and older don't set it; there, one of these holds:
 
 - `$CLAUDE_CONFIG_DIR` is `~/.claude-blackwall`, or `$CODEX_HOME` is `~/.codex-blackwall`
-- `$GH_CONFIG_DIR`, `$UV_CACHE_DIR`, or `$NPM_CONFIG_CACHE` is under `~/.cache/blackwall`
+- `$GH_CONFIG_DIR`, `$UV_CACHE_DIR`, or `$NPM_CONFIG_CACHE` is under `~/.cache-blackwall`
 - `$TMPDIR` is exactly `/tmp/claude` (`/private/tmp/claude` on macOS)
 
 Inside, `blackwall` is unavailable: every flag, `--version` included, exits 2 with `blackwall: can't run inside a sandbox; run it from a plain terminal`. Diagnose from the error text and the grant list above, read the project's `.blackwall/config.json` if one exists, then hand the user the exact edit and commands. Outside (a plain terminal, or an agent that isn't sandboxed), run the `--print-*` flags and edit the user config yourself.
