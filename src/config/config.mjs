@@ -3,7 +3,7 @@ import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFile
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
-import { CACHE, CONFIG, CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, TRUSTED } from "../constants/paths.mjs";
+import { CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, SANDBOX_CACHE, TRUST_MARKERS, USER_CONFIG } from "../constants/paths.mjs";
 import agentFiles from "../presets/agent-files.mjs";
 import git from "../presets/git.mjs";
 import github from "../presets/github.mjs";
@@ -37,7 +37,7 @@ export function trustProjectConfig() {
   if (text === undefined) exitWithConfigError(PROJECT_CONFIG, "not found");
   // A malformed file fails now rather than on the next launch
   parseConfig(PROJECT_CONFIG, text);
-  mkdirSync(TRUSTED, { recursive: true });
+  mkdirSync(TRUST_MARKERS, { recursive: true });
   writeFileSync(trustMarker(text), "");
   return PROJECT_CONFIG;
 }
@@ -45,9 +45,9 @@ export function trustProjectConfig() {
 // additions is the adapter's layer, added after every config file's lists
 export function buildConfig({ addDirs, additions }) {
   // overrideDefaults replaces default values, the project's over the user's, then the presets and the top-level lists of both are added on top
-  const user = readConfig(CONFIG);
+  const user = readConfig(USER_CONFIG);
   // From ~, both paths name the user config
-  const project = PROJECT_CONFIG === CONFIG ? { additions: {}, overrides: {}, presets: [] } : readConfig(PROJECT_CONFIG, true);
+  const project = PROJECT_CONFIG === USER_CONFIG ? { additions: {}, overrides: {}, presets: [] } : readConfig(PROJECT_CONFIG, true);
 
   // presets is blackwall's own key, so it never reaches srt
   const { presets: basePresets, ...base } = {
@@ -112,7 +112,7 @@ export function buildConfig({ addDirs, additions }) {
         ...fromAdapter("filesystem", "denyRead"),
       ].flatMap(applyToEachDir),
       allowRead: [
-        CACHE,
+        SANDBOX_CACHE,
         CWD,
         ...addDirs,
         ...base.filesystem.allowRead,
@@ -122,7 +122,7 @@ export function buildConfig({ addDirs, additions }) {
         ...fromAdapter("filesystem", "allowRead"),
       ],
       allowWrite: [
-        CACHE,
+        SANDBOX_CACHE,
         CWD,
         ...addDirs,
         ...base.filesystem.allowWrite,
@@ -160,7 +160,7 @@ export function buildConfig({ addDirs, additions }) {
 
 export function readProjectEnv() {
   // From ~, it's the user's own .env, already loaded
-  if (PROJECT_CONFIG === CONFIG) return {};
+  if (PROJECT_CONFIG === USER_CONFIG) return {};
   const env = readIfExists(PROJECT_ENV);
   if (env === undefined) return {};
   const config = readIfExists(PROJECT_CONFIG);
@@ -188,7 +188,7 @@ function readConfig(file, requireTrust = false) {
 
 // Like direnv, trust covers this path with these exact contents, so any edit needs a new --trust
 function trustMarker(text) {
-  return `${TRUSTED}/${createHash("sha256").update(`${PROJECT_CONFIG}\n${text}`).digest("hex")}`;
+  return `${TRUST_MARKERS}/${createHash("sha256").update(`${PROJECT_CONFIG}\n${text}`).digest("hex")}`;
 }
 
 function parseConfig(file, text) {
