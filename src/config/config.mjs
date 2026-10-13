@@ -77,6 +77,8 @@ export function buildConfig({ addDirs, additions }) {
   }
 
   const added = (section, key) => layers.flatMap((layer) => layer[section]?.[key] ?? []);
+  // A relative entry applies to the current folder and every --add-dir folder
+  const applyToEachDir = (path) => (/^[~/]/.test(path) ? [path] : [CWD, ...addDirs].map((dir) => `${dir}/${path}`));
 
   const config = {
     ...base,
@@ -90,10 +92,7 @@ export function buildConfig({ addDirs, additions }) {
       allowWrite: [CWD, ...addDirs, ...base.filesystem.allowWrite, CACHE, ...added("filesystem", "allowWrite")],
       // cwd/.blackwall keeps a run from writing a project config for you to trust, and ~/.blackwall from forging trust or replacing blackwall_node, even when
       // cwd or an --add-dir covers it
-      // A relative entry applies to the current folder and every --add-dir folder
-      denyWrite: [...base.filesystem.denyWrite, `${CWD}/.blackwall`, `${HOME}/.blackwall`, ...added("filesystem", "denyWrite")].flatMap((path) =>
-        /^[~/]/.test(path) ? [path] : [CWD, ...addDirs].map((dir) => `${dir}/${path}`),
-      ),
+      denyWrite: [...base.filesystem.denyWrite, `${CWD}/.blackwall`, `${HOME}/.blackwall`, ...added("filesystem", "denyWrite")].flatMap(applyToEachDir),
     },
   };
 
