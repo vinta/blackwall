@@ -72,6 +72,7 @@ check "write --add-dir .claude/settings.json denied" eval 'blackwall --add-dir "
 check "write --add-dir .mcp.json denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.mcp.json\""; ! test -e "$added/.mcp.json"'
 check "write --add-dir .claude/commands denied" eval 'blackwall --add-dir "$added" sh -c "mkdir -p \"$added/.claude/commands\" && echo x > \"$added/.claude/commands/x.md\""; ! test -e "$added/.claude/commands/x.md"'
 check "write --add-dir .claude/agents denied" eval 'blackwall --add-dir "$added" sh -c "mkdir -p \"$added/.claude/agents\" && echo x > \"$added/.claude/agents/x.md\""; ! test -e "$added/.claude/agents/x.md"'
+check "create --add-dir .blackwall denied" eval 'blackwall --add-dir "$added" mkdir "$added/.blackwall"; ! test -e "$added/.blackwall"'
 
 check "git reads ~/.config/git/config" eval 'test "$(blackwall git config --get user.email)" = e2e@example.com'
 mkdir -p "$elsewhere/xdg/git" && printf '[user]\n\temail = xdg@example.com\n' >"$elsewhere/xdg/git/config"
