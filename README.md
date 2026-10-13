@@ -82,13 +82,13 @@ npx skills add vinta/blackwall -g
 
 [`src/config/default-config.json`](src/config/default-config.json) is the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`.
 
-- `presets: ["python", "node", "github", "git", "pre-commit", "private-network"]`: The [presets](#presets) on by default
-- `network.allowedDomains: []`: No hosts beyond presets. Add `"*"` to allow every public host; srt itself rejects `"*"`, so `blackwall` handles it. IP literals, `localhost`, and names resolving into loopback or private ranges stay denied. To reach a local server, add its IP literal with the port, e.g. `127.0.0.1:8000`
-- `network.deniedResolvedAddresses: []`: IP ranges an allowed host must not resolve to, on top of srt's own denies like loopback, link-local, cloud metadata, and your machine's own addresses. Lists in your user and project configs are added to it
+- `presets: ["python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
+- `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. Add `"*"` to allow every public host and public IP literal; srt itself rejects `"*"`, so `blackwall` handles it. srt also refuses, for every name, loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses. blackwall applies the same to IP literals under `"*"`. These aren't in `--print-config`
+- `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`; without `"*"`, an unlisted host is refused anyway. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name, so `localhost:8000` in `allowedHosts` is reachable though the `local-network` preset denies `localhost`. A range is overridden only by that IP itself in `allowedHosts`. Both lists from presets, your user config, and the project config are added together
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 
-Every key except `presets` is an [srt setting](https://github.com/anthropics/sandbox-runtime), **most of them** passed to srt directly. However, blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
+Every key except `presets`, `network.allowedHosts`, and `network.deniedHosts` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt directly. blackwall translates the two host lists into srt's own lists. An srt setting blackwall doesn't expose is a config error that names it as an srt setting. However, blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
 
 ### Presets
 
@@ -99,7 +99,8 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, env v
 - [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
 - [git](src/presets/git.mjs): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
 - [pre-commit](src/presets/pre-commit.mjs): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
-- [private-network](src/presets/private-network.mjs): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedDomains`, e.g. `192.168.1.10:8080`
+- [local-network](src/presets/local-network.mjs): Denies `localhost` and `*.localhost` by name under `"*"`. srt's own denies already cover loopback addresses. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`
+- [private-network](src/presets/private-network.mjs): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedHosts`, e.g. `192.168.1.10:8080`
 - [tmpdir](src/presets/tmpdir.mjs): `/tmp/claude` as the temp folder. Always on
 - [mac](src/presets/mac.mjs): System paths macOS tools need. Always on, on macOS
 - [linux](src/presets/linux.mjs): `/usr/local`, the 64-bit lib folders, srt's seccomp helper, and `/tmp`, where srt keeps its proxy sockets. Always on, on Linux
@@ -128,8 +129,9 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 ```
 
 - Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults
-- To allow every public host, add `"*"` to `network.allowedDomains`. IP literals, `localhost`, and names resolving into loopback or private ranges stay denied, so add a local server as its IP literal with the port, e.g. `127.0.0.1:8000`
+- To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`. Loopback, the LAN, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
 - `overrideDefaults` takes any key in `default-config.json` and **replaces** its default value. It's applied first, then the top-level lists are added
+- If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open
 
 </details>
 

@@ -5,14 +5,19 @@
 ### Breaking Changes
 
 - Requires Node.js 22.21.0 or later, the first 22.x with `NODE_USE_ENV_PROXY`, so the `node` preset's proxy fix holds everywhere blackwall runs
-- `private-network` is a preset in the default list now. A host that resolves into RFC 1918, CGNAT, or IPv6 ULA ranges is refused, so sandboxed commands can't reach your LAN. To reach a LAN host, add its IP and port to `network.allowedDomains`, e.g. `192.168.1.10:8080`. If you set `overrideDefaults.presets`, add `private-network`, or private ranges stay open
-- `"*"` in `network.allowedDomains` allows only DNS names now. IP literals, public ones too, and `localhost` are refused: `"*"` used to let a command that skipped `NO_PROXY` reach servers on your machine and LAN through srt's proxy. To reach a local server, add its IP and port, e.g. `127.0.0.1:8000`
+- `network.allowedHosts` and `network.deniedHosts` replace `network.allowedDomains`, `network.deniedDomains`, and `network.deniedResolvedAddresses`. There are no aliases: the old keys are config errors, so rename them in your configs
+- An entry is a name, like `example.com` or `*.example.com`, an IP literal, or a range, like `10.0.0.0/8`. A name in `allowedHosts` or `deniedHosts` can take a port, and so can an IP literal in `allowedHosts`, e.g. `127.0.0.1:8000`. A name in `deniedHosts` is refused under `"*"`. An IP literal or a range in `deniedHosts` is refused as a literal, and also when an allowed name resolves into it
+- A denied name no longer beats an allowed one: an `allowedHosts` entry wins over a `deniedHosts` name, so to deny a host a preset allows, drop the preset. Ranges still win: a `deniedHosts` range is overridden only by that IP itself in `allowedHosts`
+- `"*"` in `network.allowedHosts` no longer reaches your machine or LAN. It used to let a command that skipped `NO_PROXY` reach them through srt's proxy. Now an IP literal in loopback, unspecified, link-local, multicast, broadcast, cloud metadata, your machine's own addresses, or a `deniedHosts` range is refused. Public IP literals like `1.1.1.1` still connect
+- `local-network` is a preset in the default list now. It denies `localhost` and `*.localhost` by name under `"*"`. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`. If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`
+- `private-network` is a preset in the default list now. A host that resolves into RFC 1918, CGNAT, or IPv6 ULA ranges is refused, so sandboxed commands can't reach your LAN. To reach a LAN host, add its IP and port to `network.allowedHosts`, e.g. `192.168.1.10:8080`. If you set `overrideDefaults.presets`, add `private-network`, or private ranges stay open
 
 ### Changes
 
 - Upgrades srt to 0.0.79. On 0.0.78, a folder with `[` and `]` in its name, like `[wip] app`, voided every deny inside it, so a sandboxed command could write the project's `.git/hooks`
-- `network.deniedResolvedAddresses` can be set: IP ranges an allowed host must not resolve to, on top of srt's own denies. Add them in your user or project config
-- Without `"*"` in `network.allowedDomains`, srt enforces the allowlist itself and denies unlisted hosts without asking blackwall's callback, so a bug in the callback can't let a host through
+- Config values are checked when each config file is read, with srt's own rules, so a bad range or name pattern is reported with the path of the file it's in
+- An srt setting blackwall doesn't expose, like `network.allowLocalBinding`, fails with `network.allowLocalBinding is an srt setting, but blackwall doesn't support setting it`. A misspelled key still fails with `unknown key`
+- Without `"*"` in `network.allowedHosts`, srt enforces the allowlist itself and denies unlisted hosts without asking blackwall's callback, so a bug in the callback can't let a host through
 
 ## v0.3.0 / 2026-10-11
 
