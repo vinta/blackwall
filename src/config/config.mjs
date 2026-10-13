@@ -103,6 +103,7 @@ export function buildConfig({ addDirs, additions }) {
       ],
     },
     filesystem: {
+      // Listed in srt's precedence: a later key wins where it overlaps an earlier one, except a denyRead nested inside an allowRead
       denyRead: [
         ...base.filesystem.denyRead,
         ...fromPresets("filesystem", "denyRead"),
@@ -111,29 +112,29 @@ export function buildConfig({ addDirs, additions }) {
         ...fromAdapter("filesystem", "denyRead"),
       ].flatMap(applyToEachDir),
       allowRead: [
+        CACHE,
         CWD,
         ...addDirs,
         ...base.filesystem.allowRead,
-        CACHE,
         ...fromPresets("filesystem", "allowRead"),
         ...fromUserConfig("filesystem", "allowRead"),
         ...fromProjectConfig("filesystem", "allowRead"),
         ...fromAdapter("filesystem", "allowRead"),
       ],
       allowWrite: [
+        CACHE,
         CWD,
         ...addDirs,
         ...base.filesystem.allowWrite,
-        CACHE,
         ...fromPresets("filesystem", "allowWrite"),
         ...fromUserConfig("filesystem", "allowWrite"),
         ...fromProjectConfig("filesystem", "allowWrite"),
         ...fromAdapter("filesystem", "allowWrite"),
       ],
       denyWrite: [
-        ...base.filesystem.denyWrite,
         `${HOME}/.blackwall`, // a sandboxed command must not edit the user's blackwall setups
         ".blackwall", // same as above, but applies to CWD and any --add-dir folder
+        ...base.filesystem.denyWrite,
         ...fromPresets("filesystem", "denyWrite"),
         ...fromUserConfig("filesystem", "denyWrite"),
         ...fromProjectConfig("filesystem", "denyWrite"),
