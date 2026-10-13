@@ -17,7 +17,6 @@
 
 - Upgrades srt to 0.0.79. On 0.0.78, a folder with `[` and `]` in its name, like `[wip] app`, voided every deny inside it, so a sandboxed command could write the project's `.git/hooks`
 - Config values are checked when each config file is read, so a bad range or name pattern is reported with the path of the file it's in. `allowedHosts` entries and ranges follow srt's rules; `deniedHosts` names follow blackwall's: `example.com` or `*.example.com` with an optional port, single-label wildcards like `*.localhost` included
-- An srt setting blackwall doesn't expose, like `network.allowLocalBinding`, fails with `network.allowLocalBinding is an srt setting, but blackwall doesn't support setting it`. A misspelled key still fails with `unknown key`
 - A relative `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
 - Without `"*"` in `network.allowedHosts`, srt enforces the allowlist itself and denies unlisted hosts without asking blackwall's callback, so a bug in the callback can't let a host through
 

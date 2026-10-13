@@ -89,7 +89,7 @@ npx skills add vinta/blackwall -g
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 
-Every key except `presets`, `network.allowedHosts`, and `network.deniedHosts` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt directly. blackwall translates the two host lists into srt's own lists. An srt setting blackwall doesn't expose is a config error that names it as an srt setting. However, blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
+Every key except `presets`, `network.allowedHosts`, and `network.deniedHosts` is an [srt setting](https://github.com/anthropics/sandbox-runtime), passed to srt directly. blackwall translates the two host lists into srt's own lists. An srt setting blackwall doesn't expose is a config error, `unknown key`. However, blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
 
 ### Presets
 

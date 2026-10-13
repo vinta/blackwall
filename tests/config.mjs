@@ -54,7 +54,7 @@ for (const key of ["denyRead", "allowRead", "allowWrite", "denyWrite"]) {
 
 rejects({ allowPty: false }, /can only be set under overrideDefaults/);
 accepts({ overrideDefaults: { allowPty: false } });
-rejects({ network: { allowLocalBinding: true } }, /is an srt setting/);
+rejects({ network: { allowLocalBinding: true } }, /^unknown key network\.allowLocalBinding$/);
 rejects({ network: { allowedHots: [] } }, /^unknown key network\.allowedHots$/);
 
 // Presets are merged without passing the file schema, so a preset-only entry like *.localhost or a typo would otherwise go unchecked
