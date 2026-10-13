@@ -31,7 +31,7 @@ By default, a sandboxed command:
 
 - Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, and `~/.cache/blackwall`
 - Never writes `.git/config` or `.git/hooks`, in the current or `--add-dir` folders. `git remote add`, `git config`, and `git branch -m` fail; `git push -u`, `git branch -D`, and `git switch -c` lose their tracking update. Set remotes and upstreams on the host, or push with `git push origin HEAD`
-- Never writes `.claude/settings.json`, `.claude/settings.local.json`, or `.claude/hooks` in the current or `--add-dir` folders, since an unsandboxed `claude` there runs the hooks, env, and apiKeyHelper from those settings even before you trust the folder. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
+- Never writes `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
@@ -95,7 +95,7 @@ Every key except `presets`, `network.allowedHosts`, and `network.deniedHosts` is
 
 A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars. Each is a module in [`src/presets`](src/presets):
 
-- [agent-files](src/presets/agent-files.mjs): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, and `.claude/hooks` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs the hooks, env, and apiKeyHelper from those settings even before you trust the folder. Drop it and a sandboxed command can plant commands that run on the host
+- [agent-files](src/presets/agent-files.mjs): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. Drop it and a sandboxed command can plant commands that run on the host
 - [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
 - [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
@@ -133,7 +133,7 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 - Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults. A relative `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
 - To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`. Loopback, the LAN, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
 - `overrideDefaults` takes any key in `default-config.json` and **replaces** its default value. It's applied first, then the top-level lists are added
-- If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open. Add `agent-files` too, or sandboxed commands can write the settings and hooks an unsandboxed `claude` runs
+- If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open. Add `agent-files` too, or sandboxed commands can write the settings and hooks an unsandboxed `claude` runs, and `.mcp.json`, `.claude/commands`, and `.claude/agents` in `--add-dir` folders
 
 </details>
 
