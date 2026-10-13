@@ -82,6 +82,7 @@ check "other host blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS
 check "host resolving into RFC 1918 blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://10.0.0.1.sslip.io 2>&1)"'
 check "user config adds deniedHosts" eval 'blackwall --print-config true | grep -q "\"192.0.2.0/24\""'
 check "local-network preset denies localhost" eval 'blackwall --print-config true | grep -q "\"localhost\""'
+check "agent-files preset in --print-config" eval 'blackwall --print-config true | grep -q "/CLAUDE.md\""'
 
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 node=$(realpath "$(command -v node)")

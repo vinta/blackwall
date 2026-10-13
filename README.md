@@ -31,7 +31,7 @@ By default, a sandboxed command:
 
 - Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, and `~/.cache/blackwall`
 - Never writes `.git/config` or `.git/hooks`, in the current or `--add-dir` folders. `git remote add`, `git config`, and `git branch -m` fail; `git push -u`, `git branch -D`, and `git switch -c` lose their tracking update. Set remotes and upstreams on the host, or push with `git push origin HEAD`
-- Never writes `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/skills`, `.claude/hooks`, `.codex`, or `.agents` in the current or `--add-dir` folders, since an unsandboxed `claude` or `codex` there would load them. A sandboxed `claude` can't save project permission rules either
+- Never writes `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/skills`, `.claude/hooks`, `.codex`, or `.agents` in the current or `--add-dir` folders, since an unsandboxed `claude` or `codex` there would load them. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
@@ -83,7 +83,7 @@ npx skills add vinta/blackwall -g
 
 [`src/config/default-config.json`](src/config/default-config.json) is the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`.
 
-- `presets: ["python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
+- `presets: ["agent-files", "python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
 - `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. Add `"*"` to allow every public host and public IP literal; srt itself rejects `"*"`, so `blackwall` handles it. srt also refuses, for every name, loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses. blackwall applies the same to IP literals under `"*"`. These aren't in `--print-config`
 - `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`; without `"*"`, an unlisted host is refused anyway. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name, so `localhost:8000` in `allowedHosts` is reachable though the `local-network` preset denies `localhost`. A range is overridden only by that IP itself in `allowedHosts`. Both lists from presets, your user config, and the project config are added together
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
@@ -95,6 +95,7 @@ Every key except `presets`, `network.allowedHosts`, and `network.deniedHosts` is
 
 A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars. Each is a module in [`src/presets`](src/presets):
 
+- [agent-files](src/presets/agent-files.mjs): Denies writes to `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/skills`, `.claude/hooks`, `.codex`, and `.agents` in the current and `--add-dir` folders, since an unsandboxed `claude` or `codex` there would load them. Drop it and a sandboxed command can plant hooks, skills, or instructions that run on the host
 - [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
 - [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
@@ -129,10 +130,10 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 }
 ```
 
-- Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults
+- Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults. A relative `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
 - To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`. Loopback, the LAN, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
 - `overrideDefaults` takes any key in `default-config.json` and **replaces** its default value. It's applied first, then the top-level lists are added
-- If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open
+- If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open. Add `agent-files` too, or sandboxed commands can write the files an unsandboxed `claude` or `codex` loads
 
 </details>
 

@@ -9,6 +9,7 @@ import { splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandb
 import { z } from "zod";
 
 import { CACHE, CONFIG, CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, TRUSTED } from "../constants/paths.mjs";
+import agentFiles from "../presets/agent-files.mjs";
 import git from "../presets/git.mjs";
 import github from "../presets/github.mjs";
 import linux from "../presets/linux.mjs";
@@ -22,11 +23,9 @@ import tmpdir from "../presets/tmpdir.mjs";
 
 const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
 
-// An unsandboxed claude or codex in the same folder loads these, so a run that writes them plants hooks, skills, or instructions on the host
-const AGENT_FILES = [".claude/settings.json", ".claude/settings.local.json", ".claude/skills", ".claude/hooks", "CLAUDE.md", "CLAUDE.local.md", "AGENTS.md", ".codex", ".agents"];
-
 // A config picks a preset only by name from this list, never a file by path
 export const PRESETS = {
+  "agent-files": agentFiles,
   git,
   github,
   linux,
@@ -164,15 +163,15 @@ export function buildConfig({ addDirs, additions }) {
       allowWrite: [CWD, ...addDirs, ...base.filesystem.allowWrite, CACHE, ...added("filesystem", "allowWrite")],
       // cwd/.blackwall keeps a run from writing a project config for you to trust, and ~/.blackwall from forging trust or replacing blackwall_node, even when
       // cwd or an --add-dir covers it
+      // A relative entry applies to the current folder and every --add-dir folder
       denyWrite: [
         ...base.filesystem.denyWrite,
         `${CWD}/.blackwall`,
         `${HOME}/.blackwall`,
         // srt's built-in .git denies anchor on cwd only
         ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]),
-        ...[CWD, ...addDirs].flatMap((dir) => AGENT_FILES.map((name) => `${dir}/${name}`)),
         ...added("filesystem", "denyWrite"),
-      ],
+      ].flatMap((path) => (/^[~/]/.test(path) ? [path] : [CWD, ...addDirs].map((dir) => `${dir}/${path}`))),
     },
   };
 

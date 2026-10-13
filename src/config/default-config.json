@@ -1,5 +1,6 @@
 {
   "presets": [
+    "agent-files",
     "python",
     "node",
     "github",
