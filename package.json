@@ -32,10 +32,11 @@
     "skills/"
   ],
   "scripts": {
-    "test": "node tests/shared.mjs && bash tests/e2e.sh"
+    "test": "node tests/shared.mjs && node tests/config.mjs && bash tests/e2e.sh"
   },
   "dependencies": {
-    "@anthropic-ai/sandbox-runtime": "0.0.79"
+    "@anthropic-ai/sandbox-runtime": "0.0.79",
+    "zod": "3.25.76"
   },
   "engines": {
     "node": ">=22.21.0"

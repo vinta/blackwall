@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { isIP } from "node:net";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
+
+import { FilesystemConfigSchema, NetworkConfigSchema, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
+import { splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
+import { z } from "zod";
 
 import { CACHE, CONFIG, CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, TRUSTED } from "../constants/paths.mjs";
 import git from "../presets/git.mjs";
@@ -28,6 +33,69 @@ const PRESETS = {
   python,
   tmpdir,
 };
+
+// srt's top-level schema is a zod 3 ZodEffects; innerType() reaches the object
+const SRT = SandboxRuntimeConfigSchema.innerType();
+const RANGE = NetworkConfigSchema.shape.deniedResolvedAddresses.unwrap().element;
+const DOMAIN = NetworkConfigSchema.shape.deniedDomains.element;
+
+// srt rejects "*", but blackwall handles it before srt sees the list
+const allowedHost = z.union([z.literal("*"), NetworkConfigSchema.shape.allowedDomains.element]);
+
+// A zod 3 union reports the first branch that fails a refine, so the range check would hide the domain message
+const deniedHost = z.string().superRefine((value, ctx) => {
+  const range = RANGE.safeParse(value);
+  if (range.success) return;
+  const { hostPattern } = splitDomainPatternPort(value);
+  // A domain pattern never has a "/", so a value with one is a mistyped CIDR. srt's deniedResolvedAddresses sees only a bare IP literal
+  const message = value.includes("/")
+    ? range.error.issues[0].message
+    : hostPattern === "*"
+      ? `"${value}" is not allowed, since every host not in allowedHosts is already denied`
+      : isIP(hostPattern)
+        ? `"${value}" must be a bare IP address or CIDR, without a port or brackets`
+        : DOMAIN.safeParse(value).error?.issues[0].message;
+  if (message) ctx.addIssue({ code: "custom", message });
+});
+
+const LISTS = z
+  .object({
+    network: z
+      .object({ allowedHosts: z.array(allowedHost), deniedHosts: z.array(deniedHost) })
+      .partial()
+      .strict(),
+    filesystem: FilesystemConfigSchema.pick({ denyRead: true, allowRead: true, allowWrite: true, denyWrite: true }).partial().strict(),
+    presets: z.array(z.string()),
+  })
+  .partial()
+  .strict();
+
+const OVERRIDES = LISTS.extend(SRT.pick({ allowPty: true, enableWeakerNetworkIsolation: true, enableWeakerNestedSandbox: true }).shape)
+  .partial()
+  .strict();
+
+export const CONFIG_SCHEMA = LISTS.extend({ overrideDefaults: OVERRIDES }).partial().strict();
+
+// Is key, under path, a key in srt's schema?
+function isSrtKey(path, key) {
+  let schema = SRT;
+  for (const segment of [...path.filter((s) => s !== "overrideDefaults"), key]) {
+    schema = schema?.shape?.[segment];
+    while (schema?.unwrap) schema = schema.unwrap();
+  }
+  return schema !== undefined;
+}
+
+export function configErrorMap(issue, ctx) {
+  if (issue.code !== "unrecognized_keys") return { message: ctx.defaultError };
+  const messages = issue.keys.map((key) => {
+    const name = [...issue.path, key].join(".");
+    if (issue.path.length === 0 && Object.hasOwn(OVERRIDES.shape, key)) return `${name} can only be set under overrideDefaults`;
+    if (isSrtKey(issue.path, key)) return `${name} is an srt setting, but blackwall doesn't support setting it`;
+    return `unknown key ${name}`;
+  });
+  return { message: messages.join("; ") };
+}
 
 export function trustProjectConfig() {
   const text = readIfExists(PROJECT_CONFIG);
@@ -148,34 +216,14 @@ function trustMarker(text) {
 
 function parseConfig(file, text) {
   const parsed = JSON.parse(text);
-  checkShape(file, parsed, { ...DEFAULTS, overrideDefaults: {} }, "", true, ["overrideDefaults"]);
+  const result = CONFIG_SCHEMA.safeParse(parsed, { errorMap: configErrorMap });
+  if (!result.success) {
+    const [issue] = result.error.issues;
+    const path = issue.path.join(".");
+    exitWithConfigError(file, path && issue.code !== "unrecognized_keys" ? `${path}: ${issue.message}` : issue.message);
+  }
   const { overrideDefaults: overrides = {}, presets = [], ...additions } = parsed;
-  checkShape(file, overrides, DEFAULTS, "overrideDefaults.", false);
   return { additions, overrides, presets };
-}
-
-// Keys and types mirror default-config.json: a misspelled key would otherwise drop its paths without a word, and a string would spread into characters
-function checkShape(file, value, shape, prefix, listsOnly, skip = []) {
-  if (typeof value !== "object" || value === null || Array.isArray(value)) {
-    exitWithConfigError(file, `${prefix.slice(0, -1) || "the file"} must be an object`);
-  }
-  for (const [key, item] of Object.entries(value)) {
-    if (skip.includes(key)) continue;
-    const name = `${prefix}${key}`;
-    if (!Object.hasOwn(shape, key)) exitWithConfigError(file, `unknown key ${name}`);
-    const expected = shape[key];
-    if (Array.isArray(expected)) {
-      if (!Array.isArray(item) || !item.every((entry) => typeof entry === "string")) {
-        exitWithConfigError(file, `${name} must be a list of strings`);
-      }
-    } else if (typeof expected === "object") {
-      checkShape(file, item, expected, `${name}.`, listsOnly);
-    } else if (listsOnly) {
-      exitWithConfigError(file, `${name} can only be set under overrideDefaults`);
-    } else if (typeof item !== typeof expected) {
-      exitWithConfigError(file, `${name} must be a ${typeof expected}`);
-    }
-  }
 }
 
 function exitWithConfigError(file, message) {

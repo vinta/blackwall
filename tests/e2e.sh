@@ -102,6 +102,15 @@ check "gh runs" blackwall gh --version
 cp "$home/.blackwall/config.json" "$root/config.json"
 echo '{"filesystem":{"allowRead":"/"}}' >"$home/.blackwall/config.json"
 check "config error exits 2" eval 'blackwall true; test $? -eq 2'
+echo '{"network":{"deniedHosts":["*"]}}' >"$home/.blackwall/config.json"
+check '"*" in deniedHosts exits 2' eval 'blackwall true; test $? -eq 2'
+echo '{"network":{"deniedHosts":["1.2.3.4:443"]}}' >"$home/.blackwall/config.json"
+check "IP literal with port in deniedHosts exits 2" eval 'blackwall true; test $? -eq 2'
+echo '{"network":{"allowLocalBinding":true}}' >"$home/.blackwall/config.json"
+check "unexposed srt key exits 2" eval 'blackwall true; test $? -eq 2'
+check "unexposed srt key named as srt setting" eval 'grep -q "is an srt setting" <<<"$(blackwall true 2>&1)"'
+echo '{"network":{"allowedDomains":["x.com"]}}' >"$home/.blackwall/config.json"
+check "old allowedDomains key exits 2" eval 'blackwall true; test $? -eq 2'
 mv "$root/config.json" "$home/.blackwall/config.json"
 
 skill=$elsewhere/linked-skill/SKILL.md

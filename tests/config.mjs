@@ -1,0 +1,29 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { CONFIG_SCHEMA, configErrorMap } from "../src/config/config.mjs";
+
+// Guards srt's zod internals (innerType, shape, element) that the schema reaches into, on each srt bump
+const parse = (config) => CONFIG_SCHEMA.safeParse(config, { errorMap: configErrorMap });
+const accepts = (config) => assert.ok(parse(config).success, JSON.stringify(config));
+const rejects = (config, message) => {
+  const result = parse(config);
+  assert.ok(!result.success, JSON.stringify(config));
+  if (message) assert.match(result.error.issues[0].message, message);
+};
+
+const defaults = JSON.parse(readFileSync(new URL("../src/config/default-config.json", import.meta.url), "utf8"));
+accepts({ overrideDefaults: defaults });
+
+accepts({ network: { allowedHosts: ["*", "github.com"] } });
+rejects({ network: { allowedHosts: ["*:22"] } });
+
+for (const host of ["*", "*:22", "1.2.3.4:443", "[::1]"]) rejects({ network: { deniedHosts: [host] } });
+accepts({ network: { deniedHosts: ["10.0.0.0/8", "1.2.3.4", "localhost", "*.corp.internal"] } });
+rejects({ network: { deniedHosts: ["10.0.0.0/33"] } }, /CIDR/);
+
+rejects({ allowPty: false }, /can only be set under overrideDefaults/);
+accepts({ overrideDefaults: { allowPty: false } });
+rejects({ network: { allowLocalBinding: true } }, /is an srt setting/);
+rejects({ network: { allowedHots: [] } }, /^unknown key network\.allowedHots$/);
+
+console.log("config: ok");
