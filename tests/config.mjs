@@ -26,6 +26,18 @@ for (const host of ["example.com:0", "example.com:99999", "exa mple.com", "*.loc
   rejects({ network: { deniedHosts: [host] } }, /must be a name like/);
 }
 
+for (const [host, canonical] of [
+  ["127.1", "127.0.0.1"],
+  ["0x7f000001", "127.0.0.1"],
+  ["2130706433", "127.0.0.1"],
+  ["0177.0.0.1", "127.0.0.1"],
+  ["192.168.1", "192.168.0.1"],
+  ["0", "0.0.0.0"],
+  ["127.1:80", "127.0.0.1"],
+]) {
+  rejects({ network: { deniedHosts: [host] } }, new RegExp(`write it as ${canonical.replaceAll(".", "\\.")}$`));
+}
+
 for (const key of ["denyRead", "allowRead", "allowWrite", "denyWrite"]) {
   const [issue] = parse({ filesystem: { [key]: [{ path: "x", literal: true }] } }).error.issues;
   assert.equal(issue.path.join("."), `filesystem.${key}.0`);

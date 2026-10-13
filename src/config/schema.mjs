@@ -2,6 +2,7 @@ import { isIP } from "node:net";
 
 import { NetworkConfigSchema, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
+import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
 import { z } from "zod";
 
 // srt's top-level schema is a zod 3 ZodEffects; innerType() reaches the object
@@ -20,6 +21,8 @@ const deniedHost = z.string().superRefine((value, ctx) => {
   const range = RANGE.safeParse(value);
   if (range.success) return;
   const { hostPattern } = splitDomainPatternPort(value);
+  // srt matches the canonical spelling, so a name like 127.1 or 2130706433 would never match a request
+  const canonical = canonicalizeHost(hostPattern) ?? "";
   // No domain pattern has a "/", so a value with one gets the range message; a pasted URL gets it too
   const message = value.includes("/")
     ? range.error.issues[0].message
@@ -27,9 +30,11 @@ const deniedHost = z.string().superRefine((value, ctx) => {
       ? `"${value}" is not allowed, since every host not in allowedHosts is already denied`
       : isIP(hostPattern)
         ? `"${value}" must be a bare IP address or CIDR, without a port or brackets`
-        : NAME.test(hostPattern)
-          ? undefined
-          : `"${value}" must be a name like example.com or *.example.com, with an optional :port, an IP address, or a CIDR range`;
+        : isIP(canonical)
+          ? `"${value}" is the IP address ${canonical}; write it as ${canonical}`
+          : NAME.test(hostPattern)
+            ? undefined
+            : `"${value}" must be a name like example.com or *.example.com, with an optional :port, an IP address, or a CIDR range`;
   if (message) ctx.addIssue({ code: "custom", message });
 });
 
