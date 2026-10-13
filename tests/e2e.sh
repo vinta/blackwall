@@ -98,6 +98,8 @@ echo '{"network":{"allowedHosts":["*"]}}' >"$open/.blackwall/config.json" && bla
 check '127.0.0.1 blocked under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 403'
 check 'localhost blocked under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 403'
 check 'foo.localhost blocked under "*"' eval 'test "$(http_code "http://foo.localhost:$port/")" = 403'
+check 'localhost.. blocked under "*"' eval 'test "$(http_code "http://localhost..:$port/")" = 403'
+check 'foo.localhost.. blocked under "*"' eval 'test "$(http_code "http://foo.localhost..:$port/")" = 403'
 check '[::1] blocked under "*"' eval 'test "$(http_code "http://[::1]:$port/")" = 403'
 check 'public host allowed under "*"' eval 'test "$(http_code https://example.com/)" = 200'
 # 1.1.1.1 may answer 200 or 301; only the proxy's 403 matters

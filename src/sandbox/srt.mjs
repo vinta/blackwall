@@ -54,6 +54,8 @@ export function createSandbox(config) {
         if (!allowAllDomains) return false;
         // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
         const canonicalHost = canonicalizeHost(host) ?? host;
+        // canonicalizeHost strips one trailing dot, so a dot left means the raw host had an empty label: no resolver accepts it, but srt dials the one-dot spelling, which does resolve
+        if (/\.$|\.\./.test(canonicalHost)) return false;
         if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return false;
         // A dummy non-IP hostname makes the guard judge the address as a resolved answer, the way it would for a name resolving there
         return isIP(canonicalHost) ? guard.permits("literal", canonicalHost, port) : true;
