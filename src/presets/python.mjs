@@ -6,7 +6,7 @@ export default {
     UV_CACHE_DIR: `${CACHE}/uv`,
   },
   network: {
-    allowedDomains: ["pypi.org", "files.pythonhosted.org"],
+    allowedHosts: ["pypi.org", "files.pythonhosted.org"],
   },
   filesystem: {
     allowRead: [`${XDG_CONFIG}/uv/uv.toml`, `${XDG_DATA}/uv`],

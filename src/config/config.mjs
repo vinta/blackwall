@@ -78,9 +78,8 @@ export function buildConfig({ addDirs, additions }) {
   const config = {
     ...base,
     network: {
-      allowedDomains: [...base.network.allowedDomains, ...added("network", "allowedDomains")],
-      deniedDomains: [...base.network.deniedDomains, ...added("network", "deniedDomains")],
-      deniedResolvedAddresses: [...base.network.deniedResolvedAddresses, ...added("network", "deniedResolvedAddresses")],
+      allowedHosts: [...base.network.allowedHosts, ...added("network", "allowedHosts")],
+      deniedHosts: [...base.network.deniedHosts, ...added("network", "deniedHosts")],
     },
     filesystem: {
       denyRead: [...base.filesystem.denyRead, ...added("filesystem", "denyRead")],

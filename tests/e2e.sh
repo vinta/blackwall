@@ -18,7 +18,7 @@ git -C "$added" init -q
 # setup-node and the claude and codex installers put them outside every default grant. Seatbelt checks a link and its target separately, so grant both the PATH entry's folder and the install folder
 grants() { local path; path=$(command -v "$1"); printf '"%s","%s"' "$(dirname "$path")" "$(dirname "$(dirname "$(realpath "$path")")")"; }
 # The codex adapter's ~/.codex/packages, where Codex's standalone installer links through a `current` folder, points into the stub HOME here
-printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]},"network":{"allowedDomains":["*.sslip.io"],"deniedResolvedAddresses":["192.0.2.0/24"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
+printf '{"filesystem":{"allowRead":[%s,%s,%s,"%s"]},"network":{"allowedHosts":["*.sslip.io"],"deniedHosts":["192.0.2.0/24"]}}\n' "$(grants node)" "$(grants claude)" "$(grants codex)" "$HOME/.codex/packages" >"$home/.blackwall/config.json"
 echo secret >"$home/secret.txt"
 echo "# host instructions" >"$home/.claude/CLAUDE.md"
 echo "# host instructions" >"$home/.codex/AGENTS.md"
@@ -74,7 +74,7 @@ check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude
 check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https://api.github.com
 check "other host blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://example.com 2>&1)"'
 check "host resolving into RFC 1918 blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://10.0.0.1.sslip.io 2>&1)"'
-check "user config adds deniedResolvedAddresses" eval 'blackwall --print-config true | grep -q "\"192.0.2.0/24\""'
+check "user config adds deniedHosts" eval 'blackwall --print-config true | grep -q "\"192.0.2.0/24\""'
 
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 node=$(realpath "$(command -v node)")
@@ -86,12 +86,12 @@ check "node fetch to other host blocked" eval 'blackwall "$node" -e "fetch(\"htt
 blackwall_open() { (cd "$open" && HOME=$home XDG_CONFIG_HOME=$home/.config node "$repo/src/blackwall.mjs" "$@"); }
 http_code() { blackwall_open sh -c 'curl -sS -o /dev/null --max-time 10 --noproxy "" --proxy "$HTTP_PROXY" -w "%{http_code}" "$1"' sh "$1"; }
 read -r port listener < <(node -e 'const server = require("http").createServer((q, s) => s.end("ok")).listen(0, "127.0.0.1", () => console.log(server.address().port, process.pid))')
-echo '{"network":{"allowedDomains":["*"]}}' >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
+echo '{"network":{"allowedHosts":["*"]}}' >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
 check '127.0.0.1 blocked under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 403'
 check 'localhost blocked under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 403'
 check '[::1] blocked under "*"' eval 'test "$(http_code "http://[::1]:$port/")" = 403'
 check 'public host allowed under "*"' eval 'test "$(http_code https://example.com/)" = 200'
-printf '{"network":{"allowedDomains":["*","127.0.0.1:%s"]}}\n' "$port" >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
+printf '{"network":{"allowedHosts":["*","127.0.0.1:%s"]}}\n' "$port" >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
 check 'listed IP literal allowed under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 200'
 # INT, since bash prints a Terminated line for a child killed by TERM
 kill -INT "$listener"

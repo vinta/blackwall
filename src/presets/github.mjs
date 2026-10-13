@@ -6,7 +6,7 @@ export default {
     GH_CONFIG_DIR: `${CACHE}/gh`,
   },
   network: {
-    allowedDomains: ["github.com", "*.github.com", "*.githubusercontent.com"],
+    allowedHosts: ["github.com", "*.github.com", "*.githubusercontent.com"],
   },
   filesystem: {
     allowRead: [`${XDG_DATA}/gh/extensions`],

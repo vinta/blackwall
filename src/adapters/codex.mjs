@@ -11,7 +11,7 @@ export default {
   config() {
     return {
       network: {
-        allowedDomains: ["api.openai.com", "auth.openai.com", "chatgpt.com"],
+        allowedHosts: ["api.openai.com", "auth.openai.com", "chatgpt.com"],
       },
       filesystem: {
         allowRead: [PROFILE, `${HOME}/.codex/packages`],

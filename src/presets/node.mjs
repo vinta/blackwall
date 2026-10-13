@@ -7,7 +7,7 @@ export default {
     NODE_USE_ENV_PROXY: "1",
   },
   network: {
-    allowedDomains: ["registry.npmjs.org"],
+    allowedHosts: ["registry.npmjs.org"],
   },
   filesystem: {
     // fnm keeps its per-shell links in the runtime folder when there is one

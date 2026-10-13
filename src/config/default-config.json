@@ -8,9 +8,8 @@
     "private-network"
   ],
   "network": {
-    "allowedDomains": [],
-    "deniedDomains": [],
-    "deniedResolvedAddresses": []
+    "allowedHosts": [],
+    "deniedHosts": []
   },
   "enableWeakerNetworkIsolation": true,
   "enableWeakerNestedSandbox": false,

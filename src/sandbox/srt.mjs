@@ -1,4 +1,5 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
+import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
 import { spawn } from "node:child_process";
 import { isIP } from "node:net";
 
@@ -7,10 +8,19 @@ import { CWD } from "../constants/paths.mjs";
 export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every DNS name no rule matches
   // IP literals and localhost stay denied: srt's resolved-address guard skips literals and lets localhost reach loopback
-  const allowAllDomains = config.network.allowedDomains.includes("*");
+  const { allowedHosts, deniedHosts, ...network } = config.network;
+  const allowAllDomains = allowedHosts.includes("*");
+  // srt matches names and literals itself; ranges it checks at dial time, for names only
+  const deniedRanges = deniedHosts.filter((entry) => parseAddressRange(entry));
   const srtConfig = {
     ...config,
-    network: { ...config.network, allowedDomains: config.network.allowedDomains.filter((domain) => domain !== "*"), strictAllowlist: !allowAllDomains },
+    network: {
+      ...network,
+      allowedDomains: allowedHosts.filter((host) => host !== "*"),
+      deniedDomains: [],
+      deniedResolvedAddresses: deniedRanges,
+      strictAllowlist: !allowAllDomains,
+    },
   };
   SandboxRuntimeConfigSchema.parse(srtConfig);
 
