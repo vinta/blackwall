@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { CONFIG_SCHEMA, configErrorMap, PRESETS } from "../src/config/config.mjs";
+import { PRESETS } from "../src/config/config.mjs";
+import { CONFIG_SCHEMA, configErrorMap } from "../src/config/schema.mjs";
 
 // Guards srt's zod internals (innerType, shape, element) that the schema reaches into, on each srt bump
 const parse = (config) => CONFIG_SCHEMA.safeParse(config, { errorMap: configErrorMap });
