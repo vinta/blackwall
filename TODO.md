@@ -16,6 +16,7 @@
 ## Features
 
 - Skill trigger evals via skill-creator: the description is 767 chars and untested against Claude Code's own sandbox errors as near-misses
+- Deny the on-link prefixes of this machine's own interfaces (`os.networkInterfaces()` cidr), so the LAN is covered whatever its numbering: `private-network` refuses RFC 1918, CGNAT, and ULA only, so a LAN host with a global IPv6 address or on a public-numbered LAN stays reachable
 - `--print-network-access`: the effective network policy as text in evaluation order, the twin of `--print-file-access`, including srt's built-in refused classes that `--print-config` leaves out
 - CIDR ranges in `network.allowedHosts`: the callback allows an IP literal inside the range. Needs `strictAllowlist` off whenever a CIDR is present, and a README note that it matches literal requests only, never a name resolving into the range
 - Expose `network.allowLocalBinding` under `overrideDefaults`, for dev servers that bind a port inside the sandbox

@@ -52,7 +52,7 @@ Noise, harmless, the command still ran:
    - One run, one folder, read and write: `blackwall --add-dir DIR <command>`. Under `blackwall claude` the folder is also passed to claude as `--add-dir`.
    - One path: `filesystem.allowRead` or `filesystem.allowWrite`. One host: `network.allowedHosts` (`*.example.com` wildcards work). Everything one tool needs: its preset.
    - Per project: `.blackwall/config.json`. Per machine: `~/.blackwall/config.json`. Secrets: `~/.blackwall/.env` or `.blackwall/.env`, never a config file.
-   - `"*"` in `allowedHosts` opens every public host and public IP literal, not loopback, the LAN, or `localhost`, and `overrideDefaults.filesystem.denyRead` opens every path; propose them only when the user asks for an open sandbox.
+   - `"*"` in `allowedHosts` opens every public host and public IP literal, not loopback, private ranges, or `localhost`, and `overrideDefaults.filesystem.denyRead` opens every path; propose them only when the user asks for an open sandbox.
    - Credentials under `~/.ssh`, `~/.aws`, `~/.gnupg`, and writes to `~/.claude`, `~/.codex`, `~/.blackwall` are what the sandbox exists to deny: report the need to the user instead of proposing a grant.
 3. Deliver. Inside: print the JSON to add, the file it goes in, and the commands, for the user to run outside. Outside: write `~/.blackwall/config.json` yourself; for a project config, write it and leave `blackwall --trust` to the user, who re-runs it after every edit. `--trust` exists so a human reviews the file.
 4. Relaunch: config loads at launch, so the user restarts the sandboxed command and reruns what failed. Done when it passes with that grant and nothing broader.

@@ -131,7 +131,7 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 ```
 
 - Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults. A relative `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
-- To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`. Loopback, the LAN, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
+- To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`. Loopback, private ranges, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
 - `overrideDefaults` takes any key in `default-config.json` and **replaces** its default value. It's applied first, then the top-level lists are added
 - If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open. Add `agent-files` too, or sandboxed commands can write the settings and hooks an unsandboxed `claude` runs, and `.mcp.json`, `.claude/commands`, and `.claude/agents` in `--add-dir` folders
 
