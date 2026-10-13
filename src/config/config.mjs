@@ -69,30 +69,78 @@ export function buildConfig({ addDirs, additions }) {
     // env is a preset-only key, so it never reaches srt
     return { name, env: {}, ...PRESETS[name] };
   });
-  const layers = [...presets, user.additions, project.additions, additions];
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
   if (!base.filesystem.denyRead.some((path) => `${HOME}/`.startsWith(`${expandPath(path)}/`.replace("//", "/")))) {
     console.warn("blackwall: overrideDefaults.filesystem.denyRead no longer denies ~/, so your home directory is readable");
   }
 
-  const added = (section, key) => layers.flatMap((layer) => layer[section]?.[key] ?? []);
+  const entriesOf = (layer, section, key) => layer[section]?.[key] ?? [];
+  const fromPresets = (section, key) => presets.flatMap((preset) => entriesOf(preset, section, key));
+  const fromUserConfig = (section, key) => entriesOf(user.additions, section, key);
+  const fromProjectConfig = (section, key) => entriesOf(project.additions, section, key);
+  const fromAdapter = (section, key) => entriesOf(additions, section, key);
+
   // A relative entry applies to the current folder and every --add-dir folder
   const applyToEachDir = (path) => (/^[~/]/.test(path) ? [path] : [CWD, ...addDirs].map((dir) => `${dir}/${path}`));
 
   const config = {
     ...base,
     network: {
-      allowedHosts: [...base.network.allowedHosts, ...added("network", "allowedHosts")],
-      deniedHosts: [...base.network.deniedHosts, ...added("network", "deniedHosts")],
+      allowedHosts: [
+        ...base.network.allowedHosts,
+        ...fromPresets("network", "allowedHosts"),
+        ...fromUserConfig("network", "allowedHosts"),
+        ...fromProjectConfig("network", "allowedHosts"),
+        ...fromAdapter("network", "allowedHosts"),
+      ],
+      deniedHosts: [
+        ...base.network.deniedHosts,
+        ...fromPresets("network", "deniedHosts"),
+        ...fromUserConfig("network", "deniedHosts"),
+        ...fromProjectConfig("network", "deniedHosts"),
+        ...fromAdapter("network", "deniedHosts"),
+      ],
     },
     filesystem: {
-      denyRead: [...base.filesystem.denyRead, ...added("filesystem", "denyRead")],
-      allowRead: [CWD, ...addDirs, ...base.filesystem.allowRead, CACHE, ...added("filesystem", "allowRead")],
-      allowWrite: [CWD, ...addDirs, ...base.filesystem.allowWrite, CACHE, ...added("filesystem", "allowWrite")],
+      denyRead: [
+        ...base.filesystem.denyRead,
+        ...fromPresets("filesystem", "denyRead"),
+        ...fromUserConfig("filesystem", "denyRead"),
+        ...fromProjectConfig("filesystem", "denyRead"),
+        ...fromAdapter("filesystem", "denyRead"),
+      ],
+      allowRead: [
+        CWD,
+        ...addDirs,
+        ...base.filesystem.allowRead,
+        CACHE,
+        ...fromPresets("filesystem", "allowRead"),
+        ...fromUserConfig("filesystem", "allowRead"),
+        ...fromProjectConfig("filesystem", "allowRead"),
+        ...fromAdapter("filesystem", "allowRead"),
+      ],
+      allowWrite: [
+        CWD,
+        ...addDirs,
+        ...base.filesystem.allowWrite,
+        CACHE,
+        ...fromPresets("filesystem", "allowWrite"),
+        ...fromUserConfig("filesystem", "allowWrite"),
+        ...fromProjectConfig("filesystem", "allowWrite"),
+        ...fromAdapter("filesystem", "allowWrite"),
+      ],
       // cwd/.blackwall keeps a run from writing a project config for you to trust, and ~/.blackwall from forging trust or replacing blackwall_node, even when
       // cwd or an --add-dir covers it
-      denyWrite: [...base.filesystem.denyWrite, `${CWD}/.blackwall`, `${HOME}/.blackwall`, ...added("filesystem", "denyWrite")].flatMap(applyToEachDir),
+      denyWrite: [
+        ...base.filesystem.denyWrite,
+        `${CWD}/.blackwall`,
+        `${HOME}/.blackwall`,
+        ...fromPresets("filesystem", "denyWrite"),
+        ...fromUserConfig("filesystem", "denyWrite"),
+        ...fromProjectConfig("filesystem", "denyWrite"),
+        ...fromAdapter("filesystem", "denyWrite"),
+      ].flatMap(applyToEachDir),
     },
   };
 
