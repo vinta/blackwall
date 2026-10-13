@@ -26,10 +26,6 @@
   - Never: `allowAppleEvents` (srt's README: removes code-execution isolation, user-level only); `network.allowAllUnixSockets` (disables socket blocking); `network.httpProxyPort`, `network.socksProxyPort` (srt stops filtering, the external proxy must); `network.mitmProxy`, `network.tlsTerminate`, `network.filterRequest` (interception, and `filterRequest` is a function); `network.parentProxy` (already set through `HTTP_PROXY`, see the parent proxy item under Network); srt's own `network` and `filesystem` lists, which blackwall builds; `windows`
   - `git.safeDirectories` collides with the git preset's `GIT_CONFIG_COUNT`, see the worktree item. `credentials` is a feature of its own, see the `GH_TOKEN` masking item under Secrets
 
-## Unsandboxed Commands
-
-- Escape hatch for commands that can't run sandboxed, e.g. playwright (enclave's `unboxexec`): a daemon on a Unix socket runs allowlisted commands outside. Exec argv directly, never through a shell
-
 ## Unverified
 
 - Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)
