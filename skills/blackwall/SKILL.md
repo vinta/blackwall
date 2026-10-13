@@ -65,7 +65,7 @@ Noise, harmless, the command still ran:
 {
   "network": { "allowedHosts": ["api.example.com", "*.example.com"] },
   "filesystem": { "allowRead": ["~/.npmrc", "/path/to/other/repo"], "allowWrite": [] },
-  "overrideDefaults": { "presets": ["github", "git"], "allowPty": false }
+  "overrideDefaults": { "presets": ["agent-files", "github", "git", "local-network", "private-network"], "allowPty": false }
 }
 ```
 
