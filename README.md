@@ -179,7 +179,7 @@ To give `blackwall` its own identity on macOS:
 BLACKWALL_USE_SELF_SIGNED_NODE=1 # put this in ~/.blackwall/.env, or export it
 ```
 
-Little Snitch then shows `blackwall_node` instead of `node`. It's an ad-hoc-signed copy of your `node` at `~/.blackwall/blackwall_node`, created on the first run and again whenever it's missing. Delete it after upgrading Node to get a fresh copy.
+Little Snitch then shows `node-blackwall` instead of `node`. It's an ad-hoc-signed copy of your `node` at `~/.blackwall/node-blackwall`, created on the first run and again whenever it's missing. Delete it after upgrading Node to get a fresh copy.
 
 </details>
 

@@ -26,7 +26,7 @@ export const PROJECT_ENV = `${CWD}/.blackwall/.env`;
 export const TRUST_MARKERS = `${HOME}/.blackwall/trusted`;
 
 // Runs unsandboxed on the next launch, so it must stay outside every allowWrite path, unlike SANDBOX_CACHE or the package folder
-export const SIGNED_NODE = `${HOME}/.blackwall/blackwall_node`;
+export const SIGNED_NODE = `${HOME}/.blackwall/node-blackwall`;
 
 // srt already lets the sandbox write here, unlike the rest of /tmp, where unsandboxed tools like Claude Code keep scratch files they later run
 export const TMPDIR = `${realpathSync("/tmp")}/claude`;
