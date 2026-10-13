@@ -44,10 +44,10 @@ export function trustProjectConfig() {
 
 // additions is the adapter's layer, added after every config file's lists
 export function buildConfig({ addDirs, additions }) {
-  // overrideDefaults replaces default values, the project's over the user's, then the presets and the top-level lists of both are added on top
+  // overrideDefaults replaces default values and srt replaces them per key, the project's over the user's, then the presets and the top-level lists of both are added on top
   const user = readConfig(USER_CONFIG);
   // From ~, both paths name the user config
-  const project = PROJECT_CONFIG === USER_CONFIG ? { additions: {}, overrides: {}, presets: [] } : readConfig(PROJECT_CONFIG, true);
+  const project = PROJECT_CONFIG === USER_CONFIG ? { additions: {}, overrides: {}, presets: [], srt: {} } : readConfig(PROJECT_CONFIG, true);
 
   // presets is blackwall's own key, so it never reaches srt
   const { presets: basePresets, ...base } = {
@@ -56,6 +56,7 @@ export function buildConfig({ addDirs, additions }) {
     ...project.overrides,
     network: { ...DEFAULTS.network, ...user.overrides.network, ...project.overrides.network },
     filesystem: { ...DEFAULTS.filesystem, ...user.overrides.filesystem, ...project.overrides.filesystem },
+    srt: { ...DEFAULTS.srt, ...user.srt, ...project.srt },
   };
 
   // Always on, so overriding presets can't drop the sandbox's own needs
@@ -180,7 +181,7 @@ export function readIfExists(file) {
 
 function readConfig(file, requireTrust = false) {
   const text = readIfExists(file);
-  if (text === undefined) return { additions: {}, overrides: {}, presets: [] };
+  if (text === undefined) return { additions: {}, overrides: {}, presets: [], srt: {} };
   // Checks the same text it parses, so an edit in between can't skip the check
   if (requireTrust && !existsSync(trustMarker(text))) exitWithConfigError(file, "not trusted. Review it, then run `blackwall --trust`");
   return parseConfig(file, text);
@@ -199,8 +200,8 @@ function parseConfig(file, text) {
     const path = issue.path.join(".");
     exitWithConfigError(file, path && issue.code !== "unrecognized_keys" ? `${path}: ${issue.message}` : issue.message);
   }
-  const { overrideDefaults: overrides = {}, presets = [], ...additions } = parsed;
-  return { additions, overrides, presets };
+  const { overrideDefaults: overrides = {}, presets = [], srt = {}, ...additions } = parsed;
+  return { additions, overrides, presets, srt };
 }
 
 function exitWithConfigError(file, message) {

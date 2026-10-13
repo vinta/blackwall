@@ -59,19 +59,19 @@ const LISTS = z
   .partial()
   .strict();
 
-// pick drops a key srt lacks without an error; tests/config.mjs catches it by parsing default-config.json
-const srtKeys = Object.keys(DEFAULTS).filter((key) => !Object.hasOwn(LISTS.shape, key));
-const OVERRIDES = LISTS.extend(SRT.pick(Object.fromEntries(srtKeys.map((key) => [key, true]))).shape)
+// pick drops a key srt lacks without an error; tests/config.mjs catches it by parsing default-config.json's srt
+const SRT_SETTINGS = SRT.pick(Object.fromEntries(Object.keys(DEFAULTS.srt).map((key) => [key, true])))
   .partial()
   .strict();
 
-export const CONFIG_SCHEMA = LISTS.extend({ overrideDefaults: OVERRIDES }).partial().strict();
+export const CONFIG_SCHEMA = LISTS.extend({ srt: SRT_SETTINGS, overrideDefaults: LISTS }).partial().strict();
 
 export function configErrorMap(issue, ctx) {
   if (issue.code !== "unrecognized_keys") return { message: ctx.defaultError };
   const messages = issue.keys.map((key) => {
     const name = [...issue.path, key].join(".");
-    if (issue.path.length === 0 && Object.hasOwn(OVERRIDES.shape, key)) return `${name} can only be set under overrideDefaults`;
+    if (issue.path.join(".") === "overrideDefaults" && key === "srt") return "srt can only be set at the top level";
+    if (Object.hasOwn(SRT_SETTINGS.shape, key)) return `${name} can only be set under srt`;
     return `unknown key ${name}`;
   });
   return { message: messages.join("; ") };

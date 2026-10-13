@@ -59,13 +59,14 @@ Noise, harmless, the command still ran:
 
 ## Config
 
-`~/.blackwall/config.json` and `.blackwall/config.json` take the same keys. Lists from both are added to the defaults. `overrideDefaults` replaces a default value, the project's winning over the user's, and is applied first. `~` expands.
+`~/.blackwall/config.json` and `.blackwall/config.json` take the same keys. Lists from both are added to the defaults. `srt` keys replace their defaults one by one, and `overrideDefaults` replaces the default `presets`, `network`, and `filesystem` values, applied first; for both, the project's wins over the user's. `~` expands.
 
 ```json
 {
   "network": { "allowedHosts": ["api.example.com", "*.example.com"] },
   "filesystem": { "allowRead": ["~/.npmrc", "/path/to/other/repo"], "allowWrite": [] },
-  "overrideDefaults": { "presets": ["agent-files", "github", "git", "local-network", "private-network"], "allowPty": false }
+  "srt": { "allowPty": false },
+  "overrideDefaults": { "presets": ["agent-files", "github", "git", "local-network", "private-network"] }
 }
 ```
 

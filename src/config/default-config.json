@@ -13,9 +13,6 @@
     "allowedHosts": [],
     "deniedHosts": []
   },
-  "enableWeakerNetworkIsolation": true,
-  "enableWeakerNestedSandbox": false,
-  "allowPty": true,
   "filesystem": {
     "denyRead": [
       "/"
@@ -35,5 +32,10 @@
     ],
     "allowWrite": [],
     "denyWrite": []
+  },
+  "srt": {
+    "enableWeakerNetworkIsolation": true,
+    "enableWeakerNestedSandbox": false,
+    "allowPty": true
   }
 }

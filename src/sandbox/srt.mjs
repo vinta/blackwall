@@ -15,8 +15,11 @@ export function createSandbox(config) {
   const allowAllDomains = allowedHosts.includes("*");
   // srt matches allowedHosts names and literals itself; denied ranges it checks at dial time, for names only
   const { ranges: deniedRanges = [], names: deniedNames = [] } = Object.groupBy(deniedHosts, (entry) => (parseAddressRange(entry) ? "ranges" : "names"));
+  const { srt, ...lists } = config;
   const srtConfig = {
-    ...config,
+    ...lists,
+    // srt takes these keys top-level
+    ...srt,
     network: {
       ...network,
       allowedDomains: allowedHosts.filter((host) => host !== "*"),

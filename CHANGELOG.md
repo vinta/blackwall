@@ -14,6 +14,7 @@
 - `agent-files` is a preset in the default list now. Sandboxed commands can't write `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or an `--add-dir` folder. An unsandboxed `claude` in the same folder runs what they hold, the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest, so a sandboxed command could plant commands that run on the host. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. A sandboxed `claude` can't save project permission rules to `.claude/settings.local.json` either. If you set `overrideDefaults.presets`, add `agent-files`, or those writes open again
 - The sandbox cache moves from `~/.cache/blackwall` to `~/.cache-blackwall`, so `gh`, `uv`, `npm`, and `pre-commit` start with empty caches and pre-commit clones its hook repos again. Delete `~/.cache/blackwall`, nothing reads it anymore
 - The ad-hoc-signed node copy is `~/.blackwall/node-blackwall`, shown as `node-blackwall` in Little Snitch. Delete `~/.blackwall/blackwall_node`, nothing reads it anymore
+- srt settings, `allowPty`, `enableWeakerNetworkIsolation`, and `enableWeakerNestedSandbox`, move to a top-level `srt` object in `default-config.json` and both configs. Each key you set replaces its default, the project's winning over the user's. `overrideDefaults.allowPty` and the others are config errors now, so move them to `srt`
 
 ### Changes
 

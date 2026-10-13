@@ -22,7 +22,8 @@ for (const fn of [parseAddressRange, matchesDomainPatternWithPort, splitDomainPa
 }
 
 const defaults = JSON.parse(readFileSync(new URL("../src/config/default-config.json", import.meta.url), "utf8"));
-accepts({ overrideDefaults: defaults });
+const { srt, ...lists } = defaults;
+accepts({ srt, overrideDefaults: lists });
 
 accepts({ network: { allowedHosts: ["*", "github.com"] } });
 rejects({ network: { allowedHosts: ["*:22"] } });
@@ -52,8 +53,11 @@ for (const key of ["denyRead", "allowRead", "allowWrite", "denyWrite"]) {
   assert.equal(issue.path.join("."), `filesystem.${key}.0`);
 }
 
-rejects({ allowPty: false }, /can only be set under overrideDefaults/);
-accepts({ overrideDefaults: { allowPty: false } });
+rejects({ allowPty: false }, /^allowPty can only be set under srt$/);
+rejects({ overrideDefaults: { allowPty: false } }, /^overrideDefaults\.allowPty can only be set under srt$/);
+rejects({ overrideDefaults: { srt: {} } }, /^srt can only be set at the top level$/);
+accepts({ srt: { allowPty: false } });
+rejects({ srt: { allowAppleEvents: true } }, /^unknown key srt\.allowAppleEvents$/);
 rejects({ network: { allowLocalBinding: true } }, /^unknown key network\.allowLocalBinding$/);
 rejects({ network: { allowedHots: [] } }, /^unknown key network\.allowedHots$/);
 
