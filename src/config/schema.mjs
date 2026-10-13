@@ -1,9 +1,12 @@
+import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
 
 import { NetworkConfigSchema, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
 import { z } from "zod/v3";
+
+export const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
 
 // srt's top-level schema is a zod 3 ZodEffects; innerType() reaches the object
 const SRT = SandboxRuntimeConfigSchema.innerType();
@@ -47,13 +50,18 @@ const LISTS = z
       .partial()
       .strict(),
     // Not srt's element, which also takes { path, literal } objects that buildConfig would treat as strings
-    filesystem: z.object({ denyRead: paths, allowRead: paths, allowWrite: paths, denyWrite: paths }).partial().strict(),
+    filesystem: z
+      .object(Object.fromEntries(Object.keys(DEFAULTS.filesystem).map((key) => [key, paths])))
+      .partial()
+      .strict(),
     presets: z.array(z.string()),
   })
   .partial()
   .strict();
 
-const OVERRIDES = LISTS.extend(SRT.pick({ allowPty: true, enableWeakerNetworkIsolation: true, enableWeakerNestedSandbox: true }).shape)
+// pick drops a key srt lacks without an error; tests/config.mjs catches it by parsing default-config.json
+const srtKeys = Object.keys(DEFAULTS).filter((key) => !Object.hasOwn(LISTS.shape, key));
+const OVERRIDES = LISTS.extend(SRT.pick(Object.fromEntries(srtKeys.map((key) => [key, true]))).shape)
   .partial()
   .strict();
 

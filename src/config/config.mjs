@@ -15,9 +15,7 @@ import preCommit from "../presets/pre-commit.mjs";
 import privateNetwork from "../presets/private-network.mjs";
 import python from "../presets/python.mjs";
 import tmpdir from "../presets/tmpdir.mjs";
-import { CONFIG_SCHEMA, configErrorMap } from "./schema.mjs";
-
-const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
+import { CONFIG_SCHEMA, configErrorMap, DEFAULTS } from "./schema.mjs";
 
 // A config picks a preset only by name from this list, never a file by path
 export const PRESETS = {
