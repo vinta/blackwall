@@ -3,7 +3,7 @@ import { isIP } from "node:net";
 import { NetworkConfigSchema, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 // srt's top-level schema is a zod 3 ZodEffects; innerType() reaches the object
 const SRT = SandboxRuntimeConfigSchema.innerType();
