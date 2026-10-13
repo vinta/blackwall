@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { CONFIG_SCHEMA, configErrorMap } from "../src/config/config.mjs";
+import { CONFIG_SCHEMA, configErrorMap, PRESETS } from "../src/config/config.mjs";
 
 // Guards srt's zod internals (innerType, shape, element) that the schema reaches into, on each srt bump
 const parse = (config) => CONFIG_SCHEMA.safeParse(config, { errorMap: configErrorMap });
@@ -29,5 +29,8 @@ rejects({ allowPty: false }, /can only be set under overrideDefaults/);
 accepts({ overrideDefaults: { allowPty: false } });
 rejects({ network: { allowLocalBinding: true } }, /is an srt setting/);
 rejects({ network: { allowedHots: [] } }, /^unknown key network\.allowedHots$/);
+
+// Presets are merged without passing the file schema, so a preset-only entry like *.localhost or a typo would otherwise go unchecked
+for (const { network, filesystem } of Object.values(PRESETS)) accepts({ network, filesystem });
 
 console.log("config: ok");
