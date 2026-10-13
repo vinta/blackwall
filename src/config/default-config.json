@@ -5,6 +5,7 @@
     "github",
     "git",
     "pre-commit",
+    "local-network",
     "private-network"
   ],
   "network": {

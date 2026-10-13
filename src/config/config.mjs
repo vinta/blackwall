@@ -12,6 +12,7 @@ import { CACHE, CONFIG, CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, TRUSTED } from "
 import git from "../presets/git.mjs";
 import github from "../presets/github.mjs";
 import linux from "../presets/linux.mjs";
+import localNetwork from "../presets/local-network.mjs";
 import mac from "../presets/mac.mjs";
 import node from "../presets/node.mjs";
 import preCommit from "../presets/pre-commit.mjs";
@@ -26,6 +27,7 @@ const PRESETS = {
   git,
   github,
   linux,
+  "local-network": localNetwork,
   mac,
   node,
   "pre-commit": preCommit,

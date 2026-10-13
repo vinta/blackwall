@@ -75,6 +75,7 @@ check "preset host allowed" blackwall curl -sS -o /dev/null --max-time 20 https:
 check "other host blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://example.com 2>&1)"'
 check "host resolving into RFC 1918 blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://10.0.0.1.sslip.io 2>&1)"'
 check "user config adds deniedHosts" eval 'blackwall --print-config true | grep -q "\"192.0.2.0/24\""'
+check "local-network preset denies localhost" eval 'blackwall --print-config true | grep -q "\"localhost\""'
 
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 node=$(realpath "$(command -v node)")
@@ -91,8 +92,9 @@ check '127.0.0.1 blocked under "*"' eval 'test "$(http_code "http://127.0.0.1:$p
 check 'localhost blocked under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 403'
 check '[::1] blocked under "*"' eval 'test "$(http_code "http://[::1]:$port/")" = 403'
 check 'public host allowed under "*"' eval 'test "$(http_code https://example.com/)" = 200'
-printf '{"network":{"allowedHosts":["*","127.0.0.1:%s"]}}\n' "$port" >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
+printf '{"network":{"allowedHosts":["*","127.0.0.1:%s","localhost:%s"]}}\n' "$port" "$port" >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
 check 'listed IP literal allowed under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 200'
+check 'listed localhost port allowed under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 200'
 # INT, since bash prints a Terminated line for a child killed by TERM
 kill -INT "$listener"
 

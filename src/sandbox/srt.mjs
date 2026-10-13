@@ -1,5 +1,7 @@
 import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbox-runtime";
 import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
+import { matchesDomainPatternWithPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
+import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
 import { spawn } from "node:child_process";
 import { isIP } from "node:net";
 
@@ -7,11 +9,12 @@ import { CWD } from "../constants/paths.mjs";
 
 export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every DNS name no rule matches
-  // IP literals and localhost stay denied: srt's resolved-address guard skips literals and lets localhost reach loopback
+  // IP literals stay denied: srt's resolved-address guard skips literals. deniedHosts names are the callback's job, since srt's deniedDomains would beat allowedHosts
   const { allowedHosts, deniedHosts, ...network } = config.network;
   const allowAllDomains = allowedHosts.includes("*");
-  // srt matches names and literals itself; ranges it checks at dial time, for names only
+  // srt matches allowedHosts names and literals itself; denied ranges it checks at dial time, for names only
   const deniedRanges = deniedHosts.filter((entry) => parseAddressRange(entry));
+  const deniedNames = deniedHosts.filter((entry) => !parseAddressRange(entry));
   const srtConfig = {
     ...config,
     network: {
@@ -45,11 +48,12 @@ export function createSandbox(config) {
     },
 
     async run(args, env) {
-      await SandboxManager.initialize(srtConfig, async ({ host }) => {
-        const bare = host.replace(/^\[(.*)\]$/, "$1");
-        // Spelled the way srt dials it, so 127.1 and 0 count as IPv4 literals and localhost.. as localhost
-        const canonicalHost = (URL.parse(`http://${bare}`)?.hostname ?? bare).toLowerCase().replace(/\.+$/, "");
-        return allowAllDomains && !isIP(canonicalHost) && canonicalHost !== "localhost" && !canonicalHost.endsWith(".localhost");
+      await SandboxManager.initialize(srtConfig, async ({ host, port }) => {
+        if (!allowAllDomains) return false;
+        // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
+        const canonicalHost = canonicalizeHost(host) ?? host;
+        if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return false;
+        return !isIP(canonicalHost);
       });
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
