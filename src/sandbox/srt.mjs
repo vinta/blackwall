@@ -9,7 +9,7 @@ import { isIP } from "node:net";
 import { CWD } from "../constants/paths.mjs";
 
 export function createSandbox(config) {
-  // srt rejects "*", so blackwall turns it into an ask callback that allows every DNS name no rule matches
+  // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
   // deniedHosts names and IP literals are the callback's job: srt's deniedDomains would beat allowedHosts, and its resolved-address guard skips literals
   const { allowedHosts, deniedHosts, ...network } = config.network;
   const allowAllDomains = allowedHosts.includes("*");
@@ -55,7 +55,7 @@ export function createSandbox(config) {
         // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
         const canonicalHost = canonicalizeHost(host) ?? host;
         if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return false;
-        // srt's guard never sees a literal, so the callback judges it as a name resolving to it would be
+        // A dummy non-IP hostname makes the guard judge the address as a resolved answer, the way it would for a name resolving there
         return isIP(canonicalHost) ? guard.permits("literal", canonicalHost, port) : true;
       });
 

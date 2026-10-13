@@ -49,7 +49,7 @@ const deniedHost = z.string().superRefine((value, ctx) => {
   const range = RANGE.safeParse(value);
   if (range.success) return;
   const { hostPattern } = splitDomainPatternPort(value);
-  // A domain pattern never has a "/", so a value with one is a mistyped CIDR. srt's deniedResolvedAddresses sees only a bare IP literal
+  // No domain pattern has a "/", so a value with one gets the range message; a pasted URL gets it too
   const message = value.includes("/")
     ? range.error.issues[0].message
     : hostPattern === "*"
@@ -78,7 +78,6 @@ const OVERRIDES = LISTS.extend(SRT.pick({ allowPty: true, enableWeakerNetworkIso
 
 export const CONFIG_SCHEMA = LISTS.extend({ overrideDefaults: OVERRIDES }).partial().strict();
 
-// Is key, under path, a key in srt's schema?
 function isSrtKey(path, key) {
   let schema = SRT;
   for (const segment of [...path.filter((s) => s !== "overrideDefaults"), key]) {
