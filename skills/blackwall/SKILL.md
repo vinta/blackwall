@@ -3,7 +3,7 @@ name: blackwall
 description: "Run, configure, and debug blackwall, the sandbox for claude, codex, and other dev commands (srt: Seatbelt on macOS, bubblewrap on Linux). Use when the user asks whether this session is sandboxed or what it can read, write, or reach, mentions blackwall, wants a command run sandboxed, or wants the sandbox to reach a path, host, or tool: ~/.blackwall/config.json, .blackwall/config.json, presets, --add-dir, --trust. Also use inside a sandboxed session when a command fails with `Operation not permitted` on a path that exists, `CONNECT tunnel failed, response 403`, ENOTFOUND or `nodename nor servname provided` for every host, a write under /tmp or ~ that fails or vanishes, or blackwall itself refuses with `can't run inside a sandbox`: those are blackwall denials, not project bugs. Not for configuring Claude Code's built-in sandbox or Codex's sandbox_mode."
 license: MIT
 compatibility: Node.js 22.21+; macOS (Seatbelt) or Linux (bubblewrap)
-allowed-tools: Bash(blackwall --print-config:*) Bash(blackwall --print-file-access:*) Bash(blackwall --print-env:*) Bash(blackwall --version)
+allowed-tools: Bash(blackwall --print-config:*) Bash(blackwall --print-file-access:*) Bash(blackwall --print-network-access:*) Bash(blackwall --print-env:*) Bash(blackwall --version)
 ---
 
 # Blackwall
@@ -73,7 +73,7 @@ Noise, harmless, the command still ran:
 - Presets: `agent-files`, `python`, `node`, `github`, `git`, `pre-commit`, `local-network`, `private-network` are on by default; `tmpdir`, `mac`, `linux` are always on. Each is one tool's hosts, read paths, and env vars. What each grants: https://github.com/vinta/blackwall#presets
 - Dropping `git` from `presets` makes every sandboxed `git` refuse to start when `~/.gitconfig` exists, and opens writes to `.git/hooks` and `.git/config` in `--add-dir` folders.
 - `.blackwall/.env` keys override `~/.blackwall/.env` and reach only the sandboxed command.
-- Verify outside: `blackwall --print-config claude` (merged config with the launch-time grants), `blackwall --print-file-access claude` (srt's view), `blackwall --print-env claude` (env vars blackwall adds, each with its why).
+- Verify outside: `blackwall --print-config claude` (merged config with the launch-time grants), `blackwall --print-file-access claude` (srt's view), `blackwall --print-network-access claude` (hosts it can reach, the names and ranges it refuses, and srt's own refused classes), `blackwall --print-env claude` (env vars blackwall adds, each with its why).
 
 ## Run and install
 

@@ -22,6 +22,7 @@ blackwall --add-dir ../another-repo claude    # also let it write to another fol
 blackwall npm test                            # any command works, not only claude
 blackwall --print-config claude               # show the merged config, after your config and the launch-time grants
 blackwall --print-file-access claude          # show what it can read and write, as srt sees it
+blackwall --print-network-access claude       # show which hosts it can reach, as srt sees it
 blackwall --print-env claude                  # show the env vars blackwall adds, and why
 blackwall --trust                             # trust .blackwall/config.json in the current folder
 blackwall --version                           # show the blackwall version

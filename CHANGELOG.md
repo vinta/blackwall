@@ -22,6 +22,7 @@
 - Config values are checked when each config file is read, so a bad range or name pattern is reported with the path of the file it's in. `allowedHosts` entries and ranges follow srt's rules; `deniedHosts` names follow blackwall's: `example.com` or `*.example.com` with an optional port, single-label wildcards like `*.localhost` included
 - A relative `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
 - Without `"*"` in `network.allowedHosts`, srt enforces the allowlist itself and denies unlisted hosts without asking blackwall's callback, so a bug in the callback can't let a host through
+- `blackwall --print-network-access` shows the effective network policy: allowed hosts, denied names and ranges, srt's built-in refused classes and this machine's own addresses, and whether other hosts are allowed. `--print-config` leaves the srt classes and this machine's addresses out
 
 ## v0.3.0 / 2026-10-11
 

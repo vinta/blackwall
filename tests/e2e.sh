@@ -169,6 +169,8 @@ check "settings seeded without hooks" eval 'grep -q enabledPlugins "$home/.claud
 check "second run prints no notice" eval '! blackwall claude --version 2>&1 | grep -q "blackwall: created"'
 
 check "--print-file-access" eval 'blackwall --print-file-access claude | grep -q "write denied:"'
+check "--print-network-access" eval 'blackwall --print-network-access claude | grep -q "denied ranges:"'
+check "--print-network-access shows ranges and this machine" eval 'out=$(blackwall --print-network-access claude) && grep -qx "  10.0.0.0/8" <<<"$out" && grep -q "^  this machine: " <<<"$out"'
 echo "E2E_TOKEN=leak" >"$home/.blackwall/.env"
 check "--print-env shows presets, not .env keys" eval 'out=$(blackwall --print-env claude) && grep -q "^# preset git:" <<<"$out" && ! grep -q E2E_TOKEN <<<"$out"'
 rm "$home/.blackwall/.env"

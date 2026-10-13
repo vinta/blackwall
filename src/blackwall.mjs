@@ -11,7 +11,7 @@ import { buildConfig, readIfExists, readProjectEnv, trustProjectConfig } from ".
 import { HOME, SANDBOX_CACHE, SIGNED_NODE } from "./constants/paths.mjs";
 import { createSandbox } from "./sandbox/srt.mjs";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-env | --trust | --version] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version] [--] <command> [args...]";
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
@@ -44,6 +44,7 @@ const args = process.argv.slice(2);
 const addDirs = [];
 let printConfig = false;
 let printFileAccess = false;
+let printNetworkAccess = false;
 let printEnv = false;
 while (true) {
   if (args[0] === "--add-dir") {
@@ -56,6 +57,9 @@ while (true) {
   } else if (args[0] === "--print-file-access") {
     args.shift();
     printFileAccess = true;
+  } else if (args[0] === "--print-network-access") {
+    args.shift();
+    printNetworkAccess = true;
   } else if (args[0] === "--print-env") {
     args.shift();
     printEnv = true;
@@ -71,7 +75,7 @@ while (true) {
 }
 
 if (args[0] === "--") args.shift();
-if (!args[0] && !printConfig && !printFileAccess && !printEnv) exitWithUsage();
+if (!args[0] && !printConfig && !printFileAccess && !printNetworkAccess && !printEnv) exitWithUsage();
 
 function exitWithUsage() {
   console.error(USAGE);
@@ -91,6 +95,11 @@ if (printConfig) {
 
 if (printFileAccess) {
   await sandbox.printFileAccess();
+  process.exit(0);
+}
+
+if (printNetworkAccess) {
+  sandbox.printNetworkAccess();
   process.exit(0);
 }
 

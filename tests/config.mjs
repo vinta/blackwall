@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
 import { matchesDomainPatternWithPort, splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
-import { createResolvedAddressGuard } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
+import { createResolvedAddressGuard, localInterfaceAddresses } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
 import { PRESETS } from "../src/config/config.mjs";
 import { CONFIG_SCHEMA, configErrorMap } from "../src/config/schema.mjs";
 
@@ -17,7 +17,7 @@ const rejects = (config, message) => {
 };
 
 // Guards the srt dist/ internals that srt.mjs and schema.mjs import at launch, outside srt's public index
-for (const fn of [parseAddressRange, matchesDomainPatternWithPort, splitDomainPatternPort, canonicalizeHost, createResolvedAddressGuard]) {
+for (const fn of [parseAddressRange, matchesDomainPatternWithPort, splitDomainPatternPort, canonicalizeHost, createResolvedAddressGuard, localInterfaceAddresses]) {
   assert.equal(typeof fn, "function");
 }
 
