@@ -22,6 +22,9 @@ import tmpdir from "../presets/tmpdir.mjs";
 
 const DEFAULTS = JSON.parse(readFileSync(new URL("./default-config.json", import.meta.url), "utf8"));
 
+// An unsandboxed claude or codex in the same folder loads these, so a run that writes them plants hooks, skills, or instructions on the host
+const AGENT_FILES = [".claude/settings.json", ".claude/settings.local.json", ".claude/skills", ".claude/hooks", "CLAUDE.md", "CLAUDE.local.md", "AGENTS.md", ".codex", ".agents"];
+
 // A config picks a preset only by name from this list, never a file by path
 export const PRESETS = {
   git,
@@ -167,6 +170,7 @@ export function buildConfig({ addDirs, additions }) {
         `${HOME}/.blackwall`,
         // srt's built-in .git denies anchor on cwd only
         ...addDirs.flatMap((dir) => [`${dir}/.git/hooks`, `${dir}/.git/config`]),
+        ...[CWD, ...addDirs].flatMap((dir) => AGENT_FILES.map((name) => `${dir}/${name}`)),
         ...added("filesystem", "denyWrite"),
       ],
     },

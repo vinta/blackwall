@@ -61,8 +61,14 @@ fi
 
 check "write cwd .git/hooks denied" eval 'blackwall sh -c "echo x > .git/hooks/pre-commit"; ! test -e "$proj/.git/hooks/pre-commit"'
 check "write cwd .git/config denied" eval 'blackwall sh -c "echo x >> .git/config"; ! grep -q "^x" "$proj/.git/config"'
+mkdir -p "$proj/.claude"
+check "write cwd .claude/settings.local.json denied" eval 'blackwall sh -c "echo x > .claude/settings.local.json"; ! test -e "$proj/.claude/settings.local.json"'
+check "write cwd .claude/skills denied" eval 'blackwall sh -c "mkdir -p .claude/skills/x"; ! test -e "$proj/.claude/skills"'
+check "write cwd .claude/other allowed" eval 'blackwall sh -c "echo x > .claude/other" && test -f "$proj/.claude/other"'
+check "write cwd CLAUDE.md denied" eval 'blackwall sh -c "echo x > CLAUDE.md"; ! test -e "$proj/CLAUDE.md"'
 check "write --add-dir .git/hooks denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.git/hooks/pre-commit\""; ! test -e "$added/.git/hooks/pre-commit"'
 check "write --add-dir .git/config denied" eval 'blackwall --add-dir "$added" sh -c "echo x >> \"$added/.git/config\""; ! grep -q "^x" "$added/.git/config"'
+check "write --add-dir CLAUDE.md denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/CLAUDE.md\""; ! test -e "$added/CLAUDE.md"'
 
 check "git reads ~/.config/git/config" eval 'test "$(blackwall git config --get user.email)" = e2e@example.com'
 mkdir -p "$elsewhere/xdg/git" && printf '[user]\n\temail = xdg@example.com\n' >"$elsewhere/xdg/git/config"
