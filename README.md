@@ -186,6 +186,10 @@ Little Snitch then shows `node-blackwall` instead of `node`. It's an ad-hoc-sign
 
 </details>
 
+## Known Limitations
+
+- The `agent-files` denies cover the top of the current and `--add-dir` folders only. A sandboxed run can still write `sub/.claude/settings.json` or `sub/.claude/hooks`, and an unsandboxed `claude` started from `sub/` later runs them. Same for `.mcp.json`, `.claude/commands`, and `.claude/agents`, which srt denies at the top only. Before running `claude` outside the sandbox from a subfolder an agent worked in, check its `.claude/` first. Closing this means pushing the names into srt's mandatory denies at launch, since srt drops user write globs on Linux
+
 ## License
 
 Released under the [MIT License](LICENSE).
