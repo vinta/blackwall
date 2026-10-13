@@ -1,7 +1,7 @@
 export default {
-  why: "an unsandboxed claude or codex in the same folder loads these, so a run that writes them plants hooks, skills, or instructions on the host",
+  why: "settings.json carries hooks, env, and apiKeyHelper that an unsandboxed claude in the same folder runs even before the folder is trusted, and .claude/hooks holds the scripts those hooks run, so a run that writes them plants commands on the host",
   filesystem: {
     // relative, so they apply to the current folder and every --add-dir folder
-    denyWrite: [".claude/settings.json", ".claude/settings.local.json", ".claude/skills", ".claude/hooks", ".claude/CLAUDE.md", ".claude/rules", "CLAUDE.md", "CLAUDE.local.md", "AGENTS.md", "AGENTS.override.md", ".codex", ".agents"],
+    denyWrite: [".claude/settings.json", ".claude/settings.local.json", ".claude/hooks"],
   },
 };

@@ -63,16 +63,12 @@ check "write cwd .git/hooks denied" eval 'blackwall sh -c "echo x > .git/hooks/p
 check "write cwd .git/config denied" eval 'blackwall sh -c "echo x >> .git/config"; ! grep -q "^x" "$proj/.git/config"'
 mkdir -p "$proj/.claude"
 check "write cwd .claude/settings.local.json denied" eval 'blackwall sh -c "echo x > .claude/settings.local.json"; ! test -e "$proj/.claude/settings.local.json"'
-check "write cwd .claude/skills denied" eval 'blackwall sh -c "mkdir -p .claude/skills/x"; ! test -e "$proj/.claude/skills"'
+check "write cwd .claude/hooks denied" eval 'blackwall sh -c "mkdir -p .claude/hooks"; ! test -e "$proj/.claude/hooks"'
 check "write cwd .claude/other allowed" eval 'blackwall sh -c "echo x > .claude/other" && test -f "$proj/.claude/other"'
-check "write cwd CLAUDE.md denied" eval 'blackwall sh -c "echo x > CLAUDE.md"; ! test -e "$proj/CLAUDE.md"'
-check "write cwd AGENTS.override.md denied" eval 'blackwall sh -c "echo x > AGENTS.override.md"; ! test -e "$proj/AGENTS.override.md"'
-check "write cwd .claude/CLAUDE.md denied" eval 'blackwall sh -c "echo x > .claude/CLAUDE.md"; ! test -e "$proj/.claude/CLAUDE.md"'
-mkdir -p "$proj/.claude/rules"
-check "write cwd .claude/rules denied" eval 'blackwall sh -c "echo x > .claude/rules/r.md"; ! test -e "$proj/.claude/rules/r.md"'
 check "write --add-dir .git/hooks denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.git/hooks/pre-commit\""; ! test -e "$added/.git/hooks/pre-commit"'
 check "write --add-dir .git/config denied" eval 'blackwall --add-dir "$added" sh -c "echo x >> \"$added/.git/config\""; ! grep -q "^x" "$added/.git/config"'
-check "write --add-dir CLAUDE.md denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/CLAUDE.md\""; ! test -e "$added/CLAUDE.md"'
+mkdir -p "$added/.claude"
+check "write --add-dir .claude/settings.json denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.claude/settings.json\""; ! test -e "$added/.claude/settings.json"'
 
 check "git reads ~/.config/git/config" eval 'test "$(blackwall git config --get user.email)" = e2e@example.com'
 mkdir -p "$elsewhere/xdg/git" && printf '[user]\n\temail = xdg@example.com\n' >"$elsewhere/xdg/git/config"
@@ -86,7 +82,7 @@ check "other host blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS
 check "host resolving into RFC 1918 blocked" eval 'grep -q "response 403" <<<"$(blackwall curl -sS -o /dev/null --max-time 20 https://10.0.0.1.sslip.io 2>&1)"'
 check "user config adds deniedHosts" eval 'blackwall --print-config true | grep -q "\"192.0.2.0/24\""'
 check "local-network preset denies localhost" eval 'blackwall --print-config true | grep -q "\"localhost\""'
-check "agent-files preset in --print-config" eval 'blackwall --print-config true | grep -q "/CLAUDE.md\""'
+check "agent-files preset in --print-config" eval 'blackwall --print-config true | grep -q "/.claude/hooks\""'
 
 # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 node=$(realpath "$(command -v node)")
