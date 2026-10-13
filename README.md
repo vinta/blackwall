@@ -31,7 +31,7 @@ By default, a sandboxed command:
 
 - Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, and `~/.cache/blackwall`
 - Never writes `.git/config` or `.git/hooks`, in the current or `--add-dir` folders. `git remote add`, `git config`, and `git branch -m` fail; `git push -u`, `git branch -D`, and `git switch -c` lose their tracking update. Set remotes and upstreams on the host, or push with `git push origin HEAD`
-- Never writes `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/skills`, `.claude/hooks`, `.codex`, or `.agents` in the current or `--add-dir` folders, since an unsandboxed `claude` or `codex` there would load them. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
+- Never writes `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `AGENTS.override.md`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/skills`, `.claude/hooks`, `.claude/CLAUDE.md`, `.claude/rules`, `.codex`, or `.agents` in the current or `--add-dir` folders, since an unsandboxed `claude` or `codex` there would load them. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
@@ -95,7 +95,7 @@ Every key except `presets`, `network.allowedHosts`, and `network.deniedHosts` is
 
 A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars. Each is a module in [`src/presets`](src/presets):
 
-- [agent-files](src/presets/agent-files.mjs): Denies writes to `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/skills`, `.claude/hooks`, `.codex`, and `.agents` in the current and `--add-dir` folders, since an unsandboxed `claude` or `codex` there would load them. Drop it and a sandboxed command can plant hooks, skills, or instructions that run on the host
+- [agent-files](src/presets/agent-files.mjs): Denies writes to `CLAUDE.md`, `CLAUDE.local.md`, `AGENTS.md`, `AGENTS.override.md`, `.claude/settings.json`, `.claude/settings.local.json`, `.claude/skills`, `.claude/hooks`, `.claude/CLAUDE.md`, `.claude/rules`, `.codex`, and `.agents` in the current and `--add-dir` folders, since an unsandboxed `claude` or `codex` there would load them. Drop it and a sandboxed command can plant hooks, skills, or instructions that run on the host
 - [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
 - [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder

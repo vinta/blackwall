@@ -66,6 +66,10 @@ check "write cwd .claude/settings.local.json denied" eval 'blackwall sh -c "echo
 check "write cwd .claude/skills denied" eval 'blackwall sh -c "mkdir -p .claude/skills/x"; ! test -e "$proj/.claude/skills"'
 check "write cwd .claude/other allowed" eval 'blackwall sh -c "echo x > .claude/other" && test -f "$proj/.claude/other"'
 check "write cwd CLAUDE.md denied" eval 'blackwall sh -c "echo x > CLAUDE.md"; ! test -e "$proj/CLAUDE.md"'
+check "write cwd AGENTS.override.md denied" eval 'blackwall sh -c "echo x > AGENTS.override.md"; ! test -e "$proj/AGENTS.override.md"'
+check "write cwd .claude/CLAUDE.md denied" eval 'blackwall sh -c "echo x > .claude/CLAUDE.md"; ! test -e "$proj/.claude/CLAUDE.md"'
+mkdir -p "$proj/.claude/rules"
+check "write cwd .claude/rules denied" eval 'blackwall sh -c "echo x > .claude/rules/r.md"; ! test -e "$proj/.claude/rules/r.md"'
 check "write --add-dir .git/hooks denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/.git/hooks/pre-commit\""; ! test -e "$added/.git/hooks/pre-commit"'
 check "write --add-dir .git/config denied" eval 'blackwall --add-dir "$added" sh -c "echo x >> \"$added/.git/config\""; ! grep -q "^x" "$added/.git/config"'
 check "write --add-dir CLAUDE.md denied" eval 'blackwall --add-dir "$added" sh -c "echo x > \"$added/CLAUDE.md\""; ! test -e "$added/CLAUDE.md"'
