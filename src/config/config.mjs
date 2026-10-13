@@ -130,12 +130,10 @@ export function buildConfig({ addDirs, additions }) {
         ...fromProjectConfig("filesystem", "allowWrite"),
         ...fromAdapter("filesystem", "allowWrite"),
       ],
-      // .blackwall in cwd and every --add-dir keeps a run from writing a project config for you to trust, and ~/.blackwall from forging trust or replacing blackwall_node, even when
-      // cwd or an --add-dir covers it
       denyWrite: [
         ...base.filesystem.denyWrite,
-        `${HOME}/.blackwall`,
-        ".blackwall",
+        `${HOME}/.blackwall`, // a sandboxed command must not edit the user's blackwall setups
+        ".blackwall", // same as above, but applies to CWD and any --add-dir folder
         ...fromPresets("filesystem", "denyWrite"),
         ...fromUserConfig("filesystem", "denyWrite"),
         ...fromProjectConfig("filesystem", "denyWrite"),
