@@ -92,6 +92,10 @@ check '127.0.0.1 blocked under "*"' eval 'test "$(http_code "http://127.0.0.1:$p
 check 'localhost blocked under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 403'
 check '[::1] blocked under "*"' eval 'test "$(http_code "http://[::1]:$port/")" = 403'
 check 'public host allowed under "*"' eval 'test "$(http_code https://example.com/)" = 200'
+# 1.1.1.1 may answer 200 or 301; only the proxy's 403 matters
+check 'public IP literal allowed under "*"' eval 'test "$(http_code https://1.1.1.1/)" != 403'
+check '169.254.169.254 blocked under "*"' eval 'test "$(http_code http://169.254.169.254/)" = 403'
+check '0.0.0.0 blocked under "*"' eval 'test "$(http_code "http://0.0.0.0:$port/")" = 403'
 printf '{"network":{"allowedHosts":["*","127.0.0.1:%s","localhost:%s"]}}\n' "$port" "$port" >"$open/.blackwall/config.json" && blackwall_open --trust >/dev/null
 check 'listed IP literal allowed under "*"' eval 'test "$(http_code "http://127.0.0.1:$port/")" = 200'
 check 'listed localhost port allowed under "*"' eval 'test "$(http_code "http://localhost:$port/")" = 200'

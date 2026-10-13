@@ -2,6 +2,7 @@ import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbo
 import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
 import { matchesDomainPatternWithPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
+import { createResolvedAddressGuard } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
 import { spawn } from "node:child_process";
 import { isIP } from "node:net";
 
@@ -9,7 +10,7 @@ import { CWD } from "../constants/paths.mjs";
 
 export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every DNS name no rule matches
-  // IP literals stay denied: srt's resolved-address guard skips literals. deniedHosts names are the callback's job, since srt's deniedDomains would beat allowedHosts
+  // deniedHosts names and IP literals are the callback's job: srt's deniedDomains would beat allowedHosts, and its resolved-address guard skips literals
   const { allowedHosts, deniedHosts, ...network } = config.network;
   const allowAllDomains = allowedHosts.includes("*");
   // srt matches allowedHosts names and literals itself; denied ranges it checks at dial time, for names only
@@ -26,6 +27,7 @@ export function createSandbox(config) {
     },
   };
   SandboxRuntimeConfigSchema.parse(srtConfig);
+  const guard = createResolvedAddressGuard(srtConfig.network);
 
   return {
     async printFileAccess() {
@@ -53,7 +55,8 @@ export function createSandbox(config) {
         // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
         const canonicalHost = canonicalizeHost(host) ?? host;
         if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return false;
-        return !isIP(canonicalHost);
+        // srt's guard never sees a literal, so the callback judges it as a name resolving to it would be
+        return isIP(canonicalHost) ? guard.permits("literal", canonicalHost, port) : true;
       });
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
