@@ -16,7 +16,7 @@ const rejects = (config, message) => {
   if (message) assert.match(result.error.issues[0].message, message);
 };
 
-// Guards the srt dist/ internals that srt.mjs and schema.mjs import at launch, outside srt's public index
+// Guards the srt dist/ internals that src/ imports at launch, outside srt's public index
 for (const fn of [parseAddressRange, matchesDomainPatternWithPort, splitDomainPatternPort, canonicalizeHost, createResolvedAddressGuard, localInterfaceAddresses]) {
   assert.equal(typeof fn, "function");
 }

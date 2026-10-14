@@ -2,11 +2,9 @@ import { SandboxManager, SandboxRuntimeConfigSchema } from "@anthropic-ai/sandbo
 import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
 import { matchesDomainPatternWithPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
-import { createResolvedAddressGuard, localInterfaceAddresses } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
+import { createResolvedAddressGuard } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
 import { spawn } from "node:child_process";
 import { isIP } from "node:net";
-
-import { CWD } from "../constants/paths.mjs";
 
 export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
@@ -46,38 +44,8 @@ export function createSandbox(config) {
   }
 
   return {
-    async printFileAccess() {
-      // srt's view, not the config's: it adds its own write paths, and denies writes to these names in the cwd at any depth
-      SandboxManager.updateConfig(srtConfig);
-      const read = SandboxManager.getFsReadConfig();
-      const write = SandboxManager.getFsWriteConfig();
-      // Not in the package's index, but srt builds its mandatory write denies from these. tests/config.mjs checks the dist imports on the launch path; this one stays lazy since only --print-file-access needs it
-      const { DANGEROUS_FILES, getDangerousDirectories } = await import("@anthropic-ai/sandbox-runtime/dist/sandbox/sandbox-utils.js");
-      const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), ".git/hooks", ".git/config"].map((name) => `${CWD}/**/${name}`);
-      for (const [title, paths] of [
-        ["read allowed", read.allowWithinDeny],
-        ["read denied", read.denyOnly],
-        ["write allowed", write.allowOnly],
-        ["write denied", [...write.denyWithinAllow, ...mandatory]],
-      ]) {
-        console.log(`${title}:`);
-        for (const path of new Set(paths)) console.log(`  ${path}`);
-      }
-    },
-
-    printNetworkAccess() {
-      for (const [title, items] of [
-        ["allowed hosts", srtConfig.network.allowedDomains],
-        ["denied names", deniedNames],
-        ["denied ranges", deniedRanges],
-        // srt doesn't export its class ranges, so name them instead of copying ranges that could drift
-        ["srt refuses", ["loopback, unspecified, link-local, multicast, broadcast, cloud metadata", `this machine: ${[...new Set(localInterfaceAddresses())].join(", ")}`]],
-        ["other hosts", [allowAllDomains ? "allowed" : "refused"]],
-      ]) {
-        console.log(`${title}:`);
-        for (const item of new Set(items)) console.log(`  ${item}`);
-      }
-    },
+    srtConfig,
+    deniedNames,
 
     async run(args, env) {
       await SandboxManager.initialize(srtConfig, askCallback);

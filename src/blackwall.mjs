@@ -7,6 +7,10 @@ import { parseEnv } from "node:util";
 import packageJson from "../package.json" with { type: "json" };
 import claude from "./adapters/claude.mjs";
 import codex from "./adapters/codex.mjs";
+import { printConfig } from "./cli/printConfig.mjs";
+import { printEnv } from "./cli/printEnv.mjs";
+import { printFileAccess } from "./cli/printFileAccess.mjs";
+import { printNetworkAccess } from "./cli/printNetworkAccess.mjs";
 import { buildConfig, readIfExists, readProjectEnv, trustProjectConfig } from "./config/config.mjs";
 import { HOME, SANDBOX_CACHE, SIGNED_NODE } from "./constants/paths.mjs";
 import { createSandbox } from "./sandbox/srt.mjs";
@@ -42,10 +46,10 @@ if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === "1" && basename(process.execP
 
 const args = process.argv.slice(2);
 const addDirs = [];
-let printConfig = false;
-let printFileAccess = false;
-let printNetworkAccess = false;
-let printEnv = false;
+let showConfig = false;
+let showFileAccess = false;
+let showNetworkAccess = false;
+let showEnv = false;
 while (true) {
   if (args[0] === "--add-dir") {
     args.shift();
@@ -53,16 +57,16 @@ while (true) {
     addDirs.push(resolve(args.shift()));
   } else if (args[0] === "--print-config") {
     args.shift();
-    printConfig = true;
+    showConfig = true;
   } else if (args[0] === "--print-file-access") {
     args.shift();
-    printFileAccess = true;
+    showFileAccess = true;
   } else if (args[0] === "--print-network-access") {
     args.shift();
-    printNetworkAccess = true;
+    showNetworkAccess = true;
   } else if (args[0] === "--print-env") {
     args.shift();
-    printEnv = true;
+    showEnv = true;
   } else if (args[0] === "--trust") {
     console.log(`blackwall: trusted ${trustProjectConfig()}`);
     process.exit(0);
@@ -75,7 +79,7 @@ while (true) {
 }
 
 if (args[0] === "--") args.shift();
-if (!args[0] && !printConfig && !printFileAccess && !printNetworkAccess && !printEnv) exitWithUsage();
+if (!args[0] && !showConfig && !showFileAccess && !showNetworkAccess && !showEnv) exitWithUsage();
 
 function exitWithUsage() {
   console.error(USAGE);
@@ -88,18 +92,18 @@ const { config, presets } = buildConfig({ addDirs, additions: adapter.config?.()
 
 const sandbox = createSandbox(config);
 
-if (printConfig) {
-  console.log(JSON.stringify(config, null, 2));
+if (showConfig) {
+  printConfig(config);
   process.exit(0);
 }
 
-if (printFileAccess) {
-  await sandbox.printFileAccess();
+if (showFileAccess) {
+  await printFileAccess(sandbox.srtConfig);
   process.exit(0);
 }
 
-if (printNetworkAccess) {
-  sandbox.printNetworkAccess();
+if (showNetworkAccess) {
+  printNetworkAccess(sandbox.srtConfig, sandbox.deniedNames);
   process.exit(0);
 }
 
@@ -110,13 +114,8 @@ const envSources = [
   ...(adapter.env ? [[`adapter ${name}`, adapter.env()]] : []),
 ];
 
-// Only blackwall's own vars, so keys from ~/.blackwall/.env never reach the terminal
-if (printEnv) {
-  for (const [label, vars] of envSources) {
-    console.log(`# ${label}`);
-    for (const [key, value] of Object.entries(vars)) console.log(`${key}=${value}`);
-  }
-  console.log("# srt adds its proxy, TMPDIR, and git vars at launch");
+if (showEnv) {
+  printEnv(envSources);
   process.exit(0);
 }
 
