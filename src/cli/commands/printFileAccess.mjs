@@ -1,6 +1,6 @@
 import { SandboxManager } from "@anthropic-ai/sandbox-runtime";
 
-import { CWD } from "../constants/paths.mjs";
+import { CWD } from "../../constants/paths.mjs";
 
 export async function printFileAccess(srtConfig) {
   // srt's view, not the config's: it adds its own write paths, and denies writes to these names in the cwd at any depth
