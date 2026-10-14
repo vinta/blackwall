@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
@@ -31,16 +31,6 @@ export const PRESETS = {
   python,
   tmpdir,
 };
-
-export function trustProjectConfig() {
-  const text = readIfExists(PROJECT_CONFIG);
-  if (text === undefined) exitWithConfigError(PROJECT_CONFIG, "not found");
-  // A malformed file fails now rather than on the next launch
-  parseConfig(PROJECT_CONFIG, text);
-  mkdirSync(TRUST_MARKERS, { recursive: true });
-  writeFileSync(trustMarker(text), "");
-  return PROJECT_CONFIG;
-}
 
 // additions is the adapter's layer, added after every config file's lists
 export function buildConfig({ addDirs, additions }) {
@@ -188,11 +178,11 @@ function readConfig(file, requireTrust = false) {
 }
 
 // Like direnv, trust covers this path with these exact contents, so any edit needs a new --trust
-function trustMarker(text) {
+export function trustMarker(text) {
   return `${TRUST_MARKERS}/${createHash("sha256").update(`${PROJECT_CONFIG}\n${text}`).digest("hex")}`;
 }
 
-function parseConfig(file, text) {
+export function parseConfig(file, text) {
   const parsed = JSON.parse(text);
   const result = CONFIG_SCHEMA.safeParse(parsed, { errorMap: configErrorMap });
   if (!result.success) {
@@ -204,7 +194,7 @@ function parseConfig(file, text) {
   return { additions, overrides, presets, srt };
 }
 
-function exitWithConfigError(file, message) {
+export function exitWithConfigError(file, message) {
   console.error(`blackwall: ${file}: ${message}`);
   process.exit(2);
 }
