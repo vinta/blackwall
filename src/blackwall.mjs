@@ -11,7 +11,7 @@ import { printConfig } from "./cli/printConfig.mjs";
 import { printEnv } from "./cli/printEnv.mjs";
 import { printFileAccess } from "./cli/printFileAccess.mjs";
 import { printNetworkAccess } from "./cli/printNetworkAccess.mjs";
-import { trustProjectConfig } from "./cli/trust.mjs";
+import { trust } from "./cli/trust.mjs";
 import { buildConfig, readIfExists, readProjectEnv } from "./config/config.mjs";
 import { HOME, SANDBOX_CACHE, SIGNED_NODE } from "./constants/paths.mjs";
 import { createSandbox } from "./sandbox/srt.mjs";
@@ -69,7 +69,7 @@ while (true) {
     args.shift();
     showEnv = true;
   } else if (args[0] === "--trust") {
-    trustProjectConfig();
+    trust();
     process.exit(0);
   } else if (args[0] === "--version") {
     console.log(packageJson.version);
