@@ -4,5 +4,6 @@ export function printEnv(envSources) {
     console.log(`# ${label}`);
     for (const [key, value] of Object.entries(vars)) console.log(`${key}=${value}`);
   }
+
   console.log("# srt adds its proxy, TMPDIR, and git vars at launch");
 }

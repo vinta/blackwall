@@ -11,5 +11,6 @@ export function trust() {
   parseConfig(PROJECT_CONFIG, text);
   mkdirSync(TRUST_MARKERS, { recursive: true });
   writeFileSync(trustMarker(text), "");
+
   console.log(`blackwall: trusted ${PROJECT_CONFIG}`);
 }
