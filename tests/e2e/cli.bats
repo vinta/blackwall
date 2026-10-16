@@ -2,6 +2,7 @@ bats_require_minimum_version 1.5.0
 
 setup_file() {
   load common
+
   prepare cli
 }
 
@@ -11,6 +12,7 @@ setup() {
 
 @test "nested blackwall refused" {
   # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
+
   run -2 blackwall --add-dir "$repo" "$(realpath "$(command -v node)")" "$repo/src/blackwall.mjs" --version
   assert_output --partial "run inside a sandbox"
 }

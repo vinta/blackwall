@@ -2,11 +2,13 @@ bats_require_minimum_version 1.5.0
 
 setup_file() {
   load common
+
   prepare network
 }
 
 setup() {
   load common
+
   # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
   node=$(realpath "$(command -v node)")
 }

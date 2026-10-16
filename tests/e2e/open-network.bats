@@ -2,8 +2,10 @@ bats_require_minimum_version 1.5.0
 
 setup_file() {
   load common
+
   prepare open-network
   blackwall --trust >/dev/null
+
   read -r port listener < <(node -e 'const server = require("http").createServer((q, s) => s.end("ok")).listen(0, "127.0.0.1", () => console.log(server.address().port, process.pid))')
   export port listener
 }
@@ -68,10 +70,12 @@ allow_listener() {
 
 @test "listed IP literal allowed under *" {
   allow_listener
+
   assert_equal "$(http_code "http://127.0.0.1:$port/")" 200
 }
 
 @test "listed localhost port allowed under *" {
   allow_listener
+
   assert_equal "$(http_code "http://localhost:$port/")" 200
 }

@@ -2,6 +2,7 @@ bats_require_minimum_version 1.5.0
 
 setup_file() {
   load common
+
   prepare git
 }
 
@@ -22,6 +23,7 @@ setup() {
 @test "git branch -d deletes despite config error" {
   git -C "$proj" -c user.name=e2e -c user.email=e2e@example.com commit -q --allow-empty -m init
   git -C "$proj" branch gone
+
   run -0 blackwall git branch -d gone
   assert_output --partial "could not write config file"
   run ! git -C "$proj" rev-parse -q --verify refs/heads/gone

@@ -2,6 +2,7 @@ bats_require_minimum_version 1.5.0
 
 setup_file() {
   load common
+
   prepare filesystem
 }
 
@@ -37,12 +38,14 @@ setup() {
 # The skill's Linux row: a denied dir is an empty writable tmpfs, so reads say ENOENT and writes land there and vanish with the run
 @test "denied read reads as missing (Linux)" {
   [ "$(uname)" = Linux ] || skip "Linux only"
+
   run ! blackwall cat "$home/secret.txt"
   assert_output --partial "No such file"
 }
 
 @test "denied write succeeds inside and vanishes (Linux)" {
   [ "$(uname)" = Linux ] || skip "Linux only"
+
   run -0 blackwall sh -c 'echo x > "$HOME/outside" && test -f "$HOME/outside"'
   refute [ -e "$home/outside" ]
 }

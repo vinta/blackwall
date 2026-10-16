@@ -2,6 +2,7 @@ bats_require_minimum_version 1.5.0
 
 setup_file() {
   load common
+
   prepare claude
   blackwall claude --version >"$work/first-run.out" 2>&1
 }
@@ -65,6 +66,7 @@ setup() {
 # Named claude so the claude adapter's grants and env apply, without needing a login
 @test "write claude profile" {
   printf '#!/bin/sh\necho x > "$CLAUDE_CONFIG_DIR/probe"\n' >"$proj/claude" && chmod +x "$proj/claude"
+
   run -0 blackwall ./claude
   assert [ -f "$home/.claude-blackwall/probe" ]
 }

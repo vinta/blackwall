@@ -2,6 +2,7 @@ bats_require_minimum_version 1.5.0
 
 setup_file() {
   load common
+
   prepare codex
   blackwall codex --version >"$work/first-run.out" 2>&1
 }
@@ -37,12 +38,14 @@ setup() {
 # Named codex so the codex adapter's grants and env apply, without needing a login
 @test "codex reads user skill and writes profile" {
   printf '#!/bin/sh\nset -e\ncat "$CODEX_HOME/skills/linked-skill/SKILL.md"\necho x > "$CODEX_HOME/probe"\n' >"$proj/codex" && chmod +x "$proj/codex"
+
   run -0 blackwall ./codex
   assert [ -f "$home/.codex-blackwall/probe" ]
 }
 
 @test "unreadable codex instructions block launch" {
   chmod 000 "$home/.codex/AGENTS.md"
+
   run ! blackwall codex --version
   assert_output --partial EACCES
 }
