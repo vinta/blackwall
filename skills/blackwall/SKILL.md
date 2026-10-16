@@ -91,11 +91,7 @@ blackwall --trust                                                  # in the proj
 
 `blackwall` with no command prints the one-line usage. There is no `--help`: `blackwall --help` runs a command named `--help`. Exit 2 means a usage or config error.
 
-## Under `blackwall claude` and `blackwall codex`
+## Agent-specific behavior
 
-- claude's config folder is `~/.claude-blackwall`, codex's is `~/.codex-blackwall`. `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, `output-styles` (claude) and `AGENTS.md`, `agents`, `rules`, plus `~/.agents/skills` (codex) are copied from the host folders on every launch, so edits to the copies vanish. User-level instruction and skill edits happen outside, in `~/.claude` or `~/.codex`; files in the current folder persist.
-- `~/.claude-blackwall/settings.json` is separate and starts with only `enabledPlugins`: host hooks and permissions don't apply. Plugins load from `~/.claude/plugins` read-only, auto-update off.
-- Login is separate: `/login`, or `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`; for codex, `blackwall codex login --device-auth`.
-- Commits are unsigned: `commit.gpgsign=false` is injected because gpg can't reach `~/.gnupg`.
-- Temp files go under `$TMPDIR` (`/tmp/claude`); the rest of `/tmp` is write-denied.
-- Codex's own sandbox is off inside; blackwall is the sandbox.
+- For config, copied files, plugins, or login under `blackwall claude`, read [references/claude-code.md](references/claude-code.md).
+- For config, copied files, command rules, or login under `blackwall codex`, read [references/codex.md](references/codex.md).
