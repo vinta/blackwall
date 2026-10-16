@@ -5,7 +5,7 @@ import { copyShared } from "./shared.mjs";
 const PROFILE = `${HOME}/.codex-blackwall`;
 
 // Copied into the profile on every launch
-const SHARED = ["AGENTS.md", "agents", "rules"];
+const SHARED = ["AGENTS.md", "agents"];
 
 export default {
   config() {
@@ -35,7 +35,7 @@ export default {
 
     if (firstRun) {
       console.warn(`blackwall: created ${PROFILE} as codex's config folder. Every launch copies ${SHARED.join(", ")} from ~/.codex, skills from ~/.agents, and blackwall's own skill into it`);
-      console.warn(`blackwall: sessions, config.toml, and login stay apart from ~/.codex. Log in with \`blackwall codex login --device-auth\``);
+      console.warn(`blackwall: sessions, config.toml, rules, and login stay apart from ~/.codex. Log in with \`blackwall codex login --device-auth\``);
     }
 
     copyShared(`${HOME}/.codex`, PROFILE, SHARED);

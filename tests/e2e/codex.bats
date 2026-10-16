@@ -46,6 +46,19 @@ setup() {
   assert [ -f "$home/.codex-blackwall/probe" ]
 }
 
+@test "codex preserves sandbox rules without copying host rules" {
+  mkdir -p "$home/.codex/rules" "$home/.codex-blackwall/rules"
+  printf 'host rules\n' >"$home/.codex/rules/host.rules"
+  printf 'sandbox rules\n' >"$proj/sandbox.rules"
+  ln -s "$proj/sandbox.rules" "$home/.codex-blackwall/rules/default.rules"
+  printf '#!/bin/sh\ncat "$CODEX_HOME/rules/default.rules"\n' >"$proj/codex" && chmod +x "$proj/codex"
+
+  run -0 blackwall ./codex
+  assert_output "sandbox rules"
+  assert [ -L "$home/.codex-blackwall/rules/default.rules" ]
+  refute [ -e "$home/.codex-blackwall/rules/host.rules" ]
+}
+
 @test "unreadable codex instructions block launch" {
   chmod 000 "$home/.codex/AGENTS.md"
 
