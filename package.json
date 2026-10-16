@@ -32,11 +32,16 @@
     "skills/"
   ],
   "scripts": {
-    "test": "node tests/shared.mjs && node tests/config.mjs && bash tests/e2e.sh"
+    "test": "node tests/shared.mjs && node tests/config.mjs && bats --print-output-on-failure tests/e2e"
   },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "0.0.79",
     "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "bats": "1.13.0",
+    "bats-assert": "2.2.4",
+    "bats-support": "0.3.0"
   },
   "engines": {
     "node": ">=22.21.0"

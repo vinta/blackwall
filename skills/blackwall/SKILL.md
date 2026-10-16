@@ -1,6 +1,6 @@
 ---
 name: blackwall
-description: "Run, configure, and debug blackwall, the sandbox for claude, codex, and other dev commands (srt: Seatbelt on macOS, bubblewrap on Linux). Use when the user asks whether this session is sandboxed or what it can read, write, or reach, mentions blackwall, wants a command run sandboxed, or wants the sandbox to reach a path, host, or tool: ~/.blackwall/config.json, .blackwall/config.json, presets, --add-dir, --trust. Also use inside a sandboxed session when a command fails with `Operation not permitted` on a path that exists, `CONNECT tunnel failed, response 403`, ENOTFOUND or `nodename nor servname provided` for every host, a write under /tmp or ~ that fails or vanishes, or blackwall itself refuses with `can't run inside a sandbox`: those are blackwall denials, not project bugs. Not for configuring Claude Code's built-in sandbox or Codex's sandbox_mode."
+description: "Run, configure, and debug blackwall, the sandbox for claude, codex, and other dev commands (srt: Seatbelt on macOS, bubblewrap on Linux). Use when the user asks whether this session is sandboxed or what it can read, write, or reach, mentions blackwall, wants a command run sandboxed, or wants the sandbox to reach a path, host, or tool: ~/.blackwall/config.json, .blackwall/config.json, presets, --add-dir, --trust; or wants a blackwall bug report. Also use inside a sandboxed session when a command fails with `Operation not permitted` on a path that exists, `CONNECT tunnel failed, response 403`, ENOTFOUND or `nodename nor servname provided` for every host, a write under /tmp or ~ that fails or vanishes, or blackwall itself refuses with `can't run inside a sandbox`: those are blackwall denials, not project bugs. Not for configuring Claude Code's built-in sandbox or Codex's sandbox_mode."
 license: MIT
 compatibility: Node.js 22.21+; macOS (Seatbelt) or Linux (bubblewrap)
 allowed-tools: Bash(blackwall --print-config:*) Bash(blackwall --print-file-access:*) Bash(blackwall --print-network-access:*) Bash(blackwall --print-env:*) Bash(blackwall --version)
@@ -37,13 +37,16 @@ Inside, `blackwall` is unavailable: every flag, `--version` included, exits 2 wi
 | `blackwall: …/.blackwall/.env: loads only with a trusted .blackwall/config.json` | project `.env` without a trusted config | add `.blackwall/config.json` (`{}` is enough), then `--trust` |
 | `blackwall: unknown preset <name>`; `blackwall: <file>: unknown key <key>`; `<file>: <path>: <message>` from a bad value (exit 2) | config typo, or an srt setting blackwall doesn't expose | fix the key or value; preset names are under Config |
 | `sandbox_apply: Operation not permitted` from `codex` | Seatbelt can't nest | `blackwall codex` already passes `-c sandbox_mode="danger-full-access"`; a codex started from inside another sandboxed command needs the same flag |
-| git: `could not write config file .git/config: Operation not permitted`. `git remote add`, `git config`, `git branch -m` fail; `git push -u`, `git branch -D`, `git switch -c` exit 0 but lose the tracking update | `.git/config` is write-denied, no grant lifts it | none. The user sets remotes and upstreams on the host; push with `git push origin HEAD` |
+| git: `could not write config file .git/config: Operation not permitted`. `git remote add`, `git config`, `git branch -m` fail; `git push -u`, `git switch -c` exit 0 but lose the tracking update; `git branch -d` and `-D` exit 0 with the branch deleted but leave its `branch.<name>` section | `.git/config` is write-denied, no grant lifts it | none. The user sets remotes and upstreams on the host; push with `git push origin HEAD`. After deleting a branch that had an upstream, the user runs `git config --remove-section branch.<name>` on the host |
 
 Noise, harmless, the command still ran:
 
 - git: `fatal: failed to store: -60008`, the keychain credential helper can't save
+- git: `could not write config file .git/config` and `update of config-file failed` from `git branch -d` or `-D`, even for a branch with no config; the branch is deleted
 - `make: error: couldn't create cache file '/var/folders/…/xcrun_db-…' (errno=Operation not permitted)`, same from `xcrun`
 - pip: `WARNING: The directory '…/Library/Caches/pip' or its parent directory is not owned or is not writable … The cache has been disabled`
+
+A failure no row explains, a path or host the docs deny that goes through, or a misleading message is a blackwall bug: write a local report as [references/bug-report.md](references/bug-report.md) describes.
 
 ## Granting the narrowest thing
 

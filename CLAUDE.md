@@ -18,4 +18,4 @@
 ## Tests
 
 - A platform claim in `skills/blackwall/SKILL.md` ships with an e2e check in the same change.
-- In `tests/e2e.sh` (pipefail), check error text with `grep -q … <<<"$(cmd 2>&1)"`, not `cmd 2>&1 | grep -q`: the failing command's status wins the pipe.
+- In `tests/e2e/*.bats`, check with `run -N`, `run !`, and bats-assert (`assert_output`, `refute`): a bare `run` always passes, `! cmd` before a test's last line never fails it, and neither does `[[ ]]` under macOS's bash 3.2.
