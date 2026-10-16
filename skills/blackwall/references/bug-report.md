@@ -1,6 +1,6 @@
 # Writing a blackwall bug report
 
-Write the report to a Markdown file under the current folder and tell the user its path. Don't file, post, or send it: the user reads it and decides what happens next.
+Ask the user where to save the report before writing it; inside the sandbox, only the current folder, `--add-dir` folders, and `$TMPDIR` are writable. Save it there as a Markdown file and tell the user its path. Don't file, post, or send it: the user reads it and decides what happens next.
 
 ## Is it a bug?
 
