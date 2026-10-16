@@ -5,5 +5,5 @@
 - Command rules stay separate in `~/.codex-blackwall/rules/`; launches preserve them.
 - Login is separate: run `blackwall codex login --device-auth`.
 - Commits are unsigned: `commit.gpgsign=false` is injected because gpg can't reach `~/.gnupg`.
-- Temp files go under `$TMPDIR` (`/tmp/claude`); the rest of `/tmp` is write-denied.
+- Temporary files use `$TMPDIR` (`/tmp/claude`, the sandbox runtime's shared temp directory); the rest of `/tmp` is write-denied.
 - Codex's own sandbox is off inside; blackwall is the sandbox.

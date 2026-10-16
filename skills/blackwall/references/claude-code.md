@@ -6,4 +6,4 @@
 - Plugins load from `~/.claude/plugins` read-only, auto-update off.
 - Login is separate: use `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 - Commits are unsigned: `commit.gpgsign=false` is injected because gpg can't reach `~/.gnupg`.
-- Temp files go under `$TMPDIR` (`/tmp/claude`); the rest of `/tmp` is write-denied.
+- Temporary files use `$TMPDIR` (`/tmp/claude`, the sandbox runtime's shared temp directory); the rest of `/tmp` is write-denied.
