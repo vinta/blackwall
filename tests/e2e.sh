@@ -77,6 +77,8 @@ check "create --add-dir .blackwall denied" eval 'blackwall --add-dir "$added" mk
 check "git reads ~/.config/git/config" eval 'test "$(blackwall git config --get user.email)" = e2e@example.com'
 mkdir -p "$elsewhere/xdg/git" && printf '[user]\n\temail = xdg@example.com\n' >"$elsewhere/xdg/git/config"
 check "git reads \$XDG_CONFIG_HOME/git/config" eval 'test "$(cd "$proj" && HOME=$home XDG_CONFIG_HOME=$elsewhere/xdg node "$repo/src/blackwall.mjs" git config --get user.email)" = xdg@example.com'
+git -C "$proj" -c user.name=e2e -c user.email=e2e@example.com commit -q --allow-empty -m init && git -C "$proj" branch gone
+check "git branch -d deletes despite config error" eval 'out=$(blackwall git branch -d gone 2>&1) && grep -q "could not write config file" <<<"$out" && ! git -C "$proj" rev-parse -q --verify refs/heads/gone'
 
 check "write ~/.blackwall under --add-dir ~ denied" eval 'blackwall --add-dir "$home" sh -c "echo x > \"\$HOME/.blackwall/probe\""; ! test -e "$home/.blackwall/probe"'
 check "write ~/.claude denied" eval 'blackwall sh -c "echo x >> \"\$HOME/.claude/CLAUDE.md\""; test "$(cat "$home/.claude/CLAUDE.md")" = "# host instructions"'
