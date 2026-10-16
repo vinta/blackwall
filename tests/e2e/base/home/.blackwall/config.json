@@ -1,0 +1,1 @@
+{"filesystem":{"allowRead":[{{TOOL_GRANTS}}]},"network":{"allowedHosts":["*.sslip.io"],"deniedHosts":["192.0.2.0/24"]},"srt":{"allowPty":false}}
