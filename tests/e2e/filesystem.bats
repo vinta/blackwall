@@ -134,3 +134,13 @@ setup() {
   run -0 blackwall sh -c 'mkdir -p "$GH_CONFIG_DIR" && echo x > "$GH_CONFIG_DIR/probe"'
   assert [ -f "$home/.cache-blackwall/gh/probe" ]
 }
+
+# zsh writes heredocs under $TMPPREFIX, /tmp/zsh by default, not $TMPDIR
+@test "zsh heredoc" {
+  command -v zsh >/dev/null || skip "no zsh"
+
+  run -0 blackwall zsh -c 'cat <<END
+hello
+END'
+  assert_output hello
+}

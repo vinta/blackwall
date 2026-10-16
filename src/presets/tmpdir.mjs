@@ -3,7 +3,10 @@ import { mkdirSync } from "node:fs";
 import { TMPDIR } from "../constants/paths.mjs";
 
 export default {
-  why: "srt sets every child's TMPDIR from the launcher's CLAUDE_CODE_TMPDIR, and Seatbelt sees /tmp/claude as /private/tmp/claude",
+  why: "srt sets every child's TMPDIR from the launcher's CLAUDE_CODE_TMPDIR, and Seatbelt sees /tmp/claude as /private/tmp/claude; zsh writes heredocs under TMPPREFIX, /tmp/zsh by default, so they fail with `can't create temp file for here document`",
+  env: {
+    TMPPREFIX: `${TMPDIR}/zsh`,
+  },
   filesystem: {
     allowRead: [TMPDIR],
   },
