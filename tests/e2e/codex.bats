@@ -4,7 +4,10 @@ setup_file() {
   load common
 
   prepare codex
-  blackwall codex --version >"$work/first-run.out" 2>&1 || { cat "$work/first-run.out" >&2; return 1; }
+  # A pipe, not a file: npm's codex is a node script, and node 24.20 aborts at startup when stdout is a file the sandbox can't read
+  local out
+  out=$(blackwall codex --version 2>&1) || { echo "$out" >&2; return 1; }
+  echo "$out" >"$work/first-run.out"
 }
 
 setup() {
