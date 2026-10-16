@@ -24,6 +24,10 @@
   - Never: `allowAppleEvents` (srt's README: removes code-execution isolation, user-level only); `network.allowAllUnixSockets` (disables socket blocking); `network.httpProxyPort`, `network.socksProxyPort` (srt stops filtering, the external proxy must); `network.mitmProxy`, `network.tlsTerminate`, `network.filterRequest` (interception, and `filterRequest` is a function); `network.parentProxy` (already set through `HTTP_PROXY`, see Known Limitations in the README); srt's own `network` and `filesystem` lists, which blackwall builds; `windows`
   - `git.safeDirectories` collides with the git preset's `GIT_CONFIG_COUNT`, see the worktree item. `credentials` is a feature of its own, see the `GH_TOKEN` masking item under Secrets
 
+## Bugs
+
+- A sandboxed node program aborts at startup with a native stack trace (`node::InitializeOncePerProcessInternal`) and no error message when its stdout or stderr is a file outside the grants: `blackwall codex --version > ../out.txt` with npm's `codex` on Node 24.20.0 on macOS. A pipe or a file under the current folder works. Likely Node's startup check on fds 0-2 failing on a file the sandbox can't read, unverified. The fix is cheap, the symptom isn't: nothing points at blackwall, so an agent would chase a Node bug. At least a "Reading a denial" row in the skill, with an e2e check
+
 ## Unverified
 
 - Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)
