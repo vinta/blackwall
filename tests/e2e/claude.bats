@@ -4,7 +4,7 @@ setup_file() {
   load common
 
   prepare claude
-  blackwall claude --version >"$work/first-run.out" 2>&1
+  blackwall claude --version >"$work/first-run.out" 2>&1 || { cat "$work/first-run.out" >&2; return 1; }
 }
 
 setup() {

@@ -4,7 +4,7 @@ setup_file() {
   load common
 
   prepare codex
-  blackwall codex --version >"$work/first-run.out" 2>&1
+  blackwall codex --version >"$work/first-run.out" 2>&1 || { cat "$work/first-run.out" >&2; return 1; }
 }
 
 setup() {
