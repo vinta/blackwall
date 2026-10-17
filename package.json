@@ -29,7 +29,8 @@
   },
   "files": [
     "src/",
-    "skills/"
+    "skills/",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "test": "node tests/shared.mjs && node tests/config.mjs && bats --print-output-on-failure tests/e2e"
