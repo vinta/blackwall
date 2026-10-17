@@ -1,4 +1,4 @@
-import { XDG_CONFIG } from "../constants/paths.mjs";
+import { XDG_CONFIG } from "../constants/paths.js";
 
 export default {
   why: "git reads your config and global ignore files; gpg can't reach ~/.gnupg under denyRead, so commits go unsigned; srt denies .git/hooks and .git/config in the current folder only, so they are listed here for --add-dir folders",

@@ -31,12 +31,13 @@ Inside, `blackwall` is unavailable: every flag, `--version` included, exits 2 wi
 | The command printed | Cause | Grant |
 |---|---|---|
 | `Operation not permitted` on a path that exists (macOS). On Linux the path reads as missing, or a write succeeds and the file is gone after the run | path outside the read or write grants | `filesystem.allowRead` or `filesystem.allowWrite` for one path; `--add-dir DIR` for a whole folder, read and write |
-| `curl: (56) CONNECT tunnel failed, response 403`; git: `unable to access '…': CONNECT tunnel failed, response 403`; Node's `fetch`: `fetch failed` caused by `Request was cancelled.`; Node's `http`: `ERR_PROXY_TUNNEL`, `HTTP/1.1 403 Forbidden` | host outside the allowlist, a `deniedHosts` name under `"*"` (preset `local-network` denies `localhost`), an IP literal in loopback, link-local, cloud metadata, this machine's own addresses, or a denied range, or a name resolving into loopback or a denied range (`private-network` ranges) | `network.allowedHosts`, or the preset for that tool; for a local or LAN server, its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000` |
+| `curl: (56) CONNECT tunnel failed, response 403`; git: `unable to access '…': CONNECT tunnel failed, response 403`; Node's `fetch`: `fetch failed` caused by `Request was cancelled.`; Node's `http`: `ERR_PROXY_TUNNEL`, `HTTP/1.1 403 host is not on the allow list`. The 403 status line carries the reason, e.g. `403 host is not on the allow list`, `403 host is on the deny list`, `403 resolved to a listed address`; git and `curl -sS` show only `response 403`, so run `curl -sv https://<host>` to read it | host outside the allowlist, a `deniedHosts` name under `"*"` (preset `local-network` denies `localhost`), an IP literal in loopback, link-local, cloud metadata, this machine's own addresses, or a denied range, or a name resolving into loopback or a denied range (`private-network` ranges) | `network.allowedHosts`, or the preset for that tool; for a local or LAN server, its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000` |
 | `ENOTFOUND`, `getaddrinfo` failure, `[Errno 8] nodename nor servname provided, or not known`, for allowed hosts too | the tool ignores `HTTPS_PROXY` | make it use the proxy; no config change. curl, git, gh, npm, pip, uv, and urllib honor it already, and so do Node's `fetch` and `http` (22.21+) through the `node` preset's `NODE_USE_ENV_PROXY=1` |
 | `blackwall: …/.blackwall/config.json: not trusted. Review it, then run \`blackwall --trust\`` | project config is new or edited | the user reviews it and runs `blackwall --trust` |
 | `blackwall: …/.blackwall/.env: loads only with a trusted .blackwall/config.json` | project `.env` without a trusted config | add `.blackwall/config.json` (`{}` is enough), then `--trust` |
 | `blackwall: unknown preset <name>`; `blackwall: <file>: unknown key <key>`; `<file>: <path>: <message>` from a bad value (exit 2) | config typo, or an srt setting blackwall doesn't expose | fix the key or value; preset names are under Config |
 | `sandbox_apply: Operation not permitted` from `codex` | Seatbelt can't nest | `blackwall codex` already passes `-c sandbox_mode="danger-full-access"`; a codex started from inside another sandboxed command needs the same flag |
+| `unshare: unshare failed: Operation not permitted` (Linux), or Chromium, Electron, Playwright, rootless podman, or a nested bubblewrap failing to start | sandboxed commands can't create user namespaces | none in the config. The user runs that tool outside blackwall |
 | git: `could not write config file .git/config: Operation not permitted`. `git remote add`, `git config`, `git branch -m` fail; `git push -u`, `git switch -c` exit 0 but lose the tracking update; `git branch -d` and `-D` exit 0 with the branch deleted but leave its `branch.<name>` section | `.git/config` is write-denied, no grant lifts it | none. The user sets remotes and upstreams on the host; push with `git push origin HEAD`. After deleting a branch that had an upstream, the user runs `git config --remove-section branch.<name>` on the host |
 
 Noise, harmless, the command still ran:
@@ -74,6 +75,7 @@ A failure no row explains, a path or host the docs deny that goes through, or a 
 ```
 
 - Presets: `agent-files`, `python`, `node`, `github`, `git`, `pre-commit`, `local-network`, `private-network` are on by default; `tmpdir`, `mac`, `linux` are always on. Each is one tool's hosts, read paths, and env vars. What each grants: https://github.com/vinta/blackwall#presets
+- `filesystem.denyRead` and `denyWrite` take paths too. A relative entry, like `./local`, applies to the current folder and every `--add-dir` folder.
 - Dropping `git` from `presets` makes every sandboxed `git` refuse to start when `~/.gitconfig` exists, and opens writes to `.git/hooks` and `.git/config` in `--add-dir` folders.
 - `.blackwall/.env` keys override `~/.blackwall/.env` and reach only the sandboxed command.
 - Verify outside: `blackwall --print-config claude` (merged config with the launch-time grants), `blackwall --print-file-access claude` (srt's view), `blackwall --print-network-access claude` (hosts it can reach, the names and ranges it refuses, and srt's own refused classes), `blackwall --print-env claude` (env vars blackwall adds, each with its why).
@@ -81,7 +83,7 @@ A failure no row explains, a path or host the docs deny that goes through, or a 
 ## Run and install
 
 ```bash
-npm install -g blackwall-sandbox                                   # Node.js 22.15+
+npm install -g blackwall-sandbox                                   # Node.js 22.21+
 sudo apt-get install -y bubblewrap socat ripgrep                   # Linux only
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0      # Ubuntu 24.04+ only
 blackwall claude                                                   # or codex, or any command

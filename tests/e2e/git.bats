@@ -16,7 +16,7 @@ setup() {
 }
 
 @test "git reads \$XDG_CONFIG_HOME/git/config" {
-  run -0 bash -c 'cd "$proj" && HOME=$home XDG_CONFIG_HOME=$elsewhere/xdg node "$1/src/blackwall.mjs" git config --get user.email' bash "$repo"
+  run -0 bash -c 'cd "$proj" && HOME=$home XDG_CONFIG_HOME=$elsewhere/xdg node "$1/src/blackwall.js" git config --get user.email' bash "$repo"
   assert_output xdg@example.com
 }
 

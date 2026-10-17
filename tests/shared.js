@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { copyShared } from "../src/adapters/shared.mjs";
+import { copyShared } from "../src/adapters/shared.js";
 
 const root = mkdtempSync(join(tmpdir(), "blackwall-shared-"));
 try {

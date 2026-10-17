@@ -1,4 +1,4 @@
-import { SANDBOX_CACHE, XDG_DATA } from "../constants/paths.mjs";
+import { SANDBOX_CACHE, XDG_DATA } from "../constants/paths.js";
 
 export default {
   why: "gh can't read or write its default ~/.config/gh; git, gh, and raw file downloads reach GitHub, and gh loads its extensions from ~/.local",

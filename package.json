@@ -8,7 +8,7 @@
     "ai-agent",
     "cli"
   ],
-  "version": "0.3.0",
+  "version": "0.4.0",
   "author": {
     "name": "Vinta Chen",
     "email": "vinta.chen@gmail.com",
@@ -25,17 +25,18 @@
   },
   "type": "module",
   "bin": {
-    "blackwall": "src/blackwall.mjs"
+    "blackwall": "src/blackwall.js"
   },
   "files": [
     "src/",
-    "skills/"
+    "skills/",
+    "CHANGELOG.md"
   ],
   "scripts": {
-    "test": "node tests/shared.mjs && node tests/config.mjs && bats --print-output-on-failure tests/e2e"
+    "test": "node tests/shared.js && node tests/config.js && bats --print-output-on-failure tests/e2e"
   },
   "dependencies": {
-    "@anthropic-ai/sandbox-runtime": "0.0.79",
+    "@anthropic-ai/sandbox-runtime": "0.0.80",
     "zod": "3.25.76"
   },
   "devDependencies": {

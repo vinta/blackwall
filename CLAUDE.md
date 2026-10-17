@@ -13,7 +13,7 @@
 
 ## srt
 
-- Imports from srt's `dist/` are internals outside its public index: guard each in `tests/config.mjs` and run e2e on every srt bump.
+- Imports from srt's `dist/` are internals outside its public index: guard each in `tests/config.js` and run e2e on every srt bump.
 
 ## Tests
 

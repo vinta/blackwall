@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { HOME, SKILLS, TMPDIR } from "../constants/paths.mjs";
-import { copyShared } from "./shared.mjs";
+import { HOME, SKILLS, TMPDIR } from "../constants/paths.js";
+import { copyShared } from "./shared.js";
 
 const PROFILE = `${HOME}/.claude-blackwall`;
 

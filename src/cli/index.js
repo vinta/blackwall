@@ -2,16 +2,16 @@ import { mkdirSync } from "node:fs";
 import { basename, resolve } from "node:path";
 
 import packageJson from "../../package.json" with { type: "json" };
-import claude from "../adapters/claude.mjs";
-import codex from "../adapters/codex.mjs";
-import { buildConfig, readProjectEnv } from "../config/config.mjs";
-import { SANDBOX_CACHE } from "../constants/paths.mjs";
-import { createSandbox } from "../sandbox/srt.mjs";
-import { printConfig } from "./commands/printConfig.mjs";
-import { printEnv } from "./commands/printEnv.mjs";
-import { printFileAccess } from "./commands/printFileAccess.mjs";
-import { printNetworkAccess } from "./commands/printNetworkAccess.mjs";
-import { trust } from "./commands/trust.mjs";
+import claude from "../adapters/claude.js";
+import codex from "../adapters/codex.js";
+import { buildConfig, readProjectEnv } from "../config/config.js";
+import { SANDBOX_CACHE } from "../constants/paths.js";
+import { createSandbox } from "../sandbox/srt.js";
+import { printConfig } from "./commands/printConfig.js";
+import { printEnv } from "./commands/printEnv.js";
+import { printFileAccess } from "./commands/printFileAccess.js";
+import { printNetworkAccess } from "./commands/printNetworkAccess.js";
+import { trust } from "./commands/trust.js";
 
 const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version] [--] <command> [args...]";
 

@@ -36,10 +36,11 @@ export function createSandbox(config) {
       // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
       const canonicalHost = canonicalizeHost(host) ?? host;
       // canonicalizeHost strips one trailing dot, so a dot left means the raw host had an empty label: no resolver accepts it, but srt dials the one-dot spelling, which does resolve
-      if (/\.$|\.\./.test(canonicalHost)) return false;
-      if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return false;
+      if (/\.$|\.\./.test(canonicalHost)) return { allow: false, reason: "host has an empty label" };
+      if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return { allow: false, reason: "host is on the deny list" };
       // A dummy non-IP hostname makes the guard judge the address as a resolved answer, the way it would for a name resolving there
-      return isIP(canonicalHost) ? guard.permits("literal", canonicalHost, port) : true;
+      if (isIP(canonicalHost) && !guard.permits("literal", canonicalHost, port)) return { allow: false, reason: "host is an IP address in a refused range" };
+      return true;
     };
   }
 
@@ -49,6 +50,8 @@ export function createSandbox(config) {
 
     async run(args, env) {
       await SandboxManager.initialize(srtConfig, askCallback);
+      // initialize prints these only under SRT_DEBUG, yet one says a sandboxed command can rewrite srt, which runs unsandboxed next launch
+      for (const warning of SandboxManager.checkDependencies().warnings) console.warn(`blackwall: ${warning}`);
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
       const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
