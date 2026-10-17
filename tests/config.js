@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { SandboxManager } from "@anthropic-ai/sandbox-runtime";
 import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
 import { matchesDomainPatternWithPort, splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
@@ -20,6 +21,9 @@ const rejects = (config, message) => {
 for (const fn of [parseAddressRange, matchesDomainPatternWithPort, splitDomainPatternPort, canonicalizeHost, createResolvedAddressGuard, localInterfaceAddresses]) {
   assert.equal(typeof fn, "function");
 }
+
+// srt up to 0.0.77 reads the ask callback's { allow: false, reason } as an allow
+assert.equal(SandboxManager.askCallbackDenyReason, true);
 
 const defaults = JSON.parse(readFileSync(new URL("../src/config/default-config.json", import.meta.url), "utf8"));
 const { srt, ...lists } = defaults;

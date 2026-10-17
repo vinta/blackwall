@@ -9,6 +9,7 @@
 ### Changes
 
 - Upgrades srt to 0.0.80. A refused connection's 403 status line now says why, e.g. `403 host is not on the allow list`, which `curl -sv` shows. Folders named like `[user-id]` no longer keep the sandbox from starting, and on Linux an absent deny path that bubblewrap can't mount no longer blocks every command
+- A host blackwall refuses under `"*"` says why in the 403 status line too, e.g. `403 host is on the deny list`, instead of `403 user denied`
 
 ## v0.4.0 / 2026-10-17
 
