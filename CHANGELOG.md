@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 
-- On Linux, sandboxed commands can't create user namespaces, so Chromium, Electron, Playwright, rootless podman, and nested bubblewrap fail with `unshare failed: Operation not permitted`. To let them, set `srt.allowNestedUserNamespaces` to `true`, which also stops `denyWrite` from holding
+- On Linux, sandboxed commands can't create user namespaces, so Chromium, Electron, Playwright, rootless podman, and nested bubblewrap fail with `unshare failed: Operation not permitted`. Run those tools outside blackwall, since the srt switch that lifts the block also stops `denyWrite` from holding
 
 ### Changes
 

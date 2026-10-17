@@ -36,7 +36,6 @@
   "srt": {
     "enableWeakerNetworkIsolation": true,
     "enableWeakerNestedSandbox": false,
-    "allowNestedUserNamespaces": false,
     "allowPty": true
   }
 }

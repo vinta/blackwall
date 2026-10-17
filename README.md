@@ -91,7 +91,6 @@ npx skills add vinta/blackwall -g
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 - `srt.enableWeakerNetworkIsolation: true`: On macOS, lets Go tools like `gh` verify TLS certificates through `com.apple.trustd.agent`, which also opens a data exfiltration path through that service. On by default because the `github` preset is
 - `srt.enableWeakerNestedSandbox: false`: On Linux, lets the sandbox run inside Docker without privileged namespaces, which considerably weakens isolation
-- `srt.allowNestedUserNamespaces: false`: On Linux, lets sandboxed commands create user namespaces, which Chromium, Electron, Playwright, rootless podman, and nested bubblewrap need. With it on, `denyWrite` and srt's built-in write denies no longer hold
 - `srt.allowPty: true`: Lets sandboxed commands open pseudo-terminals, which TUIs need
 
 `srt` holds [srt settings](https://github.com/anthropics/sandbox-runtime), passed to srt untouched, each replacing its default. The `filesystem` keys are srt settings too, but blackwall merges those lists, and translates `network.allowedHosts` and `network.deniedHosts` into srt's own lists. An srt setting not in `default-config.json`'s `srt` is a config error, `unknown key`. However, blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
