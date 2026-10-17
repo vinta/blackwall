@@ -92,7 +92,7 @@
 - First release
 - `blackwall <command>` runs any command in an [srt](https://github.com/anthropics/sandbox-runtime) sandbox, with every host allowed
 - `blackwall claude` runs Claude Code with its own `~/.claude-blackwall` profile
-- `gh`, `uv`, `npm`, and `pre-commit` use their own caches in `~/.cache/blackwall`, so a sandboxed run never writes to your host caches
+- `uv`, `npm`, and `pre-commit` use their own caches, and `gh` its own config, in `~/.cache/blackwall`, so a sandboxed run never writes to your host caches
 - Writes are limited to the current folder, `--add-dir` folders, `/private/tmp`, and `~/.cache/blackwall`
 - Reads are blocked by default, except those folders and what dev tools need
 - Tokens come from an optional `~/.blackwall/.env`: `GH_TOKEN` goes to every command, and `CLAUDE_CODE_OAUTH_TOKEN` only goes to `claude`
