@@ -69,6 +69,11 @@ allow_listener() {
   assert_output --partial "403 host is an IP address in a refused range"
 }
 
+@test "localhost.. refusal says why under *" {
+  run ! blackwall sh -c 'curl -sSv -o /dev/null --max-time 10 --noproxy "" --proxy "$HTTP_PROXY" "$1"' sh "https://localhost..:$port/"
+  assert_output --partial "403 host has an empty label"
+}
+
 @test "public host allowed under *" {
   assert_equal "$(http_code https://example.com/)" 200
 }
