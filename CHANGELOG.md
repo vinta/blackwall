@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Breaking Changes
+
+- On Linux, sandboxed commands can't create user namespaces, so Chromium, Electron, Playwright, rootless podman, and nested bubblewrap fail with `unshare failed: Operation not permitted`
+
+### Changes
+
+- Upgrades srt to 0.0.80. A refused connection's 403 status line now says why, e.g. `403 host is not on the allow list`, which `curl -sv` shows. Folders named like `[user-id]` no longer keep the sandbox from starting, and on Linux an absent deny path that bubblewrap can't mount no longer blocks every command
+
 ## v0.4.0 / 2026-10-17
 
 ### Breaking Changes

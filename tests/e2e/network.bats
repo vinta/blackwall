@@ -18,13 +18,15 @@ setup() {
 }
 
 @test "other host blocked" {
-  run ! blackwall curl -sS -o /dev/null --max-time 20 https://example.com
+  run ! blackwall curl -sSv -o /dev/null --max-time 20 https://example.com
   assert_output --partial "response 403"
+  assert_output --partial "403 host is not on the allow list"
 }
 
 @test "host resolving into RFC 1918 blocked" {
-  run ! blackwall curl -sS -o /dev/null --max-time 20 https://10.0.0.1.sslip.io
+  run ! blackwall curl -sSv -o /dev/null --max-time 20 https://10.0.0.1.sslip.io
   assert_output --partial "response 403"
+  assert_output --partial "403 resolved to a listed address"
 }
 
 @test "node fetch reaches preset host" {

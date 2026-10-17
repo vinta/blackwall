@@ -36,7 +36,7 @@
     "test": "node tests/shared.js && node tests/config.js && bats --print-output-on-failure tests/e2e"
   },
   "dependencies": {
-    "@anthropic-ai/sandbox-runtime": "0.0.79",
+    "@anthropic-ai/sandbox-runtime": "0.0.80",
     "zod": "3.25.76"
   },
   "devDependencies": {
