@@ -82,7 +82,7 @@ A failure no row explains, a path or host the docs deny that goes through, or a 
 ## Run and install
 
 ```bash
-npm install -g blackwall-sandbox                                   # Node.js 22.15+
+npm install -g blackwall-sandbox                                   # Node.js 22.21+
 sudo apt-get install -y bubblewrap socat ripgrep                   # Linux only
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0      # Ubuntu 24.04+ only
 blackwall claude                                                   # or codex, or any command
