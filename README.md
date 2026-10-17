@@ -99,17 +99,17 @@ npx skills add vinta/blackwall -g
 
 A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars. Each is a module in [`src/presets`](src/presets):
 
-- [agent-files](src/presets/agent-files.mjs): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. Drop it and a sandboxed command can plant commands that run on the host
-- [python](src/presets/python.mjs): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
-- [node](src/presets/node.mjs): The npm registry, and Node.js installed by fnm
-- [github](src/presets/github.mjs): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
-- [git](src/presets/git.mjs): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Denies writes to `.git/hooks` and `.git/config` in `--add-dir` folders, since srt denies them in the current folder only. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
-- [pre-commit](src/presets/pre-commit.mjs): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
-- [local-network](src/presets/local-network.mjs): Denies `localhost` and `*.localhost` by name under `"*"`. srt's own denies already cover loopback addresses. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`
-- [private-network](src/presets/private-network.mjs): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedHosts`, e.g. `192.168.1.10:8080`
-- [tmpdir](src/presets/tmpdir.mjs): `/tmp/claude` as the temp folder. Always on
-- [mac](src/presets/mac.mjs): System paths macOS tools need. Always on, on macOS
-- [linux](src/presets/linux.mjs): `/usr/local`, the 64-bit lib folders, srt's seccomp helper, and `/tmp`, where srt keeps its proxy sockets. Always on, on Linux
+- [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. Drop it and a sandboxed command can plant commands that run on the host
+- [python](src/presets/python.js): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
+- [node](src/presets/node.js): The npm registry, and Node.js installed by fnm
+- [github](src/presets/github.js): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
+- [git](src/presets/git.js): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Denies writes to `.git/hooks` and `.git/config` in `--add-dir` folders, since srt denies them in the current folder only. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
+- [pre-commit](src/presets/pre-commit.js): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
+- [local-network](src/presets/local-network.js): Denies `localhost` and `*.localhost` by name under `"*"`. srt's own denies already cover loopback addresses. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`
+- [private-network](src/presets/private-network.js): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedHosts`, e.g. `192.168.1.10:8080`
+- [tmpdir](src/presets/tmpdir.js): `/tmp/claude` as the temp folder. Always on
+- [mac](src/presets/mac.js): System paths macOS tools need. Always on, on macOS
+- [linux](src/presets/linux.js): `/usr/local`, the 64-bit lib folders, srt's seccomp helper, and `/tmp`, where srt keeps its proxy sockets. Always on, on Linux
 
 `tmpdir`, `mac`, and `linux` aren't in the `presets` list, so overriding it can't drop them.
 

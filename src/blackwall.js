@@ -4,9 +4,9 @@ import { copyFileSync, existsSync, mkdirSync, renameSync } from "node:fs";
 import { basename, dirname } from "node:path";
 import { parseEnv } from "node:util";
 
-import { main } from "./cli/index.mjs";
-import { readIfExists } from "./config/config.mjs";
-import { HOME, SIGNED_NODE } from "./constants/paths.mjs";
+import { main } from "./cli/index.js";
+import { readIfExists } from "./config/config.js";
+import { HOME, SIGNED_NODE } from "./constants/paths.js";
 
 // Seatbelt can't nest, and inside, ~/.blackwall is unreadable on macOS and empty on Linux
 if (process.env.BLACKWALL_SANDBOX === "1") {

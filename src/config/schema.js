@@ -59,7 +59,7 @@ const LISTS = z
   .partial()
   .strict();
 
-// pick drops a key srt lacks without an error; tests/config.mjs catches it by parsing default-config.json's srt
+// pick drops a key srt lacks without an error; tests/config.js catches it by parsing default-config.json's srt
 const SRT_SETTINGS = SRT.pick(Object.fromEntries(Object.keys(DEFAULTS.srt).map((key) => [key, true])))
   .partial()
   .strict();

@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 
-import { exitWithConfigError, parseConfig, readIfExists, trustMarker } from "../../config/config.mjs";
-import { PROJECT_CONFIG, TRUST_MARKERS } from "../../constants/paths.mjs";
+import { exitWithConfigError, parseConfig, readIfExists, trustMarker } from "../../config/config.js";
+import { PROJECT_CONFIG, TRUST_MARKERS } from "../../constants/paths.js";
 
 export function trust() {
   const text = readIfExists(PROJECT_CONFIG);

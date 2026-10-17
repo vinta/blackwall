@@ -30,4 +30,4 @@ prepare() {
 }
 
 # Ubuntu runners set XDG_CONFIG_HOME to the real home, so git would read its config from outside the stub
-blackwall() { (cd "$proj" && HOME=$home XDG_CONFIG_HOME=$home/.config node "$repo/src/blackwall.mjs" "$@"); }
+blackwall() { (cd "$proj" && HOME=$home XDG_CONFIG_HOME=$home/.config node "$repo/src/blackwall.js" "$@"); }

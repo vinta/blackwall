@@ -4,8 +4,8 @@ import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/ad
 import { matchesDomainPatternWithPort, splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
 import { createResolvedAddressGuard, localInterfaceAddresses } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
-import { PRESETS } from "../src/config/config.mjs";
-import { CONFIG_SCHEMA, configErrorMap } from "../src/config/schema.mjs";
+import { PRESETS } from "../src/config/config.js";
+import { CONFIG_SCHEMA, configErrorMap } from "../src/config/schema.js";
 
 // Guards srt's zod internals (innerType, shape, element) that the schema reaches into, on each srt bump
 const parse = (config) => CONFIG_SCHEMA.safeParse(config, { errorMap: configErrorMap });

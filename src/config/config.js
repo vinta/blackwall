@@ -3,19 +3,19 @@ import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseEnv } from "node:util";
 
-import { CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, SANDBOX_CACHE, TRUST_MARKERS, USER_CONFIG } from "../constants/paths.mjs";
-import agentFiles from "../presets/agent-files.mjs";
-import git from "../presets/git.mjs";
-import github from "../presets/github.mjs";
-import linux from "../presets/linux.mjs";
-import localNetwork from "../presets/local-network.mjs";
-import mac from "../presets/mac.mjs";
-import node from "../presets/node.mjs";
-import preCommit from "../presets/pre-commit.mjs";
-import privateNetwork from "../presets/private-network.mjs";
-import python from "../presets/python.mjs";
-import tmpdir from "../presets/tmpdir.mjs";
-import { CONFIG_SCHEMA, configErrorMap, DEFAULTS } from "./schema.mjs";
+import { CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, SANDBOX_CACHE, TRUST_MARKERS, USER_CONFIG } from "../constants/paths.js";
+import agentFiles from "../presets/agent-files.js";
+import git from "../presets/git.js";
+import github from "../presets/github.js";
+import linux from "../presets/linux.js";
+import localNetwork from "../presets/local-network.js";
+import mac from "../presets/mac.js";
+import node from "../presets/node.js";
+import preCommit from "../presets/pre-commit.js";
+import privateNetwork from "../presets/private-network.js";
+import python from "../presets/python.js";
+import tmpdir from "../presets/tmpdir.js";
+import { CONFIG_SCHEMA, configErrorMap, DEFAULTS } from "./schema.js";
 
 // A config picks a preset only by name from this list, never a file by path
 export const PRESETS = {
