@@ -23,7 +23,7 @@ if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === "1" && basename(process.execP
     // Signed under a temp name, so an interrupted run can't leave a broken copy that counts as present
     const temp = `${SIGNED_NODE}.tmp`;
     copyFileSync(process.execPath, temp);
-    execFileSync("codesign", ["-f", "-s", "-", temp]);
+    execFileSync("codesign", ["-f", "-s", "-", temp], { stdio: "pipe" });
     renameSync(temp, SIGNED_NODE);
   }
 
