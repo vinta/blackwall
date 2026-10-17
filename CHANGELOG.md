@@ -14,7 +14,7 @@
 - `agent-files` is a preset in the default list now. Sandboxed commands can't write `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or an `--add-dir` folder. An unsandboxed `claude` in the same folder runs what they hold, the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest, so a sandboxed command could plant commands that run on the host. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. A sandboxed `claude` can't save project permission rules to `.claude/settings.local.json` either. If you set `overrideDefaults.presets`, add `agent-files`, or those writes open again
 - The sandbox cache moves from `~/.cache/blackwall` to `~/.cache-blackwall`, so `uv`, `npm`, and `pre-commit` start with empty caches, pre-commit clones its hook repos again, and `gh` starts with an empty config. Delete `~/.cache/blackwall`, nothing reads it anymore
 - The ad-hoc-signed node copy is `~/.blackwall/node-blackwall`, shown as `node-blackwall` in Little Snitch. Delete `~/.blackwall/blackwall_node`, nothing reads it anymore
-- srt settings, `allowPty`, `enableWeakerNetworkIsolation`, and `enableWeakerNestedSandbox`, move to a top-level `srt` object in `default-config.json` and both configs. Each key you set replaces its default, the project's winning over the user's. `overrideDefaults.allowPty` and the others are config errors now, so move them to `srt`
+- srt settings, `allowPty`, `enableWeakerNetworkIsolation`, and `enableWeakerNestedSandbox`, move to a top-level `srt` object. Each key you set replaces its default, the project's winning over the user's. `overrideDefaults.allowPty` and the others are config errors now, so move them to `srt`
 - `blackwall codex` no longer copies `rules` from `~/.codex`, so rules you save in a sandboxed Codex last across launches instead of being replaced by the host's. Put sandbox-specific rules in `~/.codex-blackwall/rules/`
 
 ### Changes
@@ -22,7 +22,6 @@
 - Upgrades srt to 0.0.79. On 0.0.78, a folder with `[` and `]` in its name, like `[wip] app`, voided every deny inside it, so a sandboxed command could write the project's `.git/hooks`
 - Config values are checked when each config file is read, so a bad range or name pattern is reported with the path of the file it's in. `allowedHosts` entries and `deniedHosts` ranges follow srt's rules; `deniedHosts` names follow blackwall's: `example.com` or `*.example.com` with an optional port, single-label wildcards like `*.localhost` included
 - A relative `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
-- Without `"*"` in `network.allowedHosts`, srt enforces the allowlist itself and denies unlisted hosts without asking blackwall's callback, so a bug in the callback can't let a host through
 - `blackwall --print-network-access` shows the effective network policy: allowed hosts, denied names and ranges, srt's built-in refused classes and this machine's own addresses, and whether other hosts are allowed. `--print-config` leaves the srt classes and this machine's addresses out
 - zsh heredocs work in the sandbox. The `tmpdir` preset sets `TMPPREFIX` to `/tmp/claude/zsh` (`/private/tmp/claude/zsh` on macOS); zsh's default, `/tmp/zsh`, is write-denied, so heredocs failed with `can't create temp file for here document`
 - The first run with `BLACKWALL_USE_SELF_SIGNED_NODE=1` no longer prints codesign's `replacing existing signature` message
@@ -41,7 +40,6 @@
 - Reads only the `~/.local` folders tools need, not all of `~/.local/share` and `~/.local/state`: the `python` preset reads `~/.local/share/uv`, `blackwall claude` reads `~/.local/share/claude`, and the `github` preset reads `~/.local/share/gh/extensions`. Add other tools' folders, like mise's, to `allowRead` in your user config
 - Sandboxed commands can't write to `~/.blackwall`, even under `--add-dir ~` or when run from inside it, so they can't forge trust for a project config or replace `blackwall_node`
 - `UV_CACHE_DIR`, `NPM_CONFIG_CACHE`, and `GH_CONFIG_DIR` are set only with the `python`, `node`, and `github` presets, which now hold them
-- Workarounds are presets now: `git` (signing off), `pre-commit`, and `tmpdir` (`/tmp/claude`) join the others in `src/presets`, each with a `why`. `git` and `pre-commit` sit in the default `presets` list, so `overrideDefaults.presets` can drop them; `tmpdir` stays on like `mac` and `linux`
 - `--print-config` includes the launch-time grants: `/tmp/claude`, srt's seccomp helper on Linux, and the `.git/hooks` and `.git/config` write denies in `--add-dir` folders
 - `--print-env` labels every preset that sets env vars as `# preset <name>: <why>`
 - The wasilibs cache that go-re2 hooks like betterleaks read moves from `mac` to `pre-commit`, and Linux's `~/.cache/com.github.wasilibs` is read too
@@ -65,7 +63,6 @@
 ### Changes
 
 - Requires Node.js 22.15.0 or later
-- Upgrades srt to 0.0.78
 - The network is an allowlist now: only the hosts in presets and adapters are allowed. `python`, `npm`, and `github` are on by default, `mac` and `linux` are added automatically, and `blackwall claude` and `blackwall codex` allow the hosts they need. Add `"*"` to `network.allowedDomains` to allow every host again
 - Linux: reads `/usr/local`, `/lib64`, and `/usr/lib64`, and `enableWeakerNestedSandbox` can be set for Docker
 
