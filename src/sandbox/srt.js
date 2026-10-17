@@ -50,6 +50,8 @@ export function createSandbox(config) {
 
     async run(args, env) {
       await SandboxManager.initialize(srtConfig, askCallback);
+      // initialize prints these only under SRT_DEBUG, yet one says a sandboxed command can rewrite srt, which runs unsandboxed next launch
+      for (const warning of SandboxManager.checkDependencies().warnings) console.warn(`blackwall: ${warning}`);
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
       const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
