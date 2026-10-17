@@ -49,3 +49,10 @@ user_config() { echo "$1" >"$home/.blackwall/config.json"; }
   run ! blackwall --add-dir "$added" cat "$added/secrets/key"
   refute_output --partial hunter2
 }
+
+@test "read --add-dir ./ relative denyRead denied" {
+  user_config '{"filesystem":{"denyRead":["./secrets"]}}'
+
+  run ! blackwall --add-dir "$added" cat "$added/secrets/key"
+  refute_output --partial hunter2
+}

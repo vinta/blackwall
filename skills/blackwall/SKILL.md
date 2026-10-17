@@ -74,6 +74,7 @@ A failure no row explains, a path or host the docs deny that goes through, or a 
 ```
 
 - Presets: `agent-files`, `python`, `node`, `github`, `git`, `pre-commit`, `local-network`, `private-network` are on by default; `tmpdir`, `mac`, `linux` are always on. Each is one tool's hosts, read paths, and env vars. What each grants: https://github.com/vinta/blackwall#presets
+- `filesystem.denyRead` and `denyWrite` take paths too. A relative entry, like `./local`, applies to the current folder and every `--add-dir` folder.
 - Dropping `git` from `presets` makes every sandboxed `git` refuse to start when `~/.gitconfig` exists, and opens writes to `.git/hooks` and `.git/config` in `--add-dir` folders.
 - `.blackwall/.env` keys override `~/.blackwall/.env` and reach only the sandboxed command.
 - Verify outside: `blackwall --print-config claude` (merged config with the launch-time grants), `blackwall --print-file-access claude` (srt's view), `blackwall --print-network-access claude` (hosts it can reach, the names and ranges it refuses, and srt's own refused classes), `blackwall --print-env claude` (env vars blackwall adds, each with its why).
