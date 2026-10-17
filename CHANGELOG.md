@@ -1,17 +1,5 @@
 # Changelog
 
-## Unreleased
-
-### Breaking Changes
-
-- On Linux, sandboxed commands can't create user namespaces, so Chromium, Electron, Playwright, rootless podman, and nested bubblewrap fail with `unshare failed: Operation not permitted`. Run those tools outside blackwall, since the srt switch that lifts the block also stops `denyWrite` from holding
-
-### Changes
-
-- Upgrades srt to 0.0.80. A refused connection's 403 status line now says why, e.g. `403 host is not on the allow list`, which `curl -sv` shows. Folders named like `[user-id]` no longer keep the sandbox from starting, and on Linux an absent deny path that bubblewrap can't mount no longer blocks every command
-- A host blackwall refuses under `"*"` says why in the 403 status line too, e.g. `403 host is on the deny list`, instead of `403 user denied`
-- Warns when srt is installed where a sandboxed command can write it, e.g. by a project-local `npm install`, since the command could then replace the sandbox. Install blackwall globally instead. On Linux, srt's warnings about a missing seccomp helper or an outdated bubblewrap show too
-
 ## v0.4.0 / 2026-10-17
 
 ### Breaking Changes
@@ -29,10 +17,13 @@
 - The ad-hoc-signed node copy is `~/.blackwall/node-blackwall`, shown as `node-blackwall` in Little Snitch. Delete `~/.blackwall/blackwall_node`, nothing reads it anymore
 - srt settings, `allowPty`, `enableWeakerNetworkIsolation`, and `enableWeakerNestedSandbox`, move to a top-level `srt` object. Each key you set replaces its default, the project's winning over the user's. `overrideDefaults.allowPty` and the others are config errors now, so move them to `srt`
 - `blackwall codex` no longer copies `rules` from `~/.codex`, so rules you save in a sandboxed Codex last across launches instead of being replaced by the host's. Put sandbox-specific rules in `~/.codex-blackwall/rules/`
+- On Linux, sandboxed commands can't create user namespaces, so Chromium, Electron, Playwright, rootless podman, and nested bubblewrap fail with `unshare failed: Operation not permitted`. Run those tools outside blackwall, since the srt switch that lifts the block also stops `denyWrite` from holding
 
 ### Changes
 
-- Upgrades srt to 0.0.79. On 0.0.78, a folder with `[` and `]` in its name, like `[wip] app`, voided every deny inside it, so a sandboxed command could write the project's `.git/hooks`
+- Upgrades srt to 0.0.80. On 0.0.78, a folder with `[` and `]` in its name, like `[wip] app`, voided every deny inside it, so a sandboxed command could write the project's `.git/hooks`, and on 0.0.79 a folder named like `[user-id]` kept the sandbox from starting. A refused connection's 403 status line now says why, e.g. `403 host is not on the allow list`, which `curl -sv` shows. On Linux an absent deny path that bubblewrap can't mount no longer blocks every command
+- A host blackwall refuses under `"*"` says why in the 403 status line too, e.g. `403 host is on the deny list`, instead of `403 user denied`
+- Warns when srt is installed where a sandboxed command can write it, e.g. by a project-local `npm install`, since the command could then replace the sandbox. Install blackwall globally instead. On Linux, srt's warnings about a missing seccomp helper or an outdated bubblewrap show too
 - Config values are checked when each config file is read, so a bad range or name pattern is reported with the path of the file it's in. `allowedHosts` entries and `deniedHosts` ranges follow srt's rules; `deniedHosts` names follow blackwall's: `example.com` or `*.example.com` with an optional port, single-label wildcards like `*.localhost` included
 - A relative `filesystem.denyRead` or `denyWrite` entry applies to the current folder and every `--add-dir` folder
 - Sandboxed commands can't write `.blackwall` in `--add-dir` folders either, not only in the current folder, so they can't write a project config there for you to trust
