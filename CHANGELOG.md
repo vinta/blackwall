@@ -52,9 +52,6 @@
 - `blackwall` inside a sandboxed command exits 2 with `can't run inside a sandbox`. It used to die with a stack trace on macOS
 - The `node` preset sets `NODE_USE_ENV_PROXY=1`. Without it, Node's `fetch` and `http` skipped srt's proxy and failed with `ENOTFOUND` for every host, allowed ones too. Needs Node 22.21+
 - An agent skill in `skills/blackwall`: teaches Claude Code and Codex to run, configure, and debug blackwall, and to read a denial from inside the sandbox. `blackwall claude` and `blackwall codex` copy it into their config folders on every launch; for agents outside the sandbox, install it with `npx skills add vinta/blackwall -g`
-
-### Environment Variables
-
 - Per-project env vars in `.blackwall/.env`, loaded only with a trusted `.blackwall/config.json`. They override `~/.blackwall/.env` and go only to the sandboxed command
 
 ## v0.2.1 / 2026-10-08
