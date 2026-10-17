@@ -15,6 +15,7 @@
 - The sandbox cache moves from `~/.cache/blackwall` to `~/.cache-blackwall`, so `gh`, `uv`, `npm`, and `pre-commit` start with empty caches and pre-commit clones its hook repos again. Delete `~/.cache/blackwall`, nothing reads it anymore
 - The ad-hoc-signed node copy is `~/.blackwall/node-blackwall`, shown as `node-blackwall` in Little Snitch. Delete `~/.blackwall/blackwall_node`, nothing reads it anymore
 - srt settings, `allowPty`, `enableWeakerNetworkIsolation`, and `enableWeakerNestedSandbox`, move to a top-level `srt` object in `default-config.json` and both configs. Each key you set replaces its default, the project's winning over the user's. `overrideDefaults.allowPty` and the others are config errors now, so move them to `srt`
+- `blackwall codex` no longer copies `rules` from `~/.codex`, so rules you save in a sandboxed Codex last across launches instead of being replaced by the host's. Put sandbox-specific rules in `~/.codex-blackwall/rules/`
 
 ### Changes
 
@@ -23,6 +24,9 @@
 - A relative `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
 - Without `"*"` in `network.allowedHosts`, srt enforces the allowlist itself and denies unlisted hosts without asking blackwall's callback, so a bug in the callback can't let a host through
 - `blackwall --print-network-access` shows the effective network policy: allowed hosts, denied names and ranges, srt's built-in refused classes and this machine's own addresses, and whether other hosts are allowed. `--print-config` leaves the srt classes and this machine's addresses out
+- zsh heredocs work in the sandbox. The `tmpdir` preset sets `TMPPREFIX` to `/tmp/claude/zsh` (`/private/tmp/claude/zsh` on macOS); zsh's default, `/tmp/zsh`, is write-denied, so heredocs failed with `can't create temp file for here document`
+- The first sandboxed run on macOS no longer prints codesign's `replacing existing signature` message
+- The blackwall skill can write a bug report for blackwall, and asks where to save it first
 
 ## v0.3.0 / 2026-10-11
 
