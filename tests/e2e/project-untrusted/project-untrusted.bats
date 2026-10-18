@@ -1,13 +1,13 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare project-untrusted
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 @test "untrusted project config refused" {

@@ -1,7 +1,7 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare symlink-escape
   # Links a sandboxed run could plant in ~/.cache-blackwall, reached through links the user made
@@ -18,7 +18,7 @@ setup_file() {
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 @test "read grant link outside writable grants expands to its target" {

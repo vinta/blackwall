@@ -1,14 +1,14 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare project-env-injection
   blackwall --trust >/dev/null
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 # The shell joins INJ""ECTED, so INJECTED shows only if the key runs

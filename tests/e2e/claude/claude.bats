@@ -1,14 +1,14 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare claude
   blackwall claude --version >"$work/first-run.out" 2>&1 || { cat "$work/first-run.out" >&2; return 1; }
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 @test "claude runs" {

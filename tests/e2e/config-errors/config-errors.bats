@@ -1,13 +1,13 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare config-errors
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 user_config() { echo "$1" >"$home/.blackwall/config.json"; }

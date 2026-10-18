@@ -1,7 +1,7 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare codex
   # A pipe, not a file: npm's codex is a node script, and node 24.20 aborts at startup when stdout is a file the sandbox can't read
@@ -11,7 +11,7 @@ setup_file() {
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 @test "codex runs" {

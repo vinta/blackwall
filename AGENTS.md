@@ -22,4 +22,4 @@
 ## Tests
 
 - A platform claim in `skills/blackwall/SKILL.md` ships with an e2e check in the same change.
-- In `tests/e2e/*.bats`, check with `run -N`, `run !`, and bats-assert (`assert_output`, `refute`): a bare `run` always passes, `! cmd` before a test's last line never fails it, and neither does `[[ ]]` under macOS's bash 3.2.
+- In `tests/e2e/**/*.bats`, check with `run -N`, `run !`, and bats-assert (`assert_output`, `refute`): a bare `run` always passes, `! cmd` before a test's last line never fails it, and neither does `[[ ]]` under macOS's bash 3.2.

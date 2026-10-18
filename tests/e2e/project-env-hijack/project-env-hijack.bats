@@ -1,14 +1,14 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare project-env-hijack
   blackwall --trust >/dev/null
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 @test "project .env PATH never reaches the launcher's shell" {
