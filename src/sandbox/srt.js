@@ -50,6 +50,9 @@ export function createSandbox(config) {
 
     async run(args, commandEnv, launcherEnv) {
       await SandboxManager.initialize(srtConfig, askCallback);
+      // The terminal sends Ctrl+C to the child too, so the launcher must outlive it, and so must srt's proxy, whose SIGINT cleanup initialize() installs; srt's exit handler still cleans up when the child ends
+      process.removeAllListeners("SIGINT");
+      process.on("SIGINT", () => {});
       // initialize prints these only under SRT_DEBUG, yet one says a sandboxed command can rewrite srt, which runs unsandboxed next launch
       for (const warning of SandboxManager.checkDependencies().warnings) console.warn(`blackwall: ${warning}`);
 
@@ -63,8 +66,6 @@ export function createSandbox(config) {
       child.stdio[3].on("error", () => {});
       child.stdio[3].end(Object.entries(commandEnv).map(([key, value]) => `export ${key}=${quote(value)}\n`).join(""));
 
-      // The terminal sends Ctrl+C to the child too; the launcher must outlive it to keep srt's proxy up
-      process.on("SIGINT", () => {});
       process.on("SIGTERM", () => child.kill("SIGTERM"));
       child.on("exit", (code) => process.exit(code ?? 1));
     },
