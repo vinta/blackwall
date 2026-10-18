@@ -20,13 +20,14 @@ for (const range of Object.values(SRT_REFUSED_CLASSES).flat()) addRange(IN_REFUS
 export function printNetworkAccess(srtConfig, deniedNames) {
   const allowAll = !srtConfig.network.strictAllowlist;
   const ownAddresses = [...new Set(localInterfaceAddresses())].filter((address) => !addressInSet(IN_REFUSED_CLASS, address));
-  const refused = [...Object.entries(SRT_REFUSED_CLASSES), ["this machine", ownAddresses]].flatMap(([name, ranges]) => [`${name}:`, ...ranges.map((range) => `  ${range}`)]);
+  // srt refuses these for every name, even an allowed one, and lets through only an IP listed in allowedHosts
+  const refused = [["deniedHosts", srtConfig.network.deniedResolvedAddresses], ...Object.entries(SRT_REFUSED_CLASSES), ["this machine", ownAddresses]].flatMap(([name, ranges]) => [`${name}:`, ...ranges.map((range) => `  ${range}`)]);
   for (const [title, items] of [
     // Under "*", a listed host shows only where it reaches what "*" alone can't
     ["allowed hosts", allowAll ? ["*", ...srtConfig.network.allowedDomains.filter((entry) => beatsDeny(entry, deniedNames))] : srtConfig.network.allowedDomains],
-    // Mirrors deniedHosts: names, then ranges. Without "*", every unlisted name is refused, and blackwall checks denied names only under "*"
-    ["denied hosts", [...(allowAll ? deniedNames : ["*"]), ...srtConfig.network.deniedResolvedAddresses]],
-    ["srt refuses", refused],
+    // Without "*", every unlisted name is refused, and blackwall checks denied names only under "*"
+    ["denied hosts", allowAll ? deniedNames : ["*"]],
+    ["refused addresses, unless allowed by IP", refused],
   ]) {
     console.log(`${title}:`);
     for (const item of new Set(items)) console.log(`  ${item}`);

@@ -52,8 +52,9 @@ setup() {
 
 @test "--print-network-access shows ranges and this machine" {
   run -0 blackwall --print-network-access claude
-  assert_line "denied hosts:"
-  assert_line "  10.0.0.0/8"
+  assert_line "refused addresses, unless allowed by IP:"
+  assert_line "  deniedHosts:"
+  assert_line "    10.0.0.0/8"
   assert_line "  loopback:"
   assert_line "    127.0.0.0/8"
   assert_line "  this machine:"
