@@ -1,7 +1,7 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare open-network
   blackwall --trust >/dev/null
@@ -16,7 +16,7 @@ teardown_file() {
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 # srt's NO_PROXY sends loopback around the proxy, so curl clears it

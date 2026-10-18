@@ -1,9 +1,10 @@
-import { mkdirSync, statSync } from "node:fs";
+import { statSync } from "node:fs";
 import { basename, resolve } from "node:path";
 
 import packageJson from "../../package.json" with { type: "json" };
 import claude from "../adapters/claude.js";
 import codex from "../adapters/codex.js";
+import { mkdirManaged } from "../adapters/shared.js";
 import { buildConfig, readProjectEnv } from "../config/config.js";
 import { SANDBOX_CACHE } from "../constants/paths.js";
 import { createSandbox } from "../sandbox/srt.js";
@@ -106,15 +107,16 @@ export async function main(args) {
     process.exit(0);
   }
 
-  // The project's .env goes only to the command, never into process.env, so its NODE_OPTIONS can't reach an unsandboxed node. It overrides ~/.blackwall/.env but not blackwall's own vars
-  // Built before prepare() runs, so a process.env write there reaches srt, never the command
-  const env = { ...process.env, ...readProjectEnv(), ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
+  // The project's .env and blackwall's own vars go only to the command, never to the launcher's shell, so a project PATH or NODE_OPTIONS can't reach unsandboxed code. Blackwall's vars beat the project's
+  // Snapshot before prepare() runs, so a process.env write there reaches srt, never the command
+  const launcherEnv = { ...process.env };
+  const commandEnv = { ...readProjectEnv(), ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
 
-  mkdirSync(SANDBOX_CACHE, { recursive: true });
+  mkdirManaged(SANDBOX_CACHE);
   for (const preset of presets) preset.prepare?.();
   adapter.prepare?.();
 
-  await sandbox.run(adapter.args?.(args, { addDirs }) ?? args, env);
+  await sandbox.run(adapter.args?.(args, { addDirs }) ?? args, commandEnv, launcherEnv);
 }
 
 function exitWithUsage() {

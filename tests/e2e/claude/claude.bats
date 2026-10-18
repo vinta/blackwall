@@ -1,14 +1,14 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare claude
   blackwall claude --version >"$work/first-run.out" 2>&1 || { cat "$work/first-run.out" >&2; return 1; }
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 @test "claude runs" {
@@ -80,6 +80,17 @@ setup() {
   run -0 blackwall --print-env claude
   assert_line --regexp "^# preset git:"
   refute_output --partial E2E_TOKEN
+}
+
+# A sandboxed run can write its profile folder itself, so it can swap it for a link to the host's folder
+@test "symlinked profile blocks launch and spares the host folder" {
+  mv "$home/.claude-blackwall" "$work/profile"
+  ln -s "$home/.claude" "$home/.claude-blackwall"
+
+  run -2 blackwall claude --version
+  assert_output --partial "is a symlink"
+  assert [ -f "$home/.claude/CLAUDE.md" ]
+  rm "$home/.claude-blackwall" && mv "$work/profile" "$home/.claude-blackwall"
 }
 
 # Named claude so the claude adapter's grants and env apply, without needing a login

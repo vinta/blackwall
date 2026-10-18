@@ -1,0 +1,1 @@
+{"filesystem":{"allowRead":[{{TOOL_GRANTS}},"{{WORK}}/home/.safe-link","{{WORK}}/home/.dotdot-link","{{WORK}}/home/.file-link","{{WORK}}/home/.dotfile-link"]},"network":{"allowedHosts":["*.sslip.io"],"deniedHosts":["192.0.2.0/24"]},"srt":{"allowPty":false}}

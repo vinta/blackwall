@@ -1,4 +1,4 @@
-# Each <scenario>.bats runs against a copy of base/ overlaid with <scenario>/, so the folders show what a scenario starts with
+# Each <scenario>/ folder holds <scenario>.bats beside the files it starts with, which prepare overlays on a copy of base/
 # Run it from a plain shell: Seatbelt can't nest, so it fails inside a sandboxed session
 
 # Sourced from setup_suite too, where no test file sets BATS_TEST_DIRNAME
@@ -18,7 +18,7 @@ prepare() {
 
   rm -rf "$work" && mkdir -p "$proj" "$added" "$elsewhere"
   cp -R "$e2e/base/." "$work/"
-  if [ -d "$e2e/$1" ]; then cp -R "$e2e/$1/." "$work/"; fi
+  if [ -d "$e2e/$1" ]; then cp -R "$e2e/$1/." "$work/" && rm -f "$work/$1.bats"; fi
 
   local file
   grep -rlF '{{' "$work" | while read -r file; do

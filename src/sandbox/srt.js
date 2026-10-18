@@ -6,6 +6,31 @@ import { createResolvedAddressGuard } from "@anthropic-ai/sandbox-runtime/dist/s
 import { spawn } from "node:child_process";
 import { isIP } from "node:net";
 
+// Single quotes, so the shell expands nothing inside: not $, not backticks, not newlines
+const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
+
+// The command's env rides a pipe the sandboxed shell reads as this fd: the launcher's own shell never sees it, and the values stay out of argv, ps, and srt's log tag
+const ENV_FD = 3;
+
+// What the sandboxed shell runs before the command, joined with && so a failed read stops the chain and the command never runs without its env
+function applyEnvThenExec(quotedCommand) {
+  return [
+    // cat on the already open fd, not `. /dev/fd/3`: Linux can't open Node's socketpair through /dev/fd, and bash 3.2 cuts a sourced /dev/fd stream off near 64 KB
+    `blackwall_env=$(cat <&${ENV_FD})`,
+    `eval "$blackwall_env"`,
+    // Its own step: bash 3.2 turns `cmd 3<&-` into a move to fd 10 instead of a close
+    `exec ${ENV_FD}<&-`,
+    `exec -- ${quotedCommand}`,
+  ].join(" && ");
+}
+
+// One export per variable, in the shape eval applies
+function exportLines(env) {
+  return Object.entries(env)
+    .map(([key, value]) => `export ${key}=${quote(value)}\n`)
+    .join("");
+}
+
 export function createSandbox(config) {
   // srt rejects "*", so blackwall turns it into an ask callback that allows every host no rule matches
   // deniedHosts names and IP literals are the callback's job: srt's deniedDomains would beat allowedHosts, and its resolved-address guard skips literals
@@ -48,17 +73,24 @@ export function createSandbox(config) {
     srtConfig,
     deniedNames,
 
-    async run(args, env) {
+    async run(args, commandEnv, launcherEnv) {
       await SandboxManager.initialize(srtConfig, askCallback);
+      // The terminal sends Ctrl+C to the child too, so the launcher must outlive it, and so must srt's proxy, whose SIGINT cleanup initialize() installs; srt's exit handler still cleans up when the child ends
+      process.removeAllListeners("SIGINT");
+      process.on("SIGINT", () => {});
       // initialize prints these only under SRT_DEBUG, yet one says a sandboxed command can rewrite srt, which runs unsandboxed next launch
       for (const warning of SandboxManager.checkDependencies().warnings) console.warn(`blackwall: ${warning}`);
 
-      const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
-      const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
-      const child = spawn(command, { shell: true, stdio: "inherit", env });
+      const command = await SandboxManager.wrapWithSandbox(applyEnvThenExec(args.map(quote).join(" ")));
+      const stdio = ["inherit", "inherit", "inherit"];
+      stdio[ENV_FD] = "pipe";
+      const child = spawn(command, { shell: true, stdio, env: launcherEnv });
 
-      // The terminal sends Ctrl+C to the child too; the launcher must outlive it to keep srt's proxy up
-      process.on("SIGINT", () => {});
+      const envPipe = child.stdio[ENV_FD];
+      // EPIPE if the shell exits before reading
+      envPipe.on("error", () => {});
+      envPipe.end(exportLines(commandEnv));
+
       process.on("SIGTERM", () => child.kill("SIGTERM"));
       child.on("exit", (code) => process.exit(code ?? 1));
     },

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, readFileSync, realpathSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { parseEnv } from "node:util";
 
 import { CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, SANDBOX_CACHE, TRUST_MARKERS, USER_CONFIG } from "../constants/paths.js";
@@ -135,19 +135,46 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
     },
   };
 
-  // Seatbelt checks a symlink and its target separately. Only configured entries under ~ are resolved (dotfile-manager links), not system links like /var, whose target would
-  // widen the grant, and never links inside a granted directory, which a run could plant there
+  // Seatbelt checks a symlink and its target separately, so a configured entry under ~ (a dotfile-manager link) also grants its target. System links like /var are left alone,
+  // since their target would widen the grant
+  const writable = config.filesystem.allowWrite.map(expandPath);
   for (const path of [...config.filesystem.allowRead]) {
     const absolute = expandPath(path);
     if (!absolute.startsWith(`${HOME}/`)) continue;
-    try {
-      if (lstatSync(absolute).isSymbolicLink()) config.filesystem.allowRead.push(realpathSync(absolute));
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-    }
+    const target = resolveUnplantedLinks(absolute, writable);
+    if (target !== undefined && target !== absolute) config.filesystem.allowRead.push(target);
   }
 
   return { config, presets };
+}
+
+// Every symlink the sandbox can write is one a run could have planted, so this follows links one hop at a time, like the kernel, and gives up at the first such link, which realpathSync would follow
+function resolveUnplantedLinks(path, writable) {
+  let resolved = "/";
+  const remaining = path.split("/");
+  let hops = 0;
+  while (remaining.length) {
+    const name = remaining.shift();
+    if (name === "" || name === ".") continue;
+    if (name === "..") {
+      resolved = dirname(resolved);
+      continue;
+    }
+    const candidate = join(resolved, name);
+    const stats = lstatSync(candidate, { throwIfNoEntry: false });
+    if (!stats) return;
+    if (stats.isSymbolicLink()) {
+      if (writable.some((grant) => candidate === grant || candidate.startsWith(`${grant}/`))) return;
+      if (++hops > 40) return;
+      const target = readlinkSync(candidate);
+      if (target.startsWith("/")) resolved = "/";
+      remaining.unshift(...target.split("/"));
+    } else {
+      if (remaining.length && !stats.isDirectory()) return;
+      resolved = candidate;
+    }
+  }
+  return resolved;
 }
 
 export function readProjectEnv() {
@@ -159,7 +186,11 @@ export function readProjectEnv() {
   if (config === undefined || !existsSync(trustMarker(config))) {
     exitWithConfigError(PROJECT_ENV, "loads only with a trusted .blackwall/config.json. Create one ({} is enough), review both, then run `blackwall --trust`");
   }
-  return parseEnv(env);
+  const vars = parseEnv(env);
+  for (const key of Object.keys(vars)) {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) exitWithConfigError(PROJECT_ENV, `${key}: not a valid variable name`);
+  }
+  return vars;
 }
 
 export function readIfExists(file) {

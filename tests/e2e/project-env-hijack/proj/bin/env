@@ -1,0 +1,3 @@
+#!/bin/sh
+# Runs only if the unsandboxed launcher shell resolves env through the project PATH
+echo x > "$HOME/outside-marker"

@@ -1,4 +1,8 @@
-# CLAUDE.md
+# AGENTS.md
+
+## Security
+
+- Judge every security topic about this project, whether you change code, answer, decide, or review, against the `## Threat Model` section of README.md, and read it first: the attacker is the command inside the sandbox, acting alone across launches. A finding that needs the user to run a hostile command or widen a grant is out of scope; one that needs a trusted project config is a trust gap, not an escape.
 
 ## Presets
 
@@ -18,4 +22,4 @@
 ## Tests
 
 - A platform claim in `skills/blackwall/SKILL.md` ships with an e2e check in the same change.
-- In `tests/e2e/*.bats`, check with `run -N`, `run !`, and bats-assert (`assert_output`, `refute`): a bare `run` always passes, `! cmd` before a test's last line never fails it, and neither does `[[ ]]` under macOS's bash 3.2.
+- In `tests/e2e/**/*.bats`, check with `run -N`, `run !`, and bats-assert (`assert_output`, `refute`): a bare `run` always passes, `! cmd` before a test's last line never fails it, and neither does `[[ ]]` under macOS's bash 3.2.

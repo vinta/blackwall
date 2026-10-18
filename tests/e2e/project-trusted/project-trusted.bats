@@ -1,14 +1,14 @@
 bats_require_minimum_version 1.5.0
 
 setup_file() {
-  load common
+  load ../common
 
   prepare project-trusted
   blackwall --trust >/dev/null
 }
 
 setup() {
-  load common
+  load ../common
 }
 
 @test "trusted project config grants read" {
