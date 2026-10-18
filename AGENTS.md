@@ -1,5 +1,9 @@
 # AGENTS.md
 
+## Security
+
+- Judge every security topic about this project, whether you change code, answer, decide, or review, against the `## Threat Model` section of README.md, and read it first: the attacker is the command inside the sandbox, acting alone across launches. A finding that needs the user to run a hostile command or widen a grant is out of scope; one that needs a trusted project config is a trust gap, not an escape.
+
 ## Presets
 
 - A rule that applies through the config, a host, a path, or an env var, goes in a preset in `src/presets/`, never hardcoded in `buildConfig`, so the user can drop it with `overrideDefaults.presets` and see it in `--print-config`.
@@ -10,10 +14,6 @@
 
 - Deny precisely and let an `allowedHosts` entry override; never a block-everything rule. Public bare-IP URLs work under `"*"`.
 - Match hosts with srt's own matchers (`canonicalizeHost`, `matchesDomainPatternWithPort`, the resolved-address guard). Blackwall's own code validates `deniedHosts` names only, because srt's "overly broad" wildcard rule rejects `*.localhost`.
-
-## Security
-
-- Rate a security finding or a sandbox decision against the README's Threat Model: the attacker is the command inside the sandbox, acting alone across launches. A finding that needs the user to run a hostile command or widen a grant is out of scope; one that needs a trusted project config is a trust gap, not an escape.
 
 ## srt
 
