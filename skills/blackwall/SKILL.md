@@ -91,7 +91,7 @@ blackwall --add-dir ../other-repo claude
 blackwall --trust                                                  # in the project, after reviewing .blackwall/config.json
 ```
 
-`blackwall` with no command prints the one-line usage. There is no `--help`: `blackwall --help` runs a command named `--help`. Exit 2 means a usage or config error.
+`blackwall` with no command, or `blackwall --help`, prints the one-line usage. An unknown option is refused with `unknown option`. Exit 2 means a usage or config error.
 
 ## Agent-specific behavior
 

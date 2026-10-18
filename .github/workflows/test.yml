@@ -40,7 +40,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y bubblewrap socat ripgrep
+          sudo apt-get install -y bubblewrap socat ripgrep zsh
           # Ubuntu 24.04+ strips capabilities from unprivileged user namespaces, which bubblewrap needs
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
