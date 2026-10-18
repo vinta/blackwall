@@ -50,11 +50,30 @@ setup() {
   assert_output --partial "write denied:"
 }
 
+@test "--print-file-access sorts each section and expands ~" {
+  blackwall --print-file-access claude >"$work/file-access"
+  run -0 cat "$work/file-access"
+  refute_line --regexp "^  ~"
+  # Each section's paths, compared with themselves sorted
+  run -0 node -e '
+    const sections = require("fs").readFileSync(process.argv[1], "utf8").split(/^\S.*:\n/m).slice(1);
+    for (const section of sections) {
+      const paths = section.trim().split("\n").map((line) => line.trim());
+      if (paths.join() !== [...paths].sort((a, b) => a.localeCompare(b)).join()) { console.log(paths); process.exit(1); }
+    }' "$work/file-access"
+}
+
 @test "--print-network-access shows ranges and this machine" {
   run -0 blackwall --print-network-access claude
-  assert_line "denied ranges:"
-  assert_line "  10.0.0.0/8"
-  assert_line --regexp "^  this machine: "
+  assert_line "denied hosts:"
+  assert_line "  private network:"
+  assert_line "    10.0.0.0/8"
+  assert_line "  loopback:"
+  assert_line "    127.0.0.0/8"
+  assert_line "  this machine:"
+  # This machine's loopback and link-local addresses are covered by those classes
+  refute_line "    127.0.0.1"
+  refute_line --regexp "^    fe80::[^/]*$"
 }
 
 @test "--print-env shows presets, not .env keys" {

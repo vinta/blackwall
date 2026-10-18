@@ -33,7 +33,7 @@ export const PRESETS = {
 };
 
 // additions is the adapter's layer, added after every config file's lists
-export function buildConfig({ addDirs, additions }) {
+export function buildConfig({ addDirs, allowInternet, additions }) {
   // overrideDefaults replaces default values and srt replaces them per key, the project's over the user's, then the presets and the top-level lists of both are added on top
   const user = readConfig(USER_CONFIG);
   // From ~, both paths name the user config
@@ -84,6 +84,7 @@ export function buildConfig({ addDirs, additions }) {
         ...fromUserConfig("network", "allowedHosts"),
         ...fromProjectConfig("network", "allowedHosts"),
         ...fromAdapter("network", "allowedHosts"),
+        ...(allowInternet ? ["*"] : []),
       ],
       deniedHosts: [
         ...base.network.deniedHosts,

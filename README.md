@@ -28,6 +28,7 @@ Without oh-my-zsh, save it to `~/.zfunc/_blackwall` instead, and add `fpath=(~/.
 ```bash
 blackwall claude                              # run Claude Code in the sandbox
 blackwall --add-dir ../another-repo claude    # also let it write to another folder
+blackwall --allow-internet claude             # also let it reach every public host, but not localhost or your LAN
 blackwall npm test                            # any command works, not only claude
 blackwall --print-config claude               # show the merged config, after your config and the launch-time grants
 blackwall --print-file-access claude          # show what it can read and write, as srt sees it
@@ -146,7 +147,7 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 ```
 
 - Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults. A relative `filesystem.denyRead` or `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
-- To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`. Loopback, private ranges, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
+- To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`, or launch with `--allow-internet` for one run. Loopback, private ranges, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
 - `overrideDefaults` takes `presets`, `network`, and `filesystem`, and **replaces** their default values. It's applied first, then the top-level lists are added
 - If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open. Add `agent-files` too, or sandboxed commands can write the settings and hooks an unsandboxed `claude` runs, and `.mcp.json`, `.claude/commands`, and `.claude/agents` in `--add-dir` folders
 

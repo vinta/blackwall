@@ -99,3 +99,19 @@ setup() {
 @test "missing command fails" {
   run -127 blackwall nosuchcmd
 }
+
+@test "--allow-internet adds * to allowedHosts" {
+  run -0 blackwall --print-config
+  refute_output --partial '"*"'
+  run -0 blackwall --allow-internet --print-config
+  assert_output --partial '"*"'
+}
+
+@test "--print-network-access puts * on the denied side without it" {
+  run -0 blackwall --print-network-access
+  assert_line "  github.com"
+  assert_output --partial $'denied hosts:\n  *\n  private network:\n    10.0.0.0/8\n'
+  run -0 blackwall --allow-internet --print-network-access
+  assert_output --partial $'allowed hosts:\n  *\ndenied hosts:\n  localhost\n'
+  refute_line "  github.com"
+}

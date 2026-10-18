@@ -23,6 +23,21 @@ setup() {
   assert_output --partial "403 host is not on the allow list"
 }
 
+@test "--allow-internet allows other host" {
+  run -0 blackwall --allow-internet curl -sS -o /dev/null --max-time 20 https://example.com
+}
+
+# srt's NO_PROXY sends loopback around the proxy, so curl clears it
+@test "--allow-internet keeps localhost blocked" {
+  run ! blackwall --allow-internet sh -c 'curl -sSv -o /dev/null --max-time 10 --noproxy "" --proxy "$HTTP_PROXY" https://localhost:8000/'
+  assert_output --partial "403 host is on the deny list"
+}
+
+@test "--allow-internet keeps host resolving into RFC 1918 blocked" {
+  run ! blackwall --allow-internet curl -sSv -o /dev/null --max-time 20 https://10.0.0.1.sslip.io
+  assert_output --partial "403 resolved to a listed address"
+}
+
 @test "host resolving into RFC 1918 blocked" {
   run ! blackwall curl -sSv -o /dev/null --max-time 20 https://10.0.0.1.sslip.io
   assert_output --partial "response 403"

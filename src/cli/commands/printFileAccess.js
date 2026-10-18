@@ -1,6 +1,6 @@
 import { SandboxManager } from "@anthropic-ai/sandbox-runtime";
 
-import { CWD } from "../../constants/paths.js";
+import { CWD, HOME } from "../../constants/paths.js";
 
 export async function printFileAccess(srtConfig) {
   // srt's view, not the config's: it adds its own write paths, and denies writes to these names in the cwd at any depth
@@ -20,6 +20,8 @@ export async function printFileAccess(srtConfig) {
     ["write denied", [...write.denyWithinAllow, ...mandatory]],
   ]) {
     console.log(`${title}:`);
-    for (const path of new Set(paths)) console.log(`  ${path}`);
+    // srt expands ~ itself, so expanding it here sorts each path beside its siblings
+    const expanded = paths.map((path) => path.replace(/^~(?=\/|$)/, HOME));
+    for (const path of [...new Set(expanded)].sort((a, b) => a.localeCompare(b))) console.log(`  ${path}`);
   }
 }

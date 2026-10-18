@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { SandboxManager } from "@anthropic-ai/sandbox-runtime";
-import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
+import { addRange, addressInSet, LOOPBACK_RANGES, parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/address.js";
 import { matchesDomainPatternWithPort, splitDomainPatternPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
 import { createResolvedAddressGuard, localInterfaceAddresses } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
+import { SRT_REFUSED_CLASSES } from "../src/cli/commands/printNetworkAccess.js";
 import { PRESETS } from "../src/config/config.js";
 import { CONFIG_SCHEMA, configErrorMap } from "../src/config/schema.js";
 
@@ -18,9 +19,14 @@ const rejects = (config, message) => {
 };
 
 // Guards the srt dist/ internals that src/ imports at launch, outside srt's public index
-for (const fn of [parseAddressRange, matchesDomainPatternWithPort, splitDomainPatternPort, canonicalizeHost, createResolvedAddressGuard, localInterfaceAddresses]) {
+for (const fn of [addRange, addressInSet, parseAddressRange, matchesDomainPatternWithPort, splitDomainPatternPort, canonicalizeHost, createResolvedAddressGuard, localInterfaceAddresses]) {
   assert.equal(typeof fn, "function");
 }
+assert.ok(Array.isArray(LOOPBACK_RANGES));
+
+// --print-network-access copies srt's refused classes, which srt doesn't export: catches one srt drops, not one it adds
+const guard = createResolvedAddressGuard();
+for (const range of Object.values(SRT_REFUSED_CLASSES).flat()) assert.equal(guard.permits("example.com", range.split("/")[0], 443), false, range);
 
 // srt up to 0.0.77 reads the ask callback's { allow: false, reason } as an allow
 assert.equal(SandboxManager.askCallbackDenyReason, true);
