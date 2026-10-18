@@ -99,3 +99,10 @@ setup() {
 @test "missing command fails" {
   run -127 blackwall nosuchcmd
 }
+
+@test "--allow-internet adds * to allowedHosts" {
+  run -0 blackwall --print-config
+  refute_output --partial '"*"'
+  run -0 blackwall --allow-internet --print-config
+  assert_output --partial '"*"'
+}

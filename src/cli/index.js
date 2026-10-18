@@ -14,13 +14,14 @@ import { printFileAccess } from "./commands/printFileAccess.js";
 import { printNetworkAccess } from "./commands/printNetworkAccess.js";
 import { trust } from "./commands/trust.js";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version | --completion zsh | --help] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--allow-internet] [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version | --completion zsh | --help] [--] <command> [args...]";
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
 
 export async function main(args) {
   const addDirs = [];
+  let allowInternet = false;
   let showConfig = false;
   let showFileAccess = false;
   let showNetworkAccess = false;
@@ -31,6 +32,9 @@ export async function main(args) {
       if (!args[0]) exitWithError("--add-dir needs a folder");
       if (!statSync(args[0], { throwIfNoEntry: false })?.isDirectory()) exitWithError(`--add-dir ${args[0]}: not a folder`);
       addDirs.push(resolve(args.shift()));
+    } else if (args[0] === "--allow-internet") {
+      args.shift();
+      allowInternet = true;
     } else if (args[0] === "--print-config") {
       args.shift();
       showConfig = true;
@@ -71,7 +75,7 @@ export async function main(args) {
 
   const name = basename(args[0] ?? "");
   const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
-  const { config, presets } = buildConfig({ addDirs, additions: adapter.config?.() ?? {} });
+  const { config, presets } = buildConfig({ addDirs, allowInternet, additions: adapter.config?.() ?? {} });
 
   const sandbox = createSandbox(config);
 

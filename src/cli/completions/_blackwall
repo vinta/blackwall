@@ -11,6 +11,7 @@ fi
 
 _arguments -S -A '-*' \
   '*--add-dir[also let the command write to another folder]:folder:_directories' \
+  '--allow-internet[also let the command reach every public host]' \
   "${exclusive}--print-config[show the merged config]" \
   "${exclusive}--print-file-access[show what the command can read and write]" \
   "${exclusive}--print-network-access[show which hosts the command can reach]" \
