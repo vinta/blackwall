@@ -8,7 +8,7 @@
 - `blackwall --help` and `-h` show the usage
 - `blackwall --allow-internet` lets the command reach every public host for one run, like `"*"` in `network.allowedHosts`. Loopback, private ranges, and `localhost` stay denied
 - Under `"*"`, `blackwall --print-network-access` lists `*` as the allowed host, plus only the listed hosts that reach past a deny, like `localhost:8000` or `127.0.0.1:8000`, instead of every preset host. Without `"*"`, it lists `*` as a denied host, since every unlisted host is refused. The `other hosts` section is gone
-- `blackwall --print-network-access` groups every address srt refuses, even for an allowed name, under `refused addresses, unless allowed by IP`: the `deniedHosts` ranges, the ranges behind each class, like `127.0.0.0/8` under `loopback`, and this machine's addresses, leaving out ones a class already covers
+- `blackwall --print-network-access` lists every address srt refuses, even for an allowed name, in groups under `denied hosts`: the `deniedHosts` ranges as `private network`, the ranges behind each class, like `127.0.0.0/8` under `loopback`, and this machine's addresses, leaving out ones a class already covers
 - An unknown option, like a mistyped `--verison`, is refused with `unknown option` instead of running as the command in the sandbox. To run a program whose name starts with `-`, put `--` before it
 - `--add-dir` refuses a path that isn't a folder, instead of starting the sandbox without it
 
