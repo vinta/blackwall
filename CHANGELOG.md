@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changes
+
+- `blackwall --completion zsh` prints a zsh completion script. It completes blackwall's flags, then hands off to the command's own completion, so `blackwall claude --<TAB>` shows claude's flags. See the README for setup
+
 ## v0.4.0 / 2026-10-17
 
 ### Breaking Changes

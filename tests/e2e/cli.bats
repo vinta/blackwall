@@ -26,3 +26,21 @@ setup() {
   run -0 blackwall --version
   run -0 grep -q "\"version\": \"$output\"" "$repo/package.json"
 }
+
+@test "--completion zsh prints a script zsh parses" {
+  run -0 blackwall --completion zsh
+  run -0 zsh -n -c "$output"
+}
+
+@test "--completion zsh covers every flag in the usage" {
+  run -0 blackwall --completion zsh
+  local flag
+  for flag in $(sed -n 's/^const USAGE = //p' "$repo/src/cli/index.js" | grep -o -- '--[a-z][a-z-]*'); do
+    assert_output --partial -- "$flag["
+  done
+}
+
+@test "--completion refuses other shells" {
+  run -2 blackwall --completion bash
+  assert_output --partial "usage:"
+}

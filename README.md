@@ -14,6 +14,15 @@ Needs Node.js 22.21 or later.
 npm install -g blackwall-sandbox
 ```
 
+To enable zsh completion:
+
+```bash
+mkdir -p ~/.zfunc
+blackwall --completion zsh > ~/.zfunc/_blackwall  # run it again after upgrading blackwall
+```
+
+Then add `fpath=(~/.zfunc $fpath)` to `~/.zshrc`, before `compinit` or `source $ZSH/oh-my-zsh.sh`.
+
 ## Usage
 
 ```bash
@@ -26,6 +35,7 @@ blackwall --print-network-access claude       # show which hosts it can reach, a
 blackwall --print-env claude                  # show the env vars blackwall adds, and why
 blackwall --trust                             # trust .blackwall/config.json in the current folder
 blackwall --version                           # show the blackwall version
+blackwall --completion zsh                    # print the zsh completion script
 ```
 
 By default, a sandboxed command:

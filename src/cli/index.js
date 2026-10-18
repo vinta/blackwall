@@ -7,13 +7,14 @@ import codex from "../adapters/codex.js";
 import { buildConfig, readProjectEnv } from "../config/config.js";
 import { SANDBOX_CACHE } from "../constants/paths.js";
 import { createSandbox } from "../sandbox/srt.js";
+import { completion } from "./commands/completion.js";
 import { printConfig } from "./commands/printConfig.js";
 import { printEnv } from "./commands/printEnv.js";
 import { printFileAccess } from "./commands/printFileAccess.js";
 import { printNetworkAccess } from "./commands/printNetworkAccess.js";
 import { trust } from "./commands/trust.js";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version | --completion zsh] [--] <command> [args...]";
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
@@ -43,6 +44,11 @@ export async function main(args) {
       showEnv = true;
     } else if (args[0] === "--trust") {
       trust();
+      process.exit(0);
+    } else if (args[0] === "--completion") {
+      args.shift();
+      if (args[0] !== "zsh") exitWithUsage();
+      completion();
       process.exit(0);
     } else if (args[0] === "--version") {
       console.log(packageJson.version);
