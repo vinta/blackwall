@@ -199,6 +199,27 @@ Little Snitch then shows `node-blackwall` instead of `node`. It's an ad-hoc-sign
 
 </details>
 
+## Threat Model
+
+The question blackwall answers: you run `blackwall --allow-internet claude` in a repo you own or cloned, with the default config. If the agent goes rogue, is your host machine safe?
+
+The attacker is the command inside the sandbox: a coding agent steered by a prompt injection in the repo, a malicious dependency, a tool it runs. It can run anything, for as long as the session lasts, and it can try again the next time you launch blackwall.
+
+What blackwall defends:
+
+- It reads and writes only what you granted, listed in [Usage](#usage)
+- It can't plant anything the next launch runs or reads, sandboxed or not
+- With internet access, it can only leak what it was allowed to read
+
+Out of scope:
+
+- You, running a hostile command on purpose. If you start `blackwall` with an evil command, that's on you
+- What you grant: `allowRead`, `allowWrite`, `--add-dir`, and a trusted `.blackwall/config.json` with its `.env` count as your own setup. Review before `--trust`
+- Secrets in `~/.blackwall/.env`. They reach the command by design, see [Known Limitations](#known-limitations)
+- Bugs in srt, Seatbelt, or bubblewrap
+
+A finding counts when the sandboxed command alone gets past this, with no help from you beyond launching blackwall again. Reading host files outranks writing them, and writing outranks breaking a session.
+
 ## Known Limitations
 
 - The `agent-files` denies cover the top of the current and `--add-dir` folders only. A sandboxed run can still write `sub/.claude/settings.json` or `sub/.claude/hooks`, and an unsandboxed `claude` started from `sub/` later runs them. Same for `.mcp.json`, `.claude/commands`, and `.claude/agents`, which srt denies at the top only. Before running `claude` outside the sandbox from a subfolder an agent worked in, check its `.claude/` first. Closing this means pushing the names into srt's mandatory denies at launch, since srt drops user write globs on Linux

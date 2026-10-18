@@ -11,6 +11,10 @@
 - Deny precisely and let an `allowedHosts` entry override; never a block-everything rule. Public bare-IP URLs work under `"*"`.
 - Match hosts with srt's own matchers (`canonicalizeHost`, `matchesDomainPatternWithPort`, the resolved-address guard). Blackwall's own code validates `deniedHosts` names only, because srt's "overly broad" wildcard rule rejects `*.localhost`.
 
+## Security
+
+- Rate a security finding or a sandbox decision against the README's Threat Model: the attacker is the command inside the sandbox, acting alone across launches. A finding that needs the user to run a hostile command or widen a grant is out of scope; one that needs a trusted project config is a trust gap, not an escape.
+
 ## srt
 
 - Imports from srt's `dist/` are internals outside its public index: guard each in `tests/config.js` and run e2e on every srt bump.
