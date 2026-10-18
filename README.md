@@ -214,7 +214,8 @@ What blackwall defends:
 Out of scope:
 
 - You, running a hostile command on purpose. If you start `blackwall` with an evil command, that's on you
-- What you grant: `allowRead`, `allowWrite`, `--add-dir`, and a trusted `.blackwall/config.json` with its `.env` count as your own setup. `--trust` pins only `config.json`'s content; `~/.blackwall/.env` always loads, and a project's `.env` loads whenever its `config.json` is trusted, later edits included, with no new `--trust`. Review both before `--trust`, and `.env` again after a pull that touches it
+- What you grant: `allowRead`, `allowWrite`, `--add-dir`, and a trusted `.blackwall/config.json` with its `.env` count as your own setup. Review both before `--trust`
+- What `--trust` leaves to you: it pins only `config.json`'s content. `~/.blackwall/.env` always loads, and a project's `.env` loads whenever its `config.json` is trusted, later edits included, with no new `--trust`. Review `.env` again after a pull that touches it
 - Secrets in `~/.blackwall/.env`. They reach the command by design, see [Known Limitations](#known-limitations)
 - Bugs in srt, Seatbelt, or bubblewrap
 
