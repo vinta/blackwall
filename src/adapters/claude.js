@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { HOME, SKILLS, TMPDIR } from "../constants/paths.js";
-import { copyShared } from "./shared.js";
+import { copyShared, mkdirManaged } from "./shared.js";
 
 const PROFILE = `${HOME}/.claude-blackwall`;
 
@@ -53,7 +53,7 @@ export default {
 
   prepare() {
     const firstRun = !existsSync(PROFILE);
-    mkdirSync(PROFILE, { recursive: true });
+    mkdirManaged(PROFILE);
 
     // Seeded once, then the user's: seed plugins load only when enabled, while the host's other settings (hooks, permissions) assume no sandbox
     let seeded = false;

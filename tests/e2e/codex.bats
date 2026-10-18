@@ -59,6 +59,17 @@ setup() {
   refute [ -e "$home/.codex-blackwall/rules/host.rules" ]
 }
 
+# A sandboxed run can write its profile folder itself, so it can swap it for a link to the host's folder
+@test "symlinked profile blocks launch and spares the host folder" {
+  mv "$home/.codex-blackwall" "$work/profile"
+  ln -s "$home/.codex" "$home/.codex-blackwall"
+
+  run -2 blackwall codex --version
+  assert_output --partial "is a symlink"
+  assert [ -f "$home/.codex/AGENTS.md" ]
+  rm "$home/.codex-blackwall" && mv "$work/profile" "$home/.codex-blackwall"
+}
+
 @test "unreadable codex instructions block launch" {
   chmod 000 "$home/.codex/AGENTS.md"
 

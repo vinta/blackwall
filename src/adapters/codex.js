@@ -1,6 +1,6 @@
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { HOME, SKILLS } from "../constants/paths.js";
-import { copyShared } from "./shared.js";
+import { copyShared, mkdirManaged } from "./shared.js";
 
 const PROFILE = `${HOME}/.codex-blackwall`;
 
@@ -31,7 +31,7 @@ export default {
 
   prepare() {
     const firstRun = !existsSync(PROFILE);
-    mkdirSync(PROFILE, { recursive: true });
+    mkdirManaged(PROFILE);
 
     if (firstRun) {
       console.warn(`blackwall: created ${PROFILE} as codex's config folder. Every launch copies ${SHARED.join(", ")} from ~/.codex, skills from ~/.agents, and blackwall's own skill into it`);

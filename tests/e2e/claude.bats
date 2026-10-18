@@ -82,6 +82,17 @@ setup() {
   refute_output --partial E2E_TOKEN
 }
 
+# A sandboxed run can write its profile folder itself, so it can swap it for a link to the host's folder
+@test "symlinked profile blocks launch and spares the host folder" {
+  mv "$home/.claude-blackwall" "$work/profile"
+  ln -s "$home/.claude" "$home/.claude-blackwall"
+
+  run -2 blackwall claude --version
+  assert_output --partial "is a symlink"
+  assert [ -f "$home/.claude/CLAUDE.md" ]
+  rm "$home/.claude-blackwall" && mv "$work/profile" "$home/.claude-blackwall"
+}
+
 # Named claude so the claude adapter's grants and env apply, without needing a login
 @test "write claude profile" {
   printf '#!/bin/sh\necho x > "$CLAUDE_CONFIG_DIR/probe"\n' >"$proj/claude" && chmod +x "$proj/claude"

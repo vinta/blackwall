@@ -1,9 +1,10 @@
-import { mkdirSync, statSync } from "node:fs";
+import { statSync } from "node:fs";
 import { basename, resolve } from "node:path";
 
 import packageJson from "../../package.json" with { type: "json" };
 import claude from "../adapters/claude.js";
 import codex from "../adapters/codex.js";
+import { mkdirManaged } from "../adapters/shared.js";
 import { buildConfig, readProjectEnv } from "../config/config.js";
 import { SANDBOX_CACHE } from "../constants/paths.js";
 import { createSandbox } from "../sandbox/srt.js";
@@ -111,7 +112,7 @@ export async function main(args) {
   const launcherEnv = { ...process.env };
   const commandEnv = { ...readProjectEnv(), ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
 
-  mkdirSync(SANDBOX_CACHE, { recursive: true });
+  mkdirManaged(SANDBOX_CACHE);
   for (const preset of presets) preset.prepare?.();
   adapter.prepare?.();
 
