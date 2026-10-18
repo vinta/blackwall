@@ -14,14 +14,14 @@ Needs Node.js 22.21 or later.
 npm install -g blackwall-sandbox
 ```
 
-To enable zsh completion:
+To enable zsh completion with oh-my-zsh:
 
 ```bash
-mkdir -p ~/.zfunc
-blackwall --completion zsh > ~/.zfunc/_blackwall  # run it again after upgrading blackwall
+mkdir -p $ZSH_CUSTOM/completions
+blackwall --completion zsh > $ZSH_CUSTOM/completions/_blackwall  # run it again after upgrading blackwall
 ```
 
-Then add `fpath=(~/.zfunc $fpath)` to `~/.zshrc`, before `compinit` or `source $ZSH/oh-my-zsh.sh`.
+Without oh-my-zsh, save it to `~/.zfunc/_blackwall` instead, and add `fpath=(~/.zfunc $fpath)` to `~/.zshrc`, before `compinit`.
 
 ## Usage
 
