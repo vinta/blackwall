@@ -36,11 +36,66 @@ setup() {
   run -0 blackwall --completion zsh
   local flag
   for flag in $(sed -n 's/^const USAGE = //p' "$repo/src/cli/index.js" | grep -o -- '--[a-z][a-z-]*'); do
-    assert_output --partial -- "$flag["
+    # A spec is --flag[...], or {-f,--flag}[...] for a flag with a short form
+    assert_output --regexp -- "${flag}[[,}]"
   done
 }
 
 @test "--completion refuses other shells" {
   run -2 blackwall --completion bash
   assert_output "blackwall: --completion supports zsh only"
+}
+
+@test "--completion without a shell refused" {
+  run -2 blackwall --completion
+  assert_output "blackwall: --completion supports zsh only"
+}
+
+@test "--help and -h show the usage" {
+  run -0 blackwall --help
+  assert_output --partial "usage: blackwall"
+  run -0 blackwall -h
+  assert_output --partial "usage: blackwall"
+}
+
+@test "no command shows the usage" {
+  run -2 blackwall
+  assert_output --partial "usage: blackwall"
+  run -2 blackwall --
+  assert_output --partial "usage: blackwall"
+}
+
+@test "unknown option refused" {
+  run -2 blackwall --verison
+  assert_line --index 0 "blackwall: unknown option --verison"
+  assert_line --index 1 --partial "usage: blackwall"
+  run -2 blackwall --add-dir "$added" -v true
+  assert_line --index 0 "blackwall: unknown option -v"
+}
+
+@test "-- runs a command whose name starts with -" {
+  run -127 blackwall -- -v
+  refute_output --partial "unknown option"
+}
+
+@test "--add-dir without a folder refused" {
+  run -2 blackwall --add-dir
+  assert_output "blackwall: --add-dir needs a folder"
+}
+
+@test "--add-dir refuses a path that isn't a folder" {
+  run -2 blackwall --add-dir "$work/missing" true
+  assert_output "blackwall: --add-dir $work/missing: not a folder"
+  touch "$added/file"
+  run -2 blackwall --add-dir "$added/file" true
+  assert_output "blackwall: --add-dir $added/file: not a folder"
+}
+
+@test "--trust without a project config refused" {
+  run -2 blackwall --trust
+  assert_output --partial ".blackwall/config.json: not found"
+}
+
+@test "missing command fails" {
+  run -127 blackwall nosuchcmd
 }

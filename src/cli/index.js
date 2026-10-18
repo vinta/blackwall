@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
 import { basename, resolve } from "node:path";
 
 import packageJson from "../../package.json" with { type: "json" };
@@ -14,7 +14,7 @@ import { printFileAccess } from "./commands/printFileAccess.js";
 import { printNetworkAccess } from "./commands/printNetworkAccess.js";
 import { trust } from "./commands/trust.js";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version | --completion zsh] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version | --completion zsh | --help] [--] <command> [args...]";
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
@@ -28,7 +28,8 @@ export async function main(args) {
   while (true) {
     if (args[0] === "--add-dir") {
       args.shift();
-      if (!args[0]) exitWithUsage();
+      if (!args[0]) exitWithError("--add-dir needs a folder");
+      if (!statSync(args[0], { throwIfNoEntry: false })?.isDirectory()) exitWithError(`--add-dir ${args[0]}: not a folder`);
       addDirs.push(resolve(args.shift()));
     } else if (args[0] === "--print-config") {
       args.shift();
@@ -47,15 +48,19 @@ export async function main(args) {
       process.exit(0);
     } else if (args[0] === "--completion") {
       args.shift();
-      if (args[0] !== "zsh") {
-        console.error("blackwall: --completion supports zsh only");
-        process.exit(2);
-      }
+      if (args[0] !== "zsh") exitWithError("--completion supports zsh only");
       completion();
       process.exit(0);
     } else if (args[0] === "--version") {
       console.log(packageJson.version);
       process.exit(0);
+    } else if (args[0] === "--help" || args[0] === "-h") {
+      console.log(USAGE);
+      process.exit(0);
+    } else if (args[0]?.startsWith("-") && args[0] !== "--") {
+      // No program name starts with -, so this is a mistyped flag; -- still runs one
+      console.error(`blackwall: unknown option ${args[0]}`);
+      exitWithUsage();
     } else {
       break;
     }
@@ -110,5 +115,10 @@ export async function main(args) {
 
 function exitWithUsage() {
   console.error(USAGE);
+  process.exit(2);
+}
+
+function exitWithError(message) {
+  console.error(`blackwall: ${message}`);
   process.exit(2);
 }

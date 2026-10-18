@@ -5,6 +5,9 @@
 ### Changes
 
 - `blackwall --completion zsh` prints a zsh completion script. It completes blackwall's flags, then hands off to the command's own completion, so `blackwall claude --<TAB>` shows claude's flags. See the README for setup
+- `blackwall --help` and `-h` show the usage
+- An unknown option, like a mistyped `--verison`, is refused with `unknown option` instead of running as the command in the sandbox. To run a program whose name starts with `-`, put `--` before it
+- `--add-dir` refuses a path that isn't a folder, instead of starting the sandbox without it
 
 ## v0.4.0 / 2026-10-17
 

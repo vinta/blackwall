@@ -1,7 +1,7 @@
 #compdef blackwall
 
 # Same shape as zsh's own _sudo: blackwall's flags, then the command, whose own completion takes over
-local exclusive='(--print-config --print-file-access --print-network-access --print-env --trust --version --completion)'
+local exclusive='(--print-config --print-file-access --print-network-access --print-env --trust --version --completion --help -h)'
 
 # _arguments hands the command's completion no words after a leading --, so drop it as _env drops its -
 if [[ $words[2] == -- ]] && (( CURRENT > 2 )); then
@@ -18,5 +18,6 @@ _arguments -S -A '-*' \
   '(- 1 *)--trust[trust .blackwall/config.json in the current folder]' \
   '(- 1 *)--version[show the blackwall version]' \
   '(- 1 *)--completion[print the shell completion script]:shell:(zsh)' \
+  '(- 1 *)'{-h,--help}'[show the usage]' \
   '(-)1:command:_command_names -e' \
   '*::arguments:_normal'

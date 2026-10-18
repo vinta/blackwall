@@ -36,6 +36,7 @@ blackwall --print-env claude                  # show the env vars blackwall adds
 blackwall --trust                             # trust .blackwall/config.json in the current folder
 blackwall --version                           # show the blackwall version
 blackwall --completion zsh                    # print the zsh completion script
+blackwall --help                              # show the usage
 ```
 
 By default, a sandboxed command:
