@@ -24,10 +24,10 @@ export function printNetworkAccess(srtConfig, deniedNames) {
   for (const [title, items] of [
     // Under "*", a listed host shows only where it reaches what "*" alone can't
     ["allowed hosts", allowAll ? ["*", ...srtConfig.network.allowedDomains.filter((entry) => beatsDeny(entry, deniedNames))] : srtConfig.network.allowedDomains],
-    ["denied names", deniedNames],
+    // Without "*", every unlisted name is refused, and blackwall checks denied names only under "*"
+    ["denied names", allowAll ? deniedNames : ["*"]],
     ["denied ranges", srtConfig.network.deniedResolvedAddresses],
     ["srt refuses", refused],
-    ...(allowAll ? [] : [["other hosts", ["refused"]]]),
   ]) {
     console.log(`${title}:`);
     for (const item of new Set(items)) console.log(`  ${item}`);

@@ -87,7 +87,6 @@ allow_listener() {
   run -0 blackwall --print-network-access
   assert_line --index 1 "  *"
   refute_line "  github.com"
-  refute_line "other hosts:"
 }
 
 @test "listed IP literal allowed under *" {

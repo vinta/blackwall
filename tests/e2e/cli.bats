@@ -107,13 +107,11 @@ setup() {
   assert_output --partial '"*"'
 }
 
-@test "--print-network-access without * lists hosts and refuses the rest" {
+@test "--print-network-access puts * on the denied side without it" {
   run -0 blackwall --print-network-access
-  refute_line "  *"
   assert_line "  github.com"
-  assert_line "other hosts:"
-  assert_line "  refused"
+  assert_output --partial $'denied names:\n  *\ndenied ranges:'
   run -0 blackwall --allow-internet --print-network-access
-  assert_line "  *"
+  assert_output --partial $'allowed hosts:\n  *\ndenied names:\n  localhost\n'
   refute_line "  github.com"
 }
