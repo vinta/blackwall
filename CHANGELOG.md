@@ -12,7 +12,7 @@
 - `blackwall --print-network-access` lists every address srt refuses, even for an allowed name, in groups under `denied hosts`: the `deniedHosts` ranges as `private network`, the ranges behind each class, like `127.0.0.0/8` under `loopback`, and this machine's addresses, leaving out ones a class already covers
 - An unknown option, like a mistyped `--verison`, is refused with `unknown option` instead of running as the command in the sandbox. To run a program whose name starts with `-`, put `--` before it
 - `--add-dir` refuses a path that isn't a folder, instead of starting the sandbox without it
-- A project's `.blackwall/.env` reaches only the sandboxed command, never the shell blackwall starts it from, so a `PATH` or `LD_PRELOAD` there can't run code outside the sandbox. A key that isn't a valid variable name, like `A;B`, is a config error
+- A project's `.blackwall/.env` reaches only the sandboxed command, never the shell blackwall starts it from, so a `PATH` or `LD_PRELOAD` there can't run code outside the sandbox
 - Blackwall refuses to launch when a profile folder, like `~/.claude-blackwall`, or `~/.cache-blackwall` is a symlink, which a sandboxed command could plant so the next launch deletes or grants what it points to. A symlinked read grant no longer expands to its target when the link, or a link on the way to it, sits where the sandbox can write. That includes a link inside the current or an `--add-dir` folder, so list its target in `allowRead` too
 - Ctrl+C no longer shuts srt's network proxy down while the command keeps running, so a command that handles the interrupt itself keeps its network
 

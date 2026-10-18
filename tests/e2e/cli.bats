@@ -78,6 +78,11 @@ setup() {
   refute_output --partial "unknown option"
 }
 
+@test "assignment as the command refused" {
+  run -2 blackwall FOO=1 sh -c 'echo $FOO'
+  assert_output --partial "is an assignment"
+}
+
 @test "--add-dir without a folder refused" {
   run -2 blackwall --add-dir
   assert_output "blackwall: --add-dir needs a folder"

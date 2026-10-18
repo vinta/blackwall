@@ -73,6 +73,8 @@ export async function main(args) {
 
   if (args[0] === "--") args.shift();
   if (!args[0] && !showConfig && !showFileAccess && !showNetworkAccess && !showEnv) exitWithUsage();
+  // env, which applies the command's vars inside the sandbox, would take this as one more assignment and run the next word
+  if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(args[0] ?? "")) exitWithError(`${args[0]} is an assignment, not a command. Put env vars in .blackwall/.env`);
 
   const name = basename(args[0] ?? "");
   const adapter = Object.hasOwn(ADAPTERS, name) ? ADAPTERS[name] : {};
@@ -107,7 +109,7 @@ export async function main(args) {
     process.exit(0);
   }
 
-  // The project's .env and blackwall's own vars go only to the command, never to the launcher's shell, so a project PATH or NODE_OPTIONS can't reach unsandboxed code. Blackwall's vars beat the project's
+  // The project's .env and blackwall's own env vars go only to the command, never to the launcher's shell, so a project PATH or NODE_OPTIONS can't reach unsandboxed code. Blackwall's vars beat the project's
   // Snapshot before prepare() runs, so a process.env write there reaches srt, never the command
   const launcherEnv = { ...process.env };
   const commandEnv = { ...readProjectEnv(), ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };

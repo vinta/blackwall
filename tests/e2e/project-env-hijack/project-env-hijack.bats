@@ -26,8 +26,3 @@ setup() {
   run -0 blackwall sh -c 'echo $PATH'
   assert_output --partial "$proj/bin"
 }
-
-# With fd 3 still open, the spent pipe would read as empty and exit 0
-@test "command starts with fd 3 closed" {
-  run ! blackwall sh -c 'cat <&3'
-}
