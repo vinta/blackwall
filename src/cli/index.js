@@ -47,7 +47,10 @@ export async function main(args) {
       process.exit(0);
     } else if (args[0] === "--completion") {
       args.shift();
-      if (args[0] !== "zsh") exitWithUsage();
+      if (args[0] !== "zsh") {
+        console.error("blackwall: --completion supports zsh only");
+        process.exit(2);
+      }
       completion();
       process.exit(0);
     } else if (args[0] === "--version") {

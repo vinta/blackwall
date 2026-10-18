@@ -42,5 +42,5 @@ setup() {
 
 @test "--completion refuses other shells" {
   run -2 blackwall --completion bash
-  assert_output --partial "usage:"
+  assert_output "blackwall: --completion supports zsh only"
 }
