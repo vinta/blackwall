@@ -1,20 +1,21 @@
 # Changelog
 
-## Unreleased
+## v0.5.0 / 2026-10-19
+
+### Breaking Changes
+
+- A symlinked read grant no longer expands to its target when the link, or a link on the way to it, sits where the sandbox can write. That includes a link inside the current or an `--add-dir` folder, so list its target in `allowRead` too
 
 ### Changes
 
+- A project's `.blackwall/.env` reaches only the sandboxed command, never the shell blackwall starts it from, so a `PATH` or `LD_PRELOAD` there can't run code outside the sandbox. A key that isn't a valid variable name, like `A;B`, is a config error
+- Blackwall refuses to launch when a profile folder, like `~/.claude-blackwall`, or `~/.cache-blackwall` is a symlink, which a sandboxed command could plant so the next launch deletes or grants what it points to
+- Ctrl+C no longer shuts srt's network proxy down while the command keeps running, so a command that handles the interrupt itself keeps its network
+- `blackwall --allow-internet` lets the command reach every public host for one run, like `"*"` in `network.allowedHosts`. Loopback, private ranges, and `localhost` stay denied
 - `blackwall --completion zsh` prints a zsh completion script. It completes blackwall's flags, then hands off to the command's own completion, so `blackwall claude --<TAB>` shows claude's flags. See the README for setup
 - `blackwall --help` and `-h` show the usage
-- `blackwall --allow-internet` lets the command reach every public host for one run, like `"*"` in `network.allowedHosts`. Loopback, private ranges, and `localhost` stay denied
-- Under `"*"`, `blackwall --print-network-access` lists `*` as the allowed host, plus only the listed hosts that reach past a deny, like `localhost:8000` or `127.0.0.1:8000`, instead of every preset host. Without `"*"`, it lists `*` as a denied host, since every unlisted host is refused. The `other hosts` section is gone
-- `blackwall --print-file-access` sorts each section's paths and writes `~` out as your home folder, so a path sits beside its siblings
-- `blackwall --print-network-access` lists every address srt refuses, even for an allowed name, in groups under `denied hosts`: the `deniedHosts` ranges as `private network`, the ranges behind each class, like `127.0.0.0/8` under `loopback`, and this machine's addresses, leaving out ones a class already covers
 - An unknown option, like a mistyped `--verison`, is refused with `unknown option` instead of running as the command in the sandbox. To run a program whose name starts with `-`, put `--` before it
-- `--add-dir` refuses a path that isn't a folder, instead of starting the sandbox without it
-- A project's `.blackwall/.env` reaches only the sandboxed command, never the shell blackwall starts it from, so a `PATH` or `LD_PRELOAD` there can't run code outside the sandbox. A key that isn't a valid variable name, like `A;B`, is a config error
-- Blackwall refuses to launch when a profile folder, like `~/.claude-blackwall`, or `~/.cache-blackwall` is a symlink, which a sandboxed command could plant so the next launch deletes or grants what it points to. A symlinked read grant no longer expands to its target when the link, or a link on the way to it, sits where the sandbox can write. That includes a link inside the current or an `--add-dir` folder, so list its target in `allowRead` too
-- Ctrl+C no longer shuts srt's network proxy down while the command keeps running, so a command that handles the interrupt itself keeps its network
+- Under `"*"`, `blackwall --print-network-access` lists `*` as the allowed host plus only the listed hosts that reach past a deny, like `localhost:8000`, and groups every address srt refuses, even for an allowed name, under `denied hosts`: the `deniedHosts` ranges as `private network`, the ranges behind each class, like `127.0.0.0/8` under `loopback`, and this machine's addresses
 
 ## v0.4.0 / 2026-10-17
 
