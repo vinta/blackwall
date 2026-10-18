@@ -48,14 +48,20 @@ export function createSandbox(config) {
     srtConfig,
     deniedNames,
 
-    async run(args, env) {
+    async run(args, commandEnv, launcherEnv) {
       await SandboxManager.initialize(srtConfig, askCallback);
       // initialize prints these only under SRT_DEBUG, yet one says a sandboxed command can rewrite srt, which runs unsandboxed next launch
       for (const warning of SandboxManager.checkDependencies().warnings) console.warn(`blackwall: ${warning}`);
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
-      const command = await SandboxManager.wrapWithSandbox(args.map(quote).join(" "));
-      const child = spawn(command, { shell: true, stdio: "inherit", env });
+      // The command's env travels on fd 3, so its values never appear in argv, in srt's log tag, or in ps
+      // cat reads the open fd: Linux refuses to open Node's socketpair through /dev/fd (ENXIO), and bash 3.2 truncates a sourced /dev/fd stream around 64 KB
+      // The checked assignment stops the chain if the read fails, so the command never runs without its env; bash 3.2 turns `cmd 3<&-` into a move to fd 10, so the close is its own exec
+      const command = await SandboxManager.wrapWithSandbox(`blackwall_env=$(cat <&3) && eval "$blackwall_env" && exec 3<&- && exec -- ${args.map(quote).join(" ")}`);
+      const child = spawn(command, { shell: true, stdio: ["inherit", "inherit", "inherit", "pipe"], env: launcherEnv });
+      // EPIPE if the shell exits before reading
+      child.stdio[3].on("error", () => {});
+      child.stdio[3].end(Object.entries(commandEnv).map(([key, value]) => `export ${key}=${quote(value)}\n`).join(""));
 
       // The terminal sends Ctrl+C to the child too; the launcher must outlive it to keep srt's proxy up
       process.on("SIGINT", () => {});
