@@ -54,8 +54,12 @@ setup() {
   run -0 blackwall --print-network-access claude
   assert_line "denied ranges:"
   assert_line "  10.0.0.0/8"
-  assert_line "this machine:"
-  refute_line --regexp "^  (127\.|::1$|fe80:)"
+  assert_line "  loopback:"
+  assert_line "    127.0.0.0/8"
+  assert_line "  this machine:"
+  # This machine's loopback and link-local addresses are covered by those classes
+  refute_line "    127.0.0.1"
+  refute_line --regexp "^    fe80::[^/]*$"
 }
 
 @test "--print-env shows presets, not .env keys" {
