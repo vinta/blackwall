@@ -106,3 +106,14 @@ setup() {
   run -0 blackwall --allow-internet --print-config
   assert_output --partial '"*"'
 }
+
+@test "--print-network-access without * lists hosts and refuses the rest" {
+  run -0 blackwall --print-network-access
+  refute_line "  *"
+  assert_line "  github.com"
+  assert_line "other hosts:"
+  assert_line "  refused"
+  run -0 blackwall --allow-internet --print-network-access
+  assert_line "  *"
+  refute_line "  github.com"
+}

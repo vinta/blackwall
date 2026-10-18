@@ -83,6 +83,13 @@ allow_listener() {
   assert_not_equal "$(http_code https://1.1.1.1/)" 403
 }
 
+@test "--print-network-access shows * without the hosts it covers" {
+  run -0 blackwall --print-network-access
+  assert_line --index 1 "  *"
+  refute_line "  github.com"
+  refute_line "other hosts:"
+}
+
 @test "listed IP literal allowed under *" {
   allow_listener
 
@@ -93,4 +100,12 @@ allow_listener() {
   allow_listener
 
   assert_equal "$(http_code "http://localhost:$port/")" 200
+}
+
+@test "--print-network-access keeps listed hosts that beat a deny under *" {
+  allow_listener
+
+  run -0 blackwall --print-network-access
+  assert_line "  127.0.0.1:$port"
+  assert_line "  localhost:$port"
 }
