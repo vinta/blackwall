@@ -54,7 +54,8 @@ setup() {
   run -0 blackwall --print-network-access claude
   assert_line "denied ranges:"
   assert_line "  10.0.0.0/8"
-  assert_line --regexp "^  this machine: "
+  assert_line "this machine:"
+  refute_line --regexp "^  (127\.|::1$|fe80:)"
 }
 
 @test "--print-env shows presets, not .env keys" {
