@@ -57,11 +57,14 @@ export function createSandbox(config) {
       for (const warning of SandboxManager.checkDependencies().warnings) console.warn(`blackwall: ${warning}`);
 
       const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
-      // env applies the command's env inside the sandbox, so the launcher's shell never sees it
-      // -- keeps a command whose name starts with - from parsing as an env option
-      // srt encodes commandId instead of the wrapped command into its violation tag and proxy username, so the env values stay out of both
-      const command = await SandboxManager.wrapWithSandbox(["env", "--", ...Object.entries(commandEnv).map(([key, value]) => `${key}=${value}`), ...args].map(quote).join(" "), undefined, undefined, undefined, { commandId: args.map(quote).join(" ") });
-      const child = spawn(command, { shell: true, stdio: "inherit", env: launcherEnv });
+      // The command's env travels on fd 3, so its values never appear in argv, in srt's log tag, or in ps
+      // cat reads the open fd: Linux refuses to open Node's socketpair through /dev/fd (ENXIO), and bash 3.2 truncates a sourced /dev/fd stream around 64 KB
+      // The checked assignment stops the chain if the read fails, so the command never runs without its env; bash 3.2 turns `cmd 3<&-` into a move to fd 10, so the close is its own exec
+      const command = await SandboxManager.wrapWithSandbox(`blackwall_env=$(cat <&3) && eval "$blackwall_env" && exec 3<&- && exec -- ${args.map(quote).join(" ")}`);
+      const child = spawn(command, { shell: true, stdio: ["inherit", "inherit", "inherit", "pipe"], env: launcherEnv });
+      // EPIPE if the shell exits before reading
+      child.stdio[3].on("error", () => {});
+      child.stdio[3].end(Object.entries(commandEnv).map(([key, value]) => `export ${key}=${quote(value)}\n`).join(""));
 
       process.on("SIGTERM", () => child.kill("SIGTERM"));
       child.on("exit", (code) => process.exit(code ?? 1));

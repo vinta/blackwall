@@ -186,7 +186,11 @@ export function readProjectEnv() {
   if (config === undefined || !existsSync(trustMarker(config))) {
     exitWithConfigError(PROJECT_ENV, "loads only with a trusted .blackwall/config.json. Create one ({} is enough), review both, then run `blackwall --trust`");
   }
-  return parseEnv(env);
+  const vars = parseEnv(env);
+  for (const key of Object.keys(vars)) {
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) exitWithConfigError(PROJECT_ENV, `${key}: not a valid variable name`);
+  }
+  return vars;
 }
 
 export function readIfExists(file) {
