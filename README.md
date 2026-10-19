@@ -8,7 +8,7 @@ Opinionated lightweight sandbox for daily dev tasks with coding agents. Built on
 
 ## Why Blackwall
 
-Blackwall wraps the agent itself: `claude` or `codex` runs [inside srt](https://code.claude.com/docs/en/sandbox-environments#sandbox-runtime), so every tool, hook, and MCP server it starts is sandboxed too.
+Blackwall is an out-of-the-box sandbox for long-running agent tasks, mainly `claude` and `codex`. You get nearly the same experience as your daily dev work outside a sandbox, but much safer. At least the blast radius stays under control. Unlike the built-in sandboxes, it runs the whole agent inside srt, hooks and MCP servers included.
 
 ### Claude Code's Built-in Sandbox
 
