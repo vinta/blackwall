@@ -10,6 +10,9 @@ Opinionated lightweight sandbox for daily dev tasks with coding agents. Built on
 
 Blackwall is an out-of-the-box sandbox for long-running agent tasks, mainly `claude` and `codex`. You get nearly the same experience as your daily dev work outside a sandbox, but much safer. At least the blast radius stays under control. Unlike the built-in sandboxes, it runs the whole agent inside srt, hooks and MCP servers included.
 
+<details>
+<summary>Comparison: blackwall vs claude/codex built-in sandboxes vs srt</summary>
+
 ### Claude Code's Built-in Sandbox
 
 |                   | Blackwall                                                                                                       | Claude Code's built-in sandbox                                                                                                                                                                                                                                                                                                 |
@@ -47,6 +50,8 @@ Blackwall is srt underneath, with the setup done for you:
 
 srt's [security limitations](https://github.com/anthropics/sandbox-runtime#security-limitations) apply to blackwall too.
 
+</details>
+
 ### What You Give Up
 
 - Hosts and paths are fixed at launch. A new host means a config edit or `--allow-internet` and a relaunch, not a prompt mid-session
@@ -60,6 +65,9 @@ Needs Node.js 22.21 or later.
 npm install -g blackwall-sandbox
 ```
 
+<details>
+<summary>Shell completion</summary>
+
 To enable zsh completion with oh-my-zsh:
 
 ```bash
@@ -68,6 +76,8 @@ blackwall --completion zsh > $ZSH_CUSTOM/completions/_blackwall  # run it again 
 ```
 
 Without oh-my-zsh, save it to `~/.zfunc/_blackwall` instead, and add `fpath=(~/.zfunc $fpath)` to `~/.zshrc`, before `compinit`.
+
+</details>
 
 ## Usage
 
@@ -173,12 +183,10 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, env v
 
 Preset paths follow `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, and `XDG_CACHE_HOME` when you set them.
 
-<details>
-<summary>
-
 ### User Config
 
-</summary>
+<details>
+<summary>~/.blackwall/config.json: add to the defaults, or replace them with overrideDefaults</summary>
 
 Put your customizations in `~/.blackwall/config.json`. Top-level lists are added to the defaults. `srt` keys and `overrideDefaults` replace their defaults:
 
@@ -199,12 +207,10 @@ Put your customizations in `~/.blackwall/config.json`. Top-level lists are added
 
 </details>
 
-<details>
-<summary>
-
 ### Project Config
 
-</summary>
+<details>
+<summary>.blackwall/config.json and .blackwall/.env, loaded only after --trust</summary>
 
 Put a project's own config in `.blackwall/config.json`. It takes the same keys as `~/.blackwall/config.json`, e.g. to read a file from another repo:
 
@@ -226,12 +232,10 @@ A cloned repo can ship a `.blackwall/config.json` that widens the sandbox, so `b
 
 </details>
 
-<details>
-<summary>
-
 ### Signed Node
 
-</summary>
+<details>
+<summary>Give blackwall its own identity in Little Snitch</summary>
 
 For firewall apps like Little Snitch. Every sandboxed command connects through a proxy inside `blackwall`, so the firewall sees all that traffic as `node`, the same `node` behind every other Node script. One rule covers them all.
 
@@ -267,11 +271,16 @@ Out of scope:
 
 A finding counts when the sandboxed command alone gets past this, with no help from you beyond launching blackwall again. Reading host files outranks writing them, and writing outranks breaking a session.
 
-## Known Limitations
+### Known Limitations
+
+<details>
+<summary>Nested agent files, HTTP proxy, and profile folder symlinks can still get past the sandbox</summary>
 
 - The `agent-files` denies cover the top of the current and `--add-dir` folders only. A sandboxed run can still write `sub/.claude/settings.json` or `sub/.claude/hooks`, and an unsandboxed `claude` started from `sub/` later runs them. Before running `claude` outside the sandbox from a subfolder an agent worked in, check its `.claude/` first. Closing this means pushing the names into srt's mandatory denies at launch, since srt drops user write globs on Linux
 - With `HTTP_PROXY` or `HTTPS_PROXY` set, in your shell or `~/.blackwall/.env`, srt sends names through that proxy and lets it resolve them, so it can't check what they resolve to. The `private-network` preset, `deniedHosts` ranges, and srt's built-in refused classes then don't apply to names. IP literals under `"*"` are still judged. Unset the proxy when you need those denies
 - On macOS, a sandboxed command can replace its own profile folder, like `~/.claude-blackwall`, or `~/.cache-blackwall` with a symlink. Blackwall refuses to launch when it finds one and never grants reads through it, but a session still running can swap the folder right after a second launch, say for another repo, has checked it, and that launch then deletes the files it copies in, like `~/.claude/CLAUDE.md`, where the link points. It can't regain reads of the host folder that way. Don't start a second blackwall launch while a session you don't trust is running. Closing this needs srt to forbid unlinking a granted folder itself
+
+</details>
 
 Also see: [TODO.md](TODO.md) for the known gaps not closed yet, and what's planned
 
