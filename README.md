@@ -12,10 +12,10 @@ Blackwall wraps the agent itself: `claude` or `codex` runs [inside srt](https://
 
 ### Claude Code's Built-in Sandbox
 
-- It covers shell commands only. Read, Edit, Write, WebFetch, hooks, MCP servers, and `apiKeyHelper` [run outside it](https://code.claude.com/docs/en/sandboxing#what-runs-outside-the-sandbox) with your full access
+- It covers shell commands only. Read, Edit, Write, and WebFetch [run outside it](https://code.claude.com/docs/en/sandboxing#what-runs-outside-the-sandbox) and follow permission rules. Hooks, MCP servers, and `apiKeyHelper` run with your full access
 - It [reads most of your machine](https://code.claude.com/docs/en/sandboxing#filesystem-isolation) by default, `~/.ssh` and `~/.aws/credentials` included. Blackwall denies every read, then opens only what your tools need
-- Claude can [retry a blocked command unsandboxed](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch), and `excludedCommands` always run unsandboxed. Under blackwall, there's no way out from inside
-- In `bypassPermissions` mode, a host you never allowed [connects without a prompt](https://code.claude.com/docs/en/sandboxing#hosts-outside-your-allowed-domains), unless you set `strictAllowlist`
+- Claude can [retry a blocked command unsandboxed](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch), unless you [set `allowUnsandboxedCommands` to `false`](https://code.claude.com/docs/en/sandboxing#turn-off-the-retry-with-strict-sandbox-mode). `excludedCommands` run unsandboxed either way. Under blackwall, there's no way out from inside
+- In `bypassPermissions` mode, a host you never allowed [connects without a prompt](https://code.claude.com/docs/en/sandboxing#hosts-outside-your-allowed-domains), unless you set `strictAllowlist` or `allowManagedDomainsOnly`
 - An allowed name that [resolves into your LAN](https://code.claude.com/docs/en/sandboxing#hostnames-that-resolve-to-local-addresses), like `10.0.0.0/8`, connects. Blackwall's `private-network` preset denies it
 
 ### Codex's Built-in Sandbox
@@ -34,9 +34,9 @@ Blackwall is srt underneath, with the setup done for you:
 | Reads | Everything by default, `~/.ssh` included | Only the folders it writes, system paths, and what presets need |
 | Hosts | None, until you list each one in `~/.srt-settings.json` | What presets need, plus what Claude Code or Codex needs |
 | Every public host | `"*"` is rejected | `--allow-internet` for one run, or `"*"` in `network.allowedHosts` |
-| Localhost and LAN | Loopback denied, but an allowed name can still resolve into your LAN | Denied by the `local-network` and `private-network` presets |
+| Localhost and LAN | Loopback denied, but an allowed name can still resolve into your LAN | Denied by the `private-network` preset, and `local-network` keeps `localhost` denied under `"*"` |
 | `~/.claude` | Must be writable for `claude` to run, so the agent can edit your hooks and settings | `~/.claude-blackwall` instead, with your `CLAUDE.md`, rules, and skills copied in on every launch |
-| Agent files in the repo | `.mcp.json`, `.claude/commands`, and `.claude/agents` denied, in the current folder only | Plus `.claude/settings.json`, `.claude/settings.local.json`, and `.claude/hooks`, in `--add-dir` folders too |
+| Agent files in the repo | `.mcp.json`, `.claude/commands`, and `.claude/agents` denied, beneath the current folder only | Plus `.claude/settings.json`, `.claude/settings.local.json`, and `.claude/hooks`, in `--add-dir` folders too |
 | Tool setup | Yours to write: each tool's hosts, read paths, and cache folders | Presets for `python`, `node`, `github`, `git`, and `pre-commit` |
 | Project config | None, only `--settings` with a path | `.blackwall/config.json`, loaded only after `--trust` |
 | Inspection | `--debug` logs | `--print-config`, `--print-file-access`, `--print-network-access`, and `--print-env` |
