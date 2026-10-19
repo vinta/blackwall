@@ -8,7 +8,26 @@ Opinionated lightweight sandbox for daily dev tasks with coding agents. Built on
 
 ## Why Blackwall
 
-Claude Code's [built-in sandbox](https://code.claude.com/docs/en/sandboxing#what-runs-outside-the-sandbox) covers shell commands only, so its file tools, hooks, and MCP servers run outside it. Blackwall runs all of `claude` [inside srt](https://code.claude.com/docs/en/sandbox-environments#sandbox-runtime), with the setup done for you:
+Blackwall wraps the agent itself: `claude` or `codex` runs [inside srt](https://code.claude.com/docs/en/sandbox-environments#sandbox-runtime), so every tool, hook, and MCP server it starts is sandboxed too.
+
+### Claude Code's Built-in Sandbox
+
+- It covers shell commands only. Read, Edit, Write, WebFetch, hooks, MCP servers, and `apiKeyHelper` [run outside it](https://code.claude.com/docs/en/sandboxing#what-runs-outside-the-sandbox) with your full access
+- It [reads most of your machine](https://code.claude.com/docs/en/sandboxing#filesystem-isolation) by default, `~/.ssh` and `~/.aws/credentials` included. Blackwall denies every read, then opens only what your tools need
+- Claude can [retry a blocked command unsandboxed](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch), and `excludedCommands` always run unsandboxed. Under blackwall, there's no way out from inside
+- In `bypassPermissions` mode, a host you never allowed [connects without a prompt](https://code.claude.com/docs/en/sandboxing#hosts-outside-your-allowed-domains), unless you set `strictAllowlist`
+- An allowed name that [resolves into your LAN](https://code.claude.com/docs/en/sandboxing#hostnames-that-resolve-to-local-addresses), like `10.0.0.0/8`, connects. Blackwall's `private-network` preset denies it
+
+### Codex's Built-in Sandbox
+
+- MCP servers, web search, and connectors [run outside it](https://learn.chatgpt.com/docs/agent-approvals-security#traffic-outside-the-command-network-proxy)
+- It doesn't limit reads unless you write a [permission profile](https://learn.chatgpt.com/docs/permissions) for it
+- Network is off by default. Once you turn it on, every host is reachable, unless you also enable [`features.network_proxy`](https://learn.chatgpt.com/docs/agent-approvals-security#network-access) and list your domains
+- `.git` is [read-only](https://learn.chatgpt.com/docs/agent-approvals-security#protected-paths-in-writable-roots), so `git commit` needs an approval. Blackwall keeps `.git` writable, except `hooks` and `config`
+
+### srt Directly
+
+Blackwall is srt underneath, with the setup done for you:
 
 | | srt directly | Blackwall |
 | --- | --- | --- |
@@ -22,7 +41,12 @@ Claude Code's [built-in sandbox](https://code.claude.com/docs/en/sandboxing#what
 | Project config | None, only `--settings` with a path | `.blackwall/config.json`, loaded only after `--trust` |
 | Inspection | `--debug` logs | `--print-config`, `--print-file-access`, `--print-network-access`, and `--print-env` |
 
-It's still srt underneath, so srt's [security limitations](https://github.com/anthropics/sandbox-runtime#security-limitations) apply too.
+srt's [security limitations](https://github.com/anthropics/sandbox-runtime#security-limitations) apply to blackwall too.
+
+### What You Give Up
+
+- Hosts and paths are fixed at launch. A new host means a config edit or `--allow-internet` and a relaunch, not a prompt mid-session
+- No credential masking yet. Secrets in `~/.blackwall/.env` reach the command as they are, while Claude Code's built-in sandbox can [mask them](https://code.claude.com/docs/en/sandboxing#mask-credentials)
 
 ## Installation
 
