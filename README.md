@@ -53,7 +53,7 @@ By default, a sandboxed command:
 `blackwall claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. For security, a sandboxed run never writes to `~/.claude`, and reads only `~/.claude/plugins`.
 
 - Every launch copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude`, replacing what was there, so edits to those copies don't last
-- Your plugins load from `~/.claude/plugins` read-only, without auto-update
+- Your plugins load from `~/.claude/plugins` read-only, without auto-update. Every launch refreshes the profile's plugin record, `plugins/installed_plugins.json`, from the host's, so sandboxed sessions follow the plugin versions installed outside
 - Sessions, settings, and login stay separate
 - `settings.json` starts with only your `enabledPlugins`, since your other settings, like hooks and permissions, assume no sandbox. After that it's yours to edit
 
