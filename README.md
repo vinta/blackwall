@@ -6,6 +6,24 @@ Opinionated lightweight sandbox for daily dev tasks with coding agents. Built on
 
 > This project is named after the Blackwall in Cyberpunk 2077, a firewall NetWatch built to keep rogue AIs out of the Net.
 
+## Why Blackwall
+
+Claude Code's [built-in sandbox](https://code.claude.com/docs/en/sandboxing#what-runs-outside-the-sandbox) covers shell commands only, so its file tools, hooks, and MCP servers run outside it. Blackwall runs all of `claude` [inside srt](https://code.claude.com/docs/en/sandbox-environments#sandbox-runtime), with the setup done for you:
+
+| | srt directly | Blackwall |
+| --- | --- | --- |
+| Reads | Everything by default, `~/.ssh` included | Only the folders it writes, system paths, and what presets need |
+| Hosts | None, until you list each one in `~/.srt-settings.json` | What presets need, plus what Claude Code or Codex needs |
+| Every public host | `"*"` is rejected | `--allow-internet` for one run, or `"*"` in `network.allowedHosts` |
+| Localhost and LAN | Loopback denied, but an allowed name can still resolve into your LAN | Denied by the `local-network` and `private-network` presets |
+| `~/.claude` | Must be writable for `claude` to run, so the agent can edit your hooks and settings | `~/.claude-blackwall` instead, with your `CLAUDE.md`, rules, and skills copied in on every launch |
+| Agent files in the repo | `.mcp.json`, `.claude/commands`, and `.claude/agents` denied, in the current folder only | Plus `.claude/settings.json`, `.claude/settings.local.json`, and `.claude/hooks`, in `--add-dir` folders too |
+| Tool setup | Yours to write: each tool's hosts, read paths, and cache folders | Presets for `python`, `node`, `github`, `git`, and `pre-commit` |
+| Project config | None, only `--settings` with a path | `.blackwall/config.json`, loaded only after `--trust` |
+| Inspection | `--debug` logs | `--print-config`, `--print-file-access`, `--print-network-access`, and `--print-env` |
+
+It's still srt underneath, so srt's [security limitations](https://github.com/anthropics/sandbox-runtime#security-limitations) apply too.
+
 ## Installation
 
 Needs Node.js 22.21 or later.
