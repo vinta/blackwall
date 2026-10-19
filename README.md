@@ -125,18 +125,7 @@ Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
 
 Log in with `blackwall codex login --device-auth`.
 
-### Environment Variables
-
-Put your env vars in `~/.blackwall/.env` if you need them.
-
-```bash
-GH_TOKEN=xxx                  # generate a read-only PAT from https://github.com/settings/personal-access-tokens
-CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
-```
-
-Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs inside blackwall.
-
-### Agent Skill
+## Agent Skill
 
 [`skills/blackwall`](skills/blackwall/SKILL.md) teaches Claude Code and Codex to run, configure, and debug blackwall. Inside the sandbox, the agent can't run `blackwall` or edit its config, so the skill tells it how to read a denial and what to hand you.
 
@@ -147,6 +136,17 @@ npx skills add vinta/blackwall -g
 ```
 
 ## Configuration
+
+### Environment Variables
+
+Put your env vars in `~/.blackwall/.env` if you need them.
+
+```bash
+GH_TOKEN=xxx                  # generate a read-only PAT from https://github.com/settings/personal-access-tokens
+CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
+```
+
+Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs inside blackwall.
 
 ### Default
 
