@@ -8,6 +8,11 @@ setup_file() {
   mkdir -p "$proj/sub/.claude" "$added/sub/.git/hooks" "$added/sub/.claude"
 }
 
+# Git GUIs that scan nested repos flag this one as untrusted while a nested .git has no config
+teardown_file() {
+  rm -rf "$added/sub" "$added/sub2"
+}
+
 setup() {
   load ../common
 }
