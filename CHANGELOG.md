@@ -5,9 +5,11 @@
 ### Breaking Changes
 
 - A symlinked read grant no longer expands to its target when the link, or a link on the way to it, sits where the sandbox can write. That includes a link inside the current or an `--add-dir` folder, so list its target in `allowRead` too
+- The write denies from blackwall and its presets, like `.blackwall`, `.git/hooks`, `.git/config`, and `.claude/settings.json`, apply at any depth under the current and `--add-dir` folders, not only at the top. A sandboxed command can't plant hooks in a nested repo or settings in a sub-project anymore. On Linux, they cover only what exists at launch, up to three folders deep
 
 ### Changes
 
+- `blackwall claude` refreshes the profile's plugin record from the host's on every launch, so sandboxed sessions follow the plugin versions installed outside. Before, they stayed on the versions from the first launch, and a plugin silently disappeared once its old version left the host's plugin cache
 - A project's `.blackwall/.env` reaches only the sandboxed command, never the shell blackwall starts it from, so a `PATH` or `LD_PRELOAD` there can't run code outside the sandbox. A key that isn't a valid variable name, like `A;B`, is a config error
 - Blackwall refuses to launch when a profile folder, like `~/.claude-blackwall`, or `~/.cache-blackwall` is a symlink, which a sandboxed command could plant so the next launch deletes or grants what it points to
 - Ctrl+C no longer shuts srt's network proxy down while the command keeps running, so a command that handles the interrupt itself keeps its network
