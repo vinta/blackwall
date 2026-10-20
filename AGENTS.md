@@ -23,3 +23,7 @@
 
 - A platform claim in `skills/blackwall/SKILL.md` ships with an e2e check in the same change.
 - In `tests/e2e/**/*.bats`, check with `run -N`, `run !`, and bats-assert (`assert_output`, `refute`): a bare `run` always passes, `! cmd` before a test's last line never fails it, and neither does `[[ ]]` under macOS's bash 3.2.
+
+## Release
+
+- To publish, push a `v*` tag matching the `package.json` version: `.github/workflows/publish.yml` runs `npm publish` with provenance, so a local `npm publish` skips provenance and makes that run fail.
