@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { existsSync, globSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
+import { dirname, join, normalize, resolve } from "node:path";
 import { parseEnv } from "node:util";
 
 import { CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, SANDBOX_CACHE, TRUST_MARKERS, USER_CONFIG } from "../constants/paths.js";
@@ -74,6 +74,8 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
 
   // A relative entry applies to the current folder and every --add-dir folder
   const applyToEachDir = (path) => (/^[~/]/.test(path) ? [path] : [CWD, ...addDirs].map((dir) => `${dir}/${path}`));
+  // blackwall's own denies also cover matches nested beneath each folder
+  const applyToEachDirAndBeneath = (path) => (/^[~/]/.test(path) ? [path] : [CWD, ...addDirs].flatMap((dir) => [`${dir}/${path}`, ...nestedMatches(dir, path)]));
 
   const config = {
     ...base,
@@ -124,14 +126,18 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
         ...fromAdapter("filesystem", "allowWrite"),
       ],
       denyWrite: [
-        `${HOME}/.blackwall`, // a sandboxed command must not edit the user's blackwall setups
-        ".blackwall", // same as above, but applies to CWD and any --add-dir folder
-        ...base.filesystem.denyWrite,
-        ...fromPresets("filesystem", "denyWrite"),
-        ...fromUserConfig("filesystem", "denyWrite"),
-        ...fromProjectConfig("filesystem", "denyWrite"),
-        ...fromAdapter("filesystem", "denyWrite"),
-      ].flatMap(applyToEachDir),
+        ...[
+          `${HOME}/.blackwall`, // a sandboxed command must not edit the user's blackwall setups
+          ".blackwall", // same as above, but applies to CWD and any --add-dir folder
+          ...base.filesystem.denyWrite,
+          ...fromPresets("filesystem", "denyWrite"),
+        ].flatMap(applyToEachDirAndBeneath),
+        ...[
+          ...fromUserConfig("filesystem", "denyWrite"),
+          ...fromProjectConfig("filesystem", "denyWrite"),
+          ...fromAdapter("filesystem", "denyWrite"),
+        ].flatMap(applyToEachDir),
+      ],
     },
   };
 
@@ -146,6 +152,17 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
   }
 
   return { config, presets };
+}
+
+// Linux's write lists take no globs, so it gets what exists at launch, up to three folders deep (each level tries .* since * skips dot folders): a folder created during the run stays writable there, as under srt's own denies.
+// Only the first component has to exist, so a missing .claude/settings.json in an existing .claude folder is still denied
+function nestedMatches(dir, path) {
+  // srt rejects a deny glob that ends in a separator
+  const relative = normalize(path).replace(/\/$/, "");
+  if (process.platform === "darwin") return [`${dir}/**/${relative}`];
+  const [first, ...rest] = relative.split("/");
+  const levels = ["{.*,*}", "{.*,*}/{.*,*}", "{.*,*}/{.*,*}/{.*,*}"];
+  return globSync(levels.map((level) => `${level}/${first}`), { cwd: dir }).map((match) => [dir, match, ...rest].join("/"));
 }
 
 // Every symlink the sandbox can write is one a run could have planted, so this follows links one hop at a time, like the kernel, and gives up at the first such link, which realpathSync would follow

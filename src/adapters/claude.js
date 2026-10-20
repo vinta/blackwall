@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { HOME, SKILLS, TMPDIR } from "../constants/paths.js";
 import { copyShared, mkdirManaged } from "./shared.js";
 
@@ -77,5 +77,28 @@ export default {
 
     copyShared(`${HOME}/.claude`, PROFILE, SHARED);
     copyShared(SKILLS, `${PROFILE}/skills`, ["blackwall"]);
+
+    // Claude records each enabled plugin once, pointing at the profile's own cache, which never exists, and never refreshes it, so re-apply the host's record every launch
+    // Entries only in the profile are plugins installed inside the sandbox
+    let host;
+    try {
+      host = JSON.parse(readFileSync(`${PLUGINS}/installed_plugins.json`, "utf8"));
+    } catch (error) {
+      if (error.code === "ENOENT") return;
+      throw error;
+    }
+    mkdirManaged(`${PROFILE}/plugins`);
+    const record = `${PROFILE}/plugins/installed_plugins.json`;
+    // A sandboxed run can link the record to a host file, to read it back or have it overwritten
+    if (lstatSync(record, { throwIfNoEntry: false })?.isSymbolicLink()) rmSync(record);
+    let profile;
+    try {
+      profile = JSON.parse(readFileSync(record, "utf8"));
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+      profile = { ...host, plugins: {} };
+    }
+    profile.plugins = { ...profile.plugins, ...host.plugins };
+    writeFileSync(record, `${JSON.stringify(profile, null, 2)}\n`);
   },
 };

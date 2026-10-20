@@ -1,7 +1,7 @@
 import { XDG_CONFIG } from "../constants/paths.js";
 
 export default {
-  why: "git reads your config and global ignore files; gpg can't reach ~/.gnupg under denyRead, so commits go unsigned; srt denies .git/hooks and .git/config in the current folder only, so they are listed here for --add-dir folders",
+  why: "git reads your config and global ignore files; gpg can't reach ~/.gnupg under denyRead, so commits go unsigned; srt denies .git/hooks and .git/config only beneath the current folder, at any depth, so they are listed here for --add-dir folders",
   env: {
     GIT_CONFIG_COUNT: "1",
     GIT_CONFIG_KEY_0: "commit.gpgsign",

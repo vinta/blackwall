@@ -4,6 +4,13 @@ setup_file() {
   load ../common
 
   prepare filesystem
+  # Nested folders a run could plant in, which can't be committed as fixtures under .git
+  mkdir -p "$proj/sub/.claude" "$added/sub/.git/hooks" "$added/sub/.claude"
+}
+
+# Git GUIs that scan nested repos flag this one as untrusted while a nested .git has no config
+teardown_file() {
+  rm -rf "$added/sub" "$added/sub2"
 }
 
 setup() {
@@ -75,6 +82,11 @@ setup() {
   assert [ -f "$proj/.claude/other" ]
 }
 
+@test "write cwd nested .claude/settings.json denied" {
+  run blackwall sh -c 'echo x > sub/.claude/settings.json'
+  refute [ -e "$proj/sub/.claude/settings.json" ]
+}
+
 @test "create cwd .blackwall denied" {
   run blackwall mkdir .blackwall
   refute [ -e "$proj/.blackwall" ]
@@ -108,6 +120,23 @@ setup() {
 @test "write --add-dir .claude/agents denied" {
   run blackwall --add-dir "$added" sh -c 'mkdir -p "$1/.claude/agents" && echo x > "$1/.claude/agents/x.md"' sh "$added"
   refute [ -e "$added/.claude/agents/x.md" ]
+}
+
+@test "write --add-dir nested .git/hooks denied" {
+  run ! blackwall --add-dir "$added" sh -c 'echo x > "$1/sub/.git/hooks/pre-commit"' sh "$added"
+  refute [ -e "$added/sub/.git/hooks/pre-commit" ]
+}
+
+@test "write --add-dir .git/hooks created during run denied (macOS)" {
+  [ "$(uname)" = Darwin ] || skip "macOS only: Linux denies only what exists at launch"
+
+  run ! blackwall --add-dir "$added" sh -c 'mkdir -p "$1/sub2/.git/hooks" && echo x > "$1/sub2/.git/hooks/pre-commit"' sh "$added"
+  refute [ -e "$added/sub2/.git/hooks/pre-commit" ]
+}
+
+@test "write --add-dir nested .claude/other allowed" {
+  run -0 blackwall --add-dir "$added" sh -c 'echo x > "$1/sub/.claude/other"' sh "$added"
+  assert [ -f "$added/sub/.claude/other" ]
 }
 
 @test "create --add-dir .blackwall denied" {
