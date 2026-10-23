@@ -21,7 +21,7 @@ Blackwall is an out-of-the-box sandbox for long-running agent tasks, mainly `cla
 | Reads             | Denied everywhere, except the folders it writes, system paths, and what presets need                            | [Most of your machine](https://code.claude.com/docs/en/sandboxing#filesystem-isolation) by default, `~/.ssh` and `~/.aws/credentials` included                                                                                                                                                                                 |
 | Hosts             | Only what presets and `claude` need, or every public host with `--allow-internet`, whatever the permission mode | Your allowed domains, but in `bypassPermissions` mode a host you never allowed [connects without a prompt](https://code.claude.com/docs/en/sandboxing#hosts-outside-your-allowed-domains), unless you set `strictAllowlist` or `allowManagedDomainsOnly`                                                                       |
 | Localhost and LAN | Denied by the `private-network` preset, and `local-network` keeps `localhost` denied under `"*"`                | Loopback denied, but an allowed name that [resolves into your LAN](https://code.claude.com/docs/en/sandboxing#hostnames-that-resolve-to-local-addresses), like `10.0.0.0/8`, connects                                                                                                                                          |
-| Way out           | None from inside                                                                                                | Claude can [retry a blocked command unsandboxed](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch), unless you [set `allowUnsandboxedCommands` to `false`](https://code.claude.com/docs/en/sandboxing#turn-off-the-retry-with-strict-sandbox-mode). `excludedCommands` run unsandboxed either way |
+| Way out           | No built-in escape hatch; [known limitations](#known-limitations) still apply                                   | Claude can [retry a blocked command unsandboxed](https://code.claude.com/docs/en/sandboxing#the-unsandboxed-retry-escape-hatch), unless you [set `allowUnsandboxedCommands` to `false`](https://code.claude.com/docs/en/sandboxing#turn-off-the-retry-with-strict-sandbox-mode). `excludedCommands` run unsandboxed either way |
 
 ### Codex's Built-in Sandbox
 
@@ -64,6 +64,8 @@ Needs Node.js 22.21 or later.
 ```bash
 npm install -g blackwall-sandbox
 ```
+
+Keep blackwall and srt outside every writable folder, including the current folder and any `--add-dir` folder. If a sandboxed command can rewrite either package, the next launch runs that code outside the sandbox.
 
 <details>
 <summary>Shell completion</summary>
@@ -258,7 +260,6 @@ The attacker is the command inside the sandbox: a coding agent steered by a prom
 What blackwall defends:
 
 - It reads and writes only what you granted, listed in [Usage](#usage)
-- It can't plant anything the next launch runs or reads, sandboxed or not
 - With internet access, it can only leak what it was allowed to read
 
 Out of scope:
@@ -266,17 +267,18 @@ Out of scope:
 - You, running a hostile command on purpose. If you start `blackwall` with an evil command, that's on you
 - What you grant: `allowRead`, `allowWrite`, `--add-dir`, and a trusted `.blackwall/config.json` with its `.env` count as your own setup. Review both before `--trust`
 - What `--trust` leaves to you: it pins only `config.json`'s content. `~/.blackwall/.env` always loads, and a project's `.env` loads whenever its `config.json` is trusted, later edits included, with no new `--trust`. Review `.env` again after a pull that touches it
-- Secrets in `~/.blackwall/.env`. They reach the command by design, see [Known Limitations](#known-limitations)
-- Bugs in srt, Seatbelt, or bubblewrap
+- Secrets in your shell environment, `~/.blackwall/.env`, and the sandbox's agent profile. They reach the command by design
+- Files copied from your host agent profiles, including their symlink targets. The command can read the copies. Keep those sources outside sandbox-writable folders: later launches also follow links planted there
+- Files it writes inside granted folders survive. Later sandboxed runs may read or execute them
 
 A finding counts when the sandboxed command alone gets past this, with no help from you beyond launching blackwall again. Reading host files outranks writing them, and writing outranks breaking a session.
 
 ### Known Limitations
 
 <details>
-<summary>Nested agent files, HTTP proxy, and profile folder symlinks can still get past the sandbox</summary>
+<summary>Nested agent files on Linux, HTTP proxy, and profile folder symlinks can still get past the sandbox</summary>
 
-- The `agent-files` denies cover the top of the current and `--add-dir` folders only. A sandboxed run can still write `sub/.claude/settings.json` or `sub/.claude/hooks`, and an unsandboxed `claude` started from `sub/` later runs them. Before running `claude` outside the sandbox from a subfolder an agent worked in, check its `.claude/` first. Closing this means pushing the names into srt's mandatory denies at launch, since srt drops user write globs on Linux
+- On Linux, nested `agent-files` denies cover matching paths found at launch, up to 3 folders below the current or `--add-dir` folder. A run can still plant `.claude/settings.json` or `.claude/hooks` under deeper or newly created folders, for an unsandboxed `claude` to run later. Before running `claude` outside the sandbox from a subfolder an agent worked in, check its `.claude/` first. On macOS, these denies cover every depth, including folders created during the run
 - With `HTTP_PROXY` or `HTTPS_PROXY` set, in your shell or `~/.blackwall/.env`, srt sends names through that proxy and lets it resolve them, so it can't check what they resolve to. The `private-network` preset, `deniedHosts` ranges, and srt's built-in refused classes then don't apply to names. IP literals under `"*"` are still judged. Unset the proxy when you need those denies
 - On macOS, a sandboxed command can replace its own profile folder, like `~/.claude-blackwall`, or `~/.cache-blackwall` with a symlink. Blackwall refuses to launch when it finds one and never grants reads through it, but a session still running can swap the folder right after a second launch, say for another repo, has checked it, and that launch then deletes the files it copies in, like `~/.claude/CLAUDE.md`, where the link points. It can't regain reads of the host folder that way. Don't start a second blackwall launch while a session you don't trust is running. Closing this needs srt to forbid unlinking a granted folder itself
 
