@@ -95,6 +95,8 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
         ...fromProjectConfig("network", "deniedHosts"),
         ...fromAdapter("network", "deniedHosts"),
       ],
+      // Presets only: a Mach service is host access, and the schema has no user-config-only tier to grant it from
+      allowMachLookup: fromPresets("network", "allowMachLookup"),
     },
     filesystem: {
       // Listed in srt's precedence: a later key wins where it overlaps an earlier one, except a denyRead nested inside an allowRead
