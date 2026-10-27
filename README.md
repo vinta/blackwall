@@ -177,6 +177,7 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, env v
 - [pre-commit](src/presets/pre-commit.js): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
 - [local-network](src/presets/local-network.js): Denies `localhost` and `*.localhost` by name under `"*"`. srt's own denies already cover loopback addresses. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`
 - [private-network](src/presets/private-network.js): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedHosts`, e.g. `192.168.1.10:8080`
+- [screenshots](src/presets/screenshots.js): Off by default. Reads your screenshot folder, so a screenshot you copy in Finder and paste as its path reaches `claude`. That's `~/Desktop`, unless you moved it with `defaults write com.apple.screencapture location ~/Screenshots`, which also keeps the rest of your Desktop unreadable
 - [tmpdir](src/presets/tmpdir.js): `/tmp/claude` as the temp folder. Always on
 - [mac](src/presets/mac.js): System paths macOS tools need. Always on, on macOS
 - [linux](src/presets/linux.js): `/usr/local`, the 64-bit lib folders, srt's seccomp helper, and `/tmp`, where srt keeps its proxy sockets. Always on, on Linux

@@ -42,6 +42,11 @@ setup() {
   refute_output --partial hunter2
 }
 
+@test "read ~/Desktop denied" {
+  run ! blackwall cat "$home/Desktop/Screenshot.png"
+  refute_output --partial hunter2
+}
+
 # The skill's Linux row: a denied dir is an empty writable tmpfs, so reads say ENOENT and writes land there and vanish with the run
 @test "denied read reads as missing (Linux)" {
   [ "$(uname)" = Linux ] || skip "Linux only"

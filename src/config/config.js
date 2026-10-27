@@ -14,6 +14,7 @@ import node from "../presets/node.js";
 import preCommit from "../presets/pre-commit.js";
 import privateNetwork from "../presets/private-network.js";
 import python from "../presets/python.js";
+import screenshots from "../presets/screenshots.js";
 import tmpdir from "../presets/tmpdir.js";
 import { CONFIG_SCHEMA, configErrorMap, DEFAULTS } from "./schema.js";
 
@@ -29,6 +30,7 @@ export const PRESETS = {
   "pre-commit": preCommit,
   "private-network": privateNetwork,
   python,
+  screenshots,
   tmpdir,
 };
 
