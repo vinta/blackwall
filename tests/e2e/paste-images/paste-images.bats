@@ -26,3 +26,10 @@ setup() {
   assert_output hunter2
   run ! blackwall cat "$home/Desktop/Screenshot.png"
 }
+
+# pbpaste exits 1 when Seatbelt refuses the pasteboard service, whatever the clipboard holds
+@test "clipboard preset reaches the pasteboard (macOS)" {
+  [ "$(uname)" = Darwin ] || skip "macOS only"
+
+  run -0 blackwall sh -c 'pbpaste >/dev/null'
+}

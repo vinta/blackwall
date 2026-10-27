@@ -5,6 +5,7 @@ import { parseEnv } from "node:util";
 
 import { CWD, HOME, PROJECT_CONFIG, PROJECT_ENV, SANDBOX_CACHE, TRUST_MARKERS, USER_CONFIG } from "../constants/paths.js";
 import agentFiles from "../presets/agent-files.js";
+import clipboard from "../presets/clipboard.js";
 import git from "../presets/git.js";
 import github from "../presets/github.js";
 import linux from "../presets/linux.js";
@@ -21,6 +22,7 @@ import { CONFIG_SCHEMA, configErrorMap, DEFAULTS } from "./schema.js";
 // A config picks a preset only by name from this list, never a file by path
 export const PRESETS = {
   "agent-files": agentFiles,
+  clipboard,
   git,
   github,
   linux,

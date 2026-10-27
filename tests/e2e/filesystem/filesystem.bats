@@ -47,6 +47,12 @@ setup() {
   refute_output --partial hunter2
 }
 
+@test "pasteboard denied (macOS)" {
+  [ "$(uname)" = Darwin ] || skip "macOS only"
+
+  run ! blackwall sh -c 'pbpaste >/dev/null'
+}
+
 # The skill's Linux row: a denied dir is an empty writable tmpfs, so reads say ENOENT and writes land there and vanish with the run
 @test "denied read reads as missing (Linux)" {
   [ "$(uname)" = Linux ] || skip "Linux only"
