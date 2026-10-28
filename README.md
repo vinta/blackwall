@@ -271,7 +271,7 @@ Out of scope:
 - What `--trust` leaves to you: it pins only `config.json`'s content. `~/.blackwall/.env` always loads, and a project's `.env` loads whenever its `config.json` is trusted, later edits included, with no new `--trust`. Review `.env` again after a pull that touches it
 - Secrets in your shell environment, `~/.blackwall/.env`, and the sandbox's agent profile. They reach the command by design
 - Files copied from your host agent profiles, including their symlink targets. The command can read the copies. Keep those sources outside sandbox-writable folders: later launches also follow links planted there
-- Files it writes inside granted folders survive. Later sandboxed runs may read or execute them
+- Files it writes inside granted folders survive. Later sandboxed runs may read or execute them, and so does your shell when that folder is on its PATH, like an activated `.venv/bin`: a planted `node` there runs your next `blackwall` unsandboxed. Keep such folders off the PATH you launch from
 
 A finding counts when the sandboxed command alone gets past this, with no help from you beyond launching blackwall again. Reading host files outranks writing them, and writing outranks breaking a session.
 

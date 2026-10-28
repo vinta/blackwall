@@ -30,6 +30,10 @@
 - A sandboxed node program aborts at startup with a native stack trace (`node::InitializeOncePerProcessInternal`) and no error message when its stdout or stderr is a file outside the grants: `blackwall codex --version > ../out.txt` with npm's `codex` on Node 24.20.0 on macOS. A pipe or a file under the current folder works. Likely Node's startup check on fds 0-2 failing on a file the sandbox can't read, unverified. The fix is cheap, the symptom isn't: nothing points at blackwall, so an agent would chase a Node bug. At least a "Reading a denial" row in the skill, with an e2e check
 - Each launch checks a profile folder and `~/.cache-blackwall` for a symlink, then uses it, so on macOS a sandboxed session still running can swap the folder for a link while a second launch copies files in, and that launch's `rmSync` and `cpSync` follow it: the shared files in `~/.claude` or `~/.codex` get deleted, though reads of them are not regained, since the read-grant walk refuses a link the sandbox can write. Linux isn't affected: bwrap binds the folder, so removing it fails with EBUSY. Closing it needs either srt emitting Seatbelt's `(deny file-write-unlink (literal X))` for each `allowWrite` root, which no srt config key does today, or Node `*at` APIs (`openat`, `unlinkat`, `fdopendir`) to work from a held folder handle. Shelling out to `rm` doesn't help, since it resolves the swapped root before walking it
 
+## Linux
+
+- srt warns and launches without Unix-socket blocking when its `apply-seccomp` helper is missing, so a sandboxed command can reach host sockets like the SSH agent's. `checkDependencies()` reports it as a free-text warning only; make it fatal through `getApplySeccompBinaryPath` from srt's `dist/`, guarded in `tests/config.js`. Little gain in a local install, where the sandbox can rewrite srt itself
+
 ## Unverified
 
 - Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)
