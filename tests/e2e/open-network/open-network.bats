@@ -47,6 +47,10 @@ allow_listener() {
   assert_equal "$(http_code "http://foo.localhost..:$port/")" 403
 }
 
+@test ". blocked under *" {
+  assert_equal "$(http_code "http://.:$port/")" 403
+}
+
 @test "[::1] blocked under *" {
   assert_equal "$(http_code "http://[::1]:$port/")" 403
 }
@@ -71,6 +75,11 @@ allow_listener() {
 
 @test "localhost.. refusal says why under *" {
   run ! blackwall sh -c 'curl -sSv -o /dev/null --max-time 10 --noproxy "" --proxy "$HTTP_PROXY" "$1"' sh "https://localhost..:$port/"
+  assert_output --partial "403 host has an empty label"
+}
+
+@test ". refusal says why under *" {
+  run ! blackwall sh -c 'curl -sSv -o /dev/null --max-time 10 --noproxy "" --proxy "$HTTP_PROXY" "$1"' sh "https://.:$port/"
   assert_output --partial "403 host has an empty label"
 }
 
