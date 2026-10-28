@@ -37,3 +37,7 @@
 ## Unverified
 
 - Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)
+
+## Launch
+
+- Keep the machine awake while a sandboxed command runs: the launcher, not the sandbox, holds the assertion, since inside Seatbelt `caffeinate` needs a power-management mach lookup that srt likely denies (unverified). macOS: spawn `caffeinate -i -w <child pid>` next to the child, so it ends with the child and survives the launcher only as long as the pid does; Linux: `systemd-inhibit --what=idle --who=blackwall --why=<command>` wrapping the child. Opt-in (`--keep-awake` or a config key, user config only), since idle sleep is the user's power policy and an agent should not change it from a repo
