@@ -152,18 +152,18 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 ### Default
 
-[`src/config/default-config.json`](src/config/default-config.json) is the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`.
+[`src/config/default-config.json`](src/config/default-config.json) holds the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`.
 
 - `presets: ["agent-files", "python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
-- `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. Add `"*"` to allow every public host and public IP literal; srt itself rejects `"*"`, so `blackwall` handles it. srt also refuses, for every name, loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses. blackwall applies the same to IP literals under `"*"`. These aren't in `--print-config`
-- `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`; without `"*"`, an unlisted host is refused anyway. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name, so `localhost:8000` in `allowedHosts` is reachable though the `local-network` preset denies `localhost`. A range is overridden only by that IP itself in `allowedHosts`. Both lists from presets, your user config, and the project config are added together
+- `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. srt refuses loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses for every name. blackwall applies the same to IP literals under `"*"`. These aren't in `--print-config`
+- `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`; without `"*"`, an unlisted host is refused anyway. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name. A range is overridden only by that IP itself in `allowedHosts`
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 - `srt.enableWeakerNetworkIsolation: true`: On macOS, lets Go tools like `gh` verify TLS certificates through `com.apple.trustd.agent`, which also opens a data exfiltration path through that service. On by default because the `github` preset is
 - `srt.enableWeakerNestedSandbox: false`: On Linux, lets the sandbox run inside Docker without privileged namespaces, which considerably weakens isolation
 - `srt.allowPty: true`: Lets sandboxed commands open pseudo-terminals, which TUIs need
 
-`srt` holds [srt settings](https://github.com/anthropics/sandbox-runtime), passed to srt untouched, each replacing its default. The `filesystem` keys are srt settings too, but blackwall merges those lists, and translates `network.allowedHosts` and `network.deniedHosts` into srt's own lists. An srt setting not in `default-config.json`'s `srt` is a config error, `unknown key`. However, blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
+`srt` holds [srt settings](https://github.com/anthropics/sandbox-runtime), passed to srt untouched, each replacing its default. Blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
 
 ### Presets
 
