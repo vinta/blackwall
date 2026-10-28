@@ -169,19 +169,22 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, shell lines, macOS services, and a `why`, which `blackwall --print-env` prints above the preset's env vars and shell lines. Each is a module in [`src/presets`](src/presets):
 
-- [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. Drop it and a sandboxed command can plant commands that run on the host
-- [python](src/presets/python.js): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
-- [node](src/presets/node.js): The npm registry, and Node.js installed by fnm
-- [github](src/presets/github.js): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
-- [git](src/presets/git.js): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Keeps srt's proxy login out of your credential helpers, which git would save after every fetch. Denies writes to `.git/hooks` and `.git/config` in `--add-dir` folders, since srt denies them in the current folder only. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
-- [pre-commit](src/presets/pre-commit.js): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
-- [local-network](src/presets/local-network.js): Denies `localhost` and `*.localhost` by name under `"*"`. srt's own denies already cover loopback addresses. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`
-- [private-network](src/presets/private-network.js): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedHosts`, e.g. `192.168.1.10:8080`
-- [clipboard](src/presets/clipboard.js): Off by default. On macOS, lets `claude` read an image you copied, e.g. a Cmd+Ctrl+Shift+4 screenshot, when you paste it. The pasteboard service can't split read from write, so every sandboxed command can also read what you copy, passwords included, and replace what you paste next
-- [screenshots](src/presets/screenshots.js): Off by default. Reads your screenshot folder, so a screenshot you copy in Finder and paste as its path reaches `claude`. That's `~/Desktop`, unless you moved it with `defaults write com.apple.screencapture location ~/Screenshots`, which also keeps the rest of your Desktop unreadable
-- [tmpdir](src/presets/tmpdir.js): `/tmp/claude` as the temp folder. Always on
-- [mac](src/presets/mac.js): System paths macOS tools need. Always on, on macOS
-- [linux](src/presets/linux.js): `/usr/local`, the 64-bit lib folders, srt's seccomp helper, and `/tmp`, where srt keeps its proxy sockets. Always on, on Linux
+- **Always on**
+  - [mac](src/presets/mac.js): System paths macOS tools need. Always on, on macOS
+  - [linux](src/presets/linux.js): `/usr/local`, the 64-bit lib folders, srt's seccomp helper, and `/tmp`, where srt keeps its proxy sockets. Always on, on Linux
+  - [tmpdir](src/presets/tmpdir.js): `/tmp/claude` as the temp folder. Always on
+- **On by default**
+  - [private-network](src/presets/private-network.js): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedHosts`, e.g. `192.168.1.10:8080`
+  - [local-network](src/presets/local-network.js): Denies `localhost` and `*.localhost` by name under `"*"`. srt's own denies already cover loopback addresses. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`
+  - [git](src/presets/git.js): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Keeps srt's proxy login out of your credential helpers, which git would save after every fetch. Denies writes to `.git/hooks` and `.git/config` in `--add-dir` folders, since srt denies them in the current folder only. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
+  - [github](src/presets/github.js): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
+  - [python](src/presets/python.js): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
+  - [node](src/presets/node.js): The npm registry, and Node.js installed by fnm
+  - [pre-commit](src/presets/pre-commit.js): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
+  - [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. Drop it and a sandboxed command can plant commands that run on the host
+- **Off by default**
+  - [clipboard](src/presets/clipboard.js): On macOS, lets `claude` read an image you copied, e.g. a Cmd+Ctrl+Shift+4 screenshot, when you paste it. The pasteboard service can't split read from write, so every sandboxed command can also read what you copy, passwords included, and replace what you paste next
+  - [screenshots](src/presets/screenshots.js): Reads your screenshot folder, so a screenshot you copy in Finder and paste as its path reaches `claude`. That's `~/Desktop`, unless you moved it with `defaults write com.apple.screencapture location ~/Screenshots`, which also keeps the rest of your Desktop unreadable
 
 `tmpdir`, `mac`, and `linux` aren't in the `presets` list, so overriding it can't drop them.
 
