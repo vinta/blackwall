@@ -1,3 +1,4 @@
+import { getDefaultWritePaths } from "@anthropic-ai/sandbox-runtime";
 import { createHash } from "node:crypto";
 import { existsSync, globSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
 import { dirname, join, normalize, resolve } from "node:path";
@@ -149,7 +150,9 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
   // Seatbelt checks a symlink and its target separately, so a configured entry under ~ (a dotfile-manager link) also grants its target. System links like /var are left alone,
   // since their target would widen the grant
   const pathOf = (entry) => (typeof entry === "string" ? entry : entry.path);
-  const writable = config.filesystem.allowWrite.map((entry) => expandPath(pathOf(entry)));
+  // srt also grants its own write paths, like /tmp/claude, so a link there is one a run could have planted too. That takes a dotfile of yours already linking through /tmp/claude,
+  // rare, but the list has to be every path the sandbox can write
+  const writable = [...config.filesystem.allowWrite, ...getDefaultWritePaths()].map((entry) => expandPath(pathOf(entry)));
   for (const entry of [...config.filesystem.allowRead]) {
     const absolute = expandPath(pathOf(entry));
     if (!absolute.startsWith(`${HOME}/`)) continue;
