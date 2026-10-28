@@ -61,7 +61,7 @@ export function createSandbox(config) {
       // The spelling srt matches its own lists against, so 127.1 and 0 count as IPv4 literals
       const canonicalHost = canonicalizeHost(host) ?? host;
       // canonicalizeHost strips one trailing dot, so a dot left means the raw host had an empty label: no resolver accepts it, but srt dials the one-dot spelling, which does resolve
-      if (/\.$|\.\./.test(canonicalHost)) return { allow: false, reason: "host has an empty label" };
+      if (/^$|\.$|\.\./.test(canonicalHost)) return { allow: false, reason: "host has an empty label" };
       if (deniedNames.some((pattern) => matchesDomainPatternWithPort(canonicalHost, port, pattern))) return { allow: false, reason: "host is on the deny list" };
       // A dummy non-IP hostname makes the guard judge the address as a resolved answer, the way it would for a name resolving there
       if (isIP(canonicalHost) && !guard.permits("literal", canonicalHost, port)) return { allow: false, reason: "host is an IP address in a refused range" };
@@ -73,7 +73,7 @@ export function createSandbox(config) {
     srtConfig,
     deniedNames,
 
-    async run(args, commandEnv, launcherEnv) {
+    async run(args, commandEnv, launcherEnv, shellLines) {
       await SandboxManager.initialize(srtConfig, askCallback);
       // The terminal sends Ctrl+C to the child too, so the launcher must outlive it, and so must srt's proxy, whose SIGINT cleanup initialize() installs; srt's exit handler still cleans up when the child ends
       process.removeAllListeners("SIGINT");
@@ -89,7 +89,8 @@ export function createSandbox(config) {
       const envPipe = child.stdio[ENV_FD];
       // EPIPE if the shell exits before reading
       envPipe.on("error", () => {});
-      envPipe.end(exportLines(commandEnv));
+      // After the exports, so a line can read srt's vars, like HTTPS_PROXY, which only the sandboxed shell has
+      envPipe.end(exportLines(commandEnv) + shellLines.map((line) => `${line}\n`).join(""));
 
       process.on("SIGTERM", () => child.kill("SIGTERM"));
       child.on("exit", (code) => process.exit(code ?? 1));

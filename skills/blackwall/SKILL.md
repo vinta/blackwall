@@ -44,7 +44,6 @@ Inside, `blackwall` is unavailable: every flag, `--version` included, exits 2 wi
 
 Noise, harmless, the command still ran:
 
-- git: `fatal: failed to store: -60008`, the keychain credential helper can't save
 - git: `could not write config file .git/config` and `update of config-file failed` from `git branch -d` or `-D`, even for a branch with no config; the branch is deleted
 - `make: error: couldn't create cache file '/var/folders/…/xcrun_db-…' (errno=Operation not permitted)`, same from `xcrun`
 - pip: `WARNING: The directory '…/Library/Caches/pip' or its parent directory is not owned or is not writable … The cache has been disabled`

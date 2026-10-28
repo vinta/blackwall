@@ -71,7 +71,7 @@ rejects({ srt: { allowAppleEvents: true } }, /^unknown key srt\.allowAppleEvents
 rejects({ network: { allowLocalBinding: true } }, /^unknown key network\.allowLocalBinding$/);
 rejects({ network: { allowedHots: [] } }, /^unknown key network\.allowedHots$/);
 
-// Presets are merged without passing the file schema, so a preset-only entry like *.localhost or a typo would otherwise go unchecked
-for (const { network, filesystem } of Object.values(PRESETS)) accepts({ network, filesystem });
+// Presets are merged without passing the file schema, so a preset-only entry like *.localhost or a typo would otherwise go unchecked. allowMachLookup is a preset-only key the schema lacks
+for (const { network: { allowMachLookup, ...network } = {}, filesystem } of Object.values(PRESETS)) accepts({ network, filesystem });
 
 console.log("config: ok");

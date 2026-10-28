@@ -167,13 +167,13 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 ### Presets
 
-A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars. Each is a module in [`src/presets`](src/presets):
+A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars and shell lines. Each is a module in [`src/presets`](src/presets):
 
 - [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. Drop it and a sandboxed command can plant commands that run on the host
 - [python](src/presets/python.js): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
 - [node](src/presets/node.js): The npm registry, and Node.js installed by fnm
 - [github](src/presets/github.js): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
-- [git](src/presets/git.js): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Denies writes to `.git/hooks` and `.git/config` in `--add-dir` folders, since srt denies them in the current folder only. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
+- [git](src/presets/git.js): Your git config and global ignore files, and commit signing off, since gpg can't reach `~/.gnupg`. Keeps srt's proxy login out of your credential helpers, which git would save after every fetch. Denies writes to `.git/hooks` and `.git/config` in `--add-dir` folders, since srt denies them in the current folder only. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
 - [pre-commit](src/presets/pre-commit.js): Its own cache folder, git proxy auth so hook repos clone through srt's proxy, and go-re2's compile cache for hooks like betterleaks
 - [local-network](src/presets/local-network.js): Denies `localhost` and `*.localhost` by name under `"*"`. srt's own denies already cover loopback addresses. To reach a local server, add its name or IP literal with the port to `network.allowedHosts`, e.g. `localhost:8000`
 - [private-network](src/presets/private-network.js): Denies hosts that resolve into private ranges: RFC 1918, CGNAT, and IPv6 ULA. srt's own denies already cover loopback, link-local, and cloud metadata. To reach a LAN host, add its IP literal to `network.allowedHosts`, e.g. `192.168.1.10:8080`
@@ -271,7 +271,7 @@ Out of scope:
 - What `--trust` leaves to you: it pins only `config.json`'s content. `~/.blackwall/.env` always loads, and a project's `.env` loads whenever its `config.json` is trusted, later edits included, with no new `--trust`. Review `.env` again after a pull that touches it
 - Secrets in your shell environment, `~/.blackwall/.env`, and the sandbox's agent profile. They reach the command by design
 - Files copied from your host agent profiles, including their symlink targets. The command can read the copies. Keep those sources outside sandbox-writable folders: later launches also follow links planted there
-- Files it writes inside granted folders survive. Later sandboxed runs may read or execute them
+- Files it writes inside granted folders survive. Later sandboxed runs may read or execute them, and so does your shell when that folder is on its PATH, like an activated `.venv/bin`: a planted `node` there runs your next `blackwall` unsandboxed. Keep such folders off the PATH you launch from
 
 A finding counts when the sandboxed command alone gets past this, with no help from you beyond launching blackwall again. Reading host files outranks writing them, and writing outranks breaking a session.
 

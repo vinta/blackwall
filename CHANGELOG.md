@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Changes
+
+- git no longer saves srt's proxy login through your credential helpers, so the `fatal: failed to store: -60008` lines after every network git command are gone, and on Linux the per-launch proxy token no longer lands in `~/.git-credentials`
+- A folder named with `*`, `?`, `[`, or `]`, like `app/[slug]`, as the current or an `--add-dir` folder no longer matches its siblings, and one named `**` no longer grants its parent. The grant is the folder itself
+- `.` as a hostname is refused under `"*"` and `--allow-internet`. It used to reach your machine's loopback services past the `local-network` preset
+- A link inside `/tmp/claude` no longer expands a read grant on the next launch, since the sandbox can write there. Same rule as a link inside the current folder
+- A FIFO left at the profile's plugin record no longer hangs every later `blackwall claude` launch. It's replaced, like a planted link
+
 ## v0.5.0 / 2026-10-21
 
 ### Breaking Changes

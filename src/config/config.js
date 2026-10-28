@@ -1,3 +1,4 @@
+import { getDefaultWritePaths } from "@anthropic-ai/sandbox-runtime";
 import { createHash } from "node:crypto";
 import { existsSync, globSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
 import { dirname, join, normalize, resolve } from "node:path";
@@ -61,8 +62,8 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
       console.error(`blackwall: unknown preset ${name}`);
       process.exit(2);
     }
-    // env is a preset-only key, so it never reaches srt
-    return { name, env: {}, ...PRESETS[name] };
+    // env and shell are preset-only keys, so they never reach srt
+    return { name, env: {}, shell: [], ...PRESETS[name] };
   });
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
@@ -80,6 +81,9 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
   const applyToEachDir = (path) => (/^[~/]/.test(path) ? [path] : [CWD, ...addDirs].map((dir) => `${dir}/${path}`));
   // blackwall's own denies also cover matches nested beneath each folder
   const applyToEachDirAndBeneath = (path) => (/^[~/]/.test(path) ? [path] : [CWD, ...addDirs].flatMap((dir) => [`${dir}/${path}`, ...nestedMatches(dir, path)]));
+
+  // srt reads *, ?, [ and ] in a path as a glob, so a folder named [ab] would also grant its siblings a and b
+  const ownDirs = [SANDBOX_CACHE, CWD, ...addDirs].map((path) => ({ path, literal: true }));
 
   const config = {
     ...base,
@@ -112,9 +116,7 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
         ...fromAdapter("filesystem", "denyRead"),
       ].flatMap(applyToEachDir),
       allowRead: [
-        SANDBOX_CACHE,
-        CWD,
-        ...addDirs,
+        ...ownDirs,
         ...base.filesystem.allowRead,
         ...fromPresets("filesystem", "allowRead"),
         ...fromUserConfig("filesystem", "allowRead"),
@@ -122,9 +124,7 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
         ...fromAdapter("filesystem", "allowRead"),
       ],
       allowWrite: [
-        SANDBOX_CACHE,
-        CWD,
-        ...addDirs,
+        ...ownDirs,
         ...base.filesystem.allowWrite,
         ...fromPresets("filesystem", "allowWrite"),
         ...fromUserConfig("filesystem", "allowWrite"),
@@ -149,12 +149,15 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
 
   // Seatbelt checks a symlink and its target separately, so a configured entry under ~ (a dotfile-manager link) also grants its target. System links like /var are left alone,
   // since their target would widen the grant
-  const writable = config.filesystem.allowWrite.map(expandPath);
-  for (const path of [...config.filesystem.allowRead]) {
-    const absolute = expandPath(path);
+  const pathOf = (entry) => (typeof entry === "string" ? entry : entry.path);
+  // srt also grants its own write paths, like /tmp/claude, so a link there is one a run could have planted too. That takes a dotfile of yours already linking through /tmp/claude,
+  // rare, but the list has to be every path the sandbox can write
+  const writable = [...config.filesystem.allowWrite, ...getDefaultWritePaths()].map((entry) => expandPath(pathOf(entry)));
+  for (const entry of [...config.filesystem.allowRead]) {
+    const absolute = expandPath(pathOf(entry));
     if (!absolute.startsWith(`${HOME}/`)) continue;
     const target = resolveUnplantedLinks(absolute, writable);
-    if (target !== undefined && target !== absolute) config.filesystem.allowRead.push(target);
+    if (target !== undefined && target !== absolute) config.filesystem.allowRead.push(typeof entry === "string" ? target : { path: target, literal: true });
   }
 
   return { config, presets };
