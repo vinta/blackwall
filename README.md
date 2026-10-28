@@ -102,7 +102,7 @@ By default, a sandboxed command:
 
 - Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, and `~/.cache-blackwall`
 - Never writes `.git/config` or `.git/hooks`, in the current or `--add-dir` folders. `git remote add`, `git config`, and `git branch -m` fail; `git push -u`, `git branch -D`, and `git switch -c` lose their tracking update. Set remotes and upstreams on the host, or push with `git push origin HEAD`
-- Never writes `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
+- Never writes `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or `--add-dir` folders. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
@@ -111,7 +111,7 @@ By default, a sandboxed command:
 `blackwall claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. For security, a sandboxed run never writes to `~/.claude`, and reads only `~/.claude/plugins`.
 
 - Every launch copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude`, replacing what was there, so edits to those copies don't last
-- Your plugins load from `~/.claude/plugins` read-only, without auto-update. Every launch refreshes the profile's plugin record, `plugins/installed_plugins.json`, from the host's, so sandboxed sessions follow the plugin versions installed outside
+- Your plugins load from `~/.claude/plugins` read-only, without auto-update. Sandboxed sessions follow the plugin versions installed outside
 - Sessions, settings, and login stay separate
 - `settings.json` starts with only your `enabledPlugins`, since your other settings, like hooks and permissions, assume no sandbox. After that it's yours to edit
 
