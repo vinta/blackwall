@@ -73,7 +73,7 @@ export function createSandbox(config) {
     srtConfig,
     deniedNames,
 
-    async run(args, commandEnv, launcherEnv) {
+    async run(args, commandEnv, launcherEnv, shellLines) {
       await SandboxManager.initialize(srtConfig, askCallback);
       // The terminal sends Ctrl+C to the child too, so the launcher must outlive it, and so must srt's proxy, whose SIGINT cleanup initialize() installs; srt's exit handler still cleans up when the child ends
       process.removeAllListeners("SIGINT");
@@ -89,7 +89,8 @@ export function createSandbox(config) {
       const envPipe = child.stdio[ENV_FD];
       // EPIPE if the shell exits before reading
       envPipe.on("error", () => {});
-      envPipe.end(exportLines(commandEnv));
+      // After the exports, so a line can read srt's vars, like HTTPS_PROXY, which only the sandboxed shell has
+      envPipe.end(exportLines(commandEnv) + shellLines.map((line) => `${line}\n`).join(""));
 
       process.on("SIGTERM", () => child.kill("SIGTERM"));
       child.on("exit", (code) => process.exit(code ?? 1));

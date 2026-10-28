@@ -95,10 +95,10 @@ export async function main(args) {
     process.exit(0);
   }
 
-  // Each label names where its vars come from, for --print-env
+  // Each label names where its vars and shell lines come from, for --print-env
   const envSources = [
     ["blackwall: tells scripts they run inside blackwall", { BLACKWALL_SANDBOX: "1" }],
-    ...presets.filter((preset) => Object.keys(preset.env).length).map((preset) => [`preset ${preset.name}: ${preset.why}`, preset.env]),
+    ...presets.filter((preset) => Object.keys(preset.env).length || preset.shell.length).map((preset) => [`preset ${preset.name}: ${preset.why}`, preset.env, preset.shell]),
     ...(adapter.env ? [[`adapter ${name}`, adapter.env()]] : []),
   ];
 
@@ -111,12 +111,13 @@ export async function main(args) {
   // Snapshot before prepare() runs, so a process.env write there reaches srt, never the command
   const launcherEnv = { ...process.env };
   const commandEnv = { ...readProjectEnv(), ...Object.assign({}, ...envSources.map(([, vars]) => vars)) };
+  const shellLines = envSources.flatMap(([, , lines = []]) => lines);
 
   mkdirManaged(SANDBOX_CACHE);
   for (const preset of presets) preset.prepare?.();
   adapter.prepare?.();
 
-  await sandbox.run(adapter.args?.(args, { addDirs }) ?? args, commandEnv, launcherEnv);
+  await sandbox.run(adapter.args?.(args, { addDirs }) ?? args, commandEnv, launcherEnv, shellLines);
 }
 
 function exitWithUsage() {

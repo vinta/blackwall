@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changes
+
+- git no longer saves srt's proxy login through your credential helpers, so the `fatal: failed to store: -60008` lines after every network git command are gone, and on Linux the per-launch proxy token no longer lands in `~/.git-credentials`
+
 ## v0.5.0 / 2026-10-21
 
 ### Breaking Changes

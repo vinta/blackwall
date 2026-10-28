@@ -61,8 +61,8 @@ export function buildConfig({ addDirs, allowInternet, additions }) {
       console.error(`blackwall: unknown preset ${name}`);
       process.exit(2);
     }
-    // env is a preset-only key, so it never reaches srt
-    return { name, env: {}, ...PRESETS[name] };
+    // env and shell are preset-only keys, so they never reach srt
+    return { name, env: {}, shell: [], ...PRESETS[name] };
   });
 
   const expandPath = (path) => resolve(path.replace(/^~(?=\/|$)/, HOME));
