@@ -2,6 +2,8 @@ bats_require_minimum_version 1.5.0
 
 setup_file() {
   load ../common
+  # A FIFO at the plugin record hangs the launch instead of failing it; bats reads the timeout before setup() runs, so it can't be set per test
+  export BATS_TEST_TIMEOUT=30
 
   prepare claude
   blackwall claude --version >"$work/first-run.out" 2>&1 || { cat "$work/first-run.out" >&2; return 1; }
@@ -134,4 +136,16 @@ EOF
   run -0 blackwall ./claude
   run -0 cmp "$e2e/claude/home/.claude/settings.json" "$home/.claude/settings.json"
   refute [ -L "$home/.claude-blackwall/plugins/installed_plugins.json" ]
+}
+
+@test "FIFO plugin record rebuilt from the host" {
+  printf '#!/bin/sh\n' >"$proj/claude" && chmod +x "$proj/claude"
+  mkdir -p "$home/.claude-blackwall/plugins"
+  rm -f "$home/.claude-blackwall/plugins/installed_plugins.json"
+  mkfifo "$home/.claude-blackwall/plugins/installed_plugins.json"
+
+  run -0 blackwall ./claude
+  refute [ -p "$home/.claude-blackwall/plugins/installed_plugins.json" ]
+  run -0 cat "$home/.claude-blackwall/plugins/installed_plugins.json"
+  assert_output --partial "\"installPath\": \"$home/.claude/plugins/cache/y/x/2.0.0\""
 }

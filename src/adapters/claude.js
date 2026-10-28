@@ -89,8 +89,8 @@ export default {
     }
     mkdirManaged(`${PROFILE}/plugins`);
     const record = `${PROFILE}/plugins/installed_plugins.json`;
-    // A sandboxed run can link the record to a host file, to read it back or have it overwritten
-    if (lstatSync(record, { throwIfNoEntry: false })?.isSymbolicLink()) rmSync(record);
+    // A sandboxed run can plant a link here to have a host file written through, or a FIFO to block the read forever
+    if (lstatSync(record, { throwIfNoEntry: false })?.isFile() === false) rmSync(record);
     let profile;
     try {
       profile = JSON.parse(readFileSync(record, "utf8"));
