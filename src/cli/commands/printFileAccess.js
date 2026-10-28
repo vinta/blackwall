@@ -14,9 +14,9 @@ export async function printFileAccess(srtConfig) {
   const mandatory = [...DANGEROUS_FILES, ...getDangerousDirectories(), ".git/hooks", ".git/config"].map((name) => `${CWD}/**/${name}`);
 
   for (const [title, paths] of [
-    ["read allowed", read.allowWithinDeny],
+    ["read allowed", [...read.allowWithinDeny, ...(read.literalAllowWithinDeny ?? [])]],
     ["read denied", read.denyOnly],
-    ["write allowed", write.allowOnly],
+    ["write allowed", [...write.allowOnly, ...(write.literalAllowOnly ?? [])]],
     ["write denied", [...write.denyWithinAllow, ...mandatory]],
   ]) {
     console.log(`${title}:`);
