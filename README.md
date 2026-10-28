@@ -167,7 +167,7 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 ### Presets
 
-A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, and a `why`, which `blackwall --print-env` prints above the preset's env vars and shell lines. Each is a module in [`src/presets`](src/presets):
+A preset is what one tool needs to work in the sandbox: hosts, read paths, env vars like its cache folder, shell lines, macOS services, and a `why`, which `blackwall --print-env` prints above the preset's env vars and shell lines. Each is a module in [`src/presets`](src/presets):
 
 - [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders, since an unsandboxed `claude` there runs what they hold: the hooks, env, and apiKeyHelper in settings even before you trust the folder, and the MCP servers, commands, and subagents in the rest. srt denies the last three in the current folder only, so the preset adds them for `--add-dir` folders. Drop it and a sandboxed command can plant commands that run on the host
 - [python](src/presets/python.js): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools

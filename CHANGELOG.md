@@ -1,14 +1,20 @@
 # Changelog
 
-## Unreleased
+## v0.6.0 / 2026-10-28
+
+### Breaking Changes
+
+- A link inside a folder srt itself can write, `/tmp/claude`, `~/.npm/_logs`, or `~/.claude/debug`, no longer expands a read grant on the next launch. Same rule as a link inside the current folder, so list the target in `allowRead` too
 
 ### Changes
 
-- git no longer saves srt's proxy login through your credential helpers, so the `fatal: failed to store: -60008` lines after every network git command are gone, and on Linux the per-launch proxy token no longer lands in `~/.git-credentials`
+- `clipboard` preset, off by default. On macOS, lets `claude` read an image you copied when you paste it. The pasteboard service can't split read from write, so every sandboxed command can also read what you copy and replace what you paste next
+- `screenshots` preset, off by default. Reads your screenshot folder, so a screenshot you copy in Finder and paste as its path reaches `claude`
+- git no longer saves srt's proxy login through your credential helpers, so the `fatal: failed to store: -60008` lines after every network git command are gone
 - A folder named with `*`, `?`, `[`, or `]`, like `app/[slug]`, as the current or an `--add-dir` folder no longer matches its siblings, and one named `**` no longer grants its parent. The grant is the folder itself
 - `.` as a hostname is refused under `"*"` and `--allow-internet`. It used to reach your machine's loopback services past the `local-network` preset
-- A link inside `/tmp/claude` no longer expands a read grant on the next launch, since the sandbox can write there. Same rule as a link inside the current folder
-- A FIFO left at the profile's plugin record no longer hangs every later `blackwall claude` launch. It's replaced, like a planted link
+- A FIFO or a folder left at the profile's plugin record no longer hangs or breaks every later `blackwall claude` launch. It's replaced, like a planted link
+- `blackwall --print-config` lists the current folder, `--add-dir` folders, and the cache as `{"path": ..., "literal": true}` in `allowRead` and `allowWrite`, and shows `network.allowMachLookup`, the macOS services presets open. `--print-env` prints a preset's shell lines under its env vars
 
 ## v0.5.0 / 2026-10-21
 
