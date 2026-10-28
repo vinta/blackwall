@@ -55,7 +55,7 @@ srt's [security limitations](https://github.com/anthropics/sandbox-runtime#secur
 ### What You Give Up
 
 - Hosts and paths are fixed at launch. A new host means a config edit or `--allow-internet` and a relaunch, not a prompt mid-session
-- No credential masking yet. Secrets in `~/.blackwall/.env` reach the command as they are, while Claude Code's built-in sandbox can [mask them](https://code.claude.com/docs/en/sandboxing#mask-credentials)
+- No credential masking yet, while Claude Code's built-in sandbox can [mask secrets](https://code.claude.com/docs/en/sandboxing#mask-credentials)
 
 ## Installation
 
