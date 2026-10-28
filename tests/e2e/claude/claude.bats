@@ -149,3 +149,15 @@ EOF
   run -0 cat "$home/.claude-blackwall/plugins/installed_plugins.json"
   assert_output --partial "\"installPath\": \"$home/.claude/plugins/cache/y/x/2.0.0\""
 }
+
+@test "directory plugin record rebuilt from the host" {
+  printf '#!/bin/sh\n' >"$proj/claude" && chmod +x "$proj/claude"
+  mkdir -p "$home/.claude-blackwall/plugins"
+  rm -f "$home/.claude-blackwall/plugins/installed_plugins.json"
+  mkdir -p "$home/.claude-blackwall/plugins/installed_plugins.json/nested"
+
+  run -0 blackwall ./claude
+  assert [ -f "$home/.claude-blackwall/plugins/installed_plugins.json" ]
+  run -0 cat "$home/.claude-blackwall/plugins/installed_plugins.json"
+  assert_output --partial "\"installPath\": \"$home/.claude/plugins/cache/y/x/2.0.0\""
+}
