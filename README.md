@@ -235,7 +235,7 @@ Put a project's own env vars in `.blackwall/.env`:
 - Its keys override `~/.blackwall/.env`, and go only to the sandboxed command, so `BLACKWALL_*` keys there don't configure `blackwall`
 - It loads only when `.blackwall/config.json` exists and is trusted. `{}` is enough
 
-A cloned repo can ship a `.blackwall/config.json` that widens the sandbox, so `blackwall` refuses to run until you review it and run `blackwall --trust`. Like direnv, trust covers that path with that exact content, so run it again after every edit to `config.json`. Edits to `.env` don't need a new `--trust`. Sandboxed commands can't write to `.blackwall` in the current folder.
+A cloned repo can ship a `.blackwall/config.json` that widens the sandbox, so `blackwall` refuses to run until you review it and run `blackwall --trust`. Like direnv, trust covers that path with that exact content, so run it again after every edit to `config.json`. Sandboxed commands can't write to `.blackwall` in the current folder.
 
 </details>
 
