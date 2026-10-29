@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Changes
+
+- Upgrades srt to 0.0.81. Every change in that release is on Windows, so nothing changes on macOS or Linux
+
 ## v0.6.0 / 2026-10-28
 
 ### Breaking Changes
