@@ -17,6 +17,16 @@ npm install -g blackwall-sandbox
 ```
 
 <details>
+<summary>Linux</summary>
+
+```bash
+sudo apt-get install -y bubblewrap socat ripgrep
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0      # Ubuntu 24.04+ only
+```
+
+</details>
+
+<details>
 <summary>Shell completion</summary>
 
 With oh-my-zsh:
