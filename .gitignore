@@ -1,8 +1,5 @@
 node_modules/
 
 tests/.e2e/
-
-.env
-# e2e fixtures, kept even when a global gitignore excludes .blackwall/
 !tests/e2e/**/.blackwall/
 !tests/e2e/**/.env
