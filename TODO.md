@@ -34,10 +34,6 @@
 
 - srt warns and launches without Unix-socket blocking when its `apply-seccomp` helper is missing, so a sandboxed command can reach host sockets like the SSH agent's. `checkDependencies()` reports it as a free-text warning only; make it fatal through `getApplySeccompBinaryPath` from srt's `dist/`, guarded in `tests/config.js`. Little gain in a local install, where the sandbox can rewrite srt itself
 
-## Unverified
-
-- Data-protection keychain items through `com.apple.securityd.xpc`, which srt allows (login keychain items were shown unreadable: `security find-generic-password` can't find them)
-
 ## Launch
 
 - `--presets clipboard,screenshots`: adds presets for one run, like `--add-dir` and `--allow-internet`, so a one-session need like pasting a screenshot doesn't need `config.json`. Additive only; dropping a preset stays `overrideDefaults`. Comma list, not space-separated: `blackwall --presets clipboard node script.js` would swallow `node`, a preset name and a command. Ships with the usage line, `--print-config` showing it, zsh completion with the preset names, a Usage row in the README and SKILL.md, and an e2e check
