@@ -23,6 +23,7 @@
 
 - A platform claim in `skills/blackwall/SKILL.md` ships with an e2e check in the same change.
 - In `tests/e2e/**/*.bats`, check with `run -N`, `run !`, and bats-assert (`assert_output`, `refute`): a bare `run` always passes, `! cmd` before a test's last line never fails it, and neither does `[[ ]]` under macOS's bash 3.2.
+- To run one folder under `tests/e2e/`, pass `--setup-suite-file tests/e2e/setup_suite.bash`: bats looks for `setup_suite.bash` only in the folder of the first `*.bats` file, so without it `TOOL_GRANTS` stays empty and `claude` is not found.
 
 ## Release
 
