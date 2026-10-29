@@ -19,7 +19,7 @@ npm install -g blackwall-sandbox
 <details>
 <summary>Shell completion</summary>
 
-To enable zsh completion with oh-my-zsh:
+With oh-my-zsh:
 
 ```bash
 mkdir -p $ZSH_CUSTOM/completions
@@ -87,7 +87,7 @@ blackwall claude                              # run Claude Code in the sandbox
 blackwall --add-dir ../another-repo claude    # also let it write to another folder
 blackwall --allow-internet claude             # also let it reach every public host, but not localhost or private ranges
 blackwall npm test                            # any command works, not only claude
-blackwall --print-config claude               # show the merged config, after your config and the launch-time grants
+blackwall --print-config claude               # show the merged config
 blackwall --print-file-access claude          # show what it can read and write, as srt sees it
 blackwall --print-network-access claude       # show which hosts it can reach, as srt sees it
 blackwall --print-env claude                  # show the env vars blackwall adds, and why
@@ -101,26 +101,26 @@ By default, a sandboxed command:
 
 - Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, `~/.cache-blackwall`, and the [Claude Code](#claude-code) or [Codex](#codex) config folder
 - Never writes `.git/config` or `.git/hooks`, in the current or `--add-dir` folders. `git remote add`, `git config`, and `git branch -m` fail; `git push -u`, `git branch -D`, and `git switch -c` lose their tracking update. Set remotes and upstreams on the host, or push with `git push origin HEAD`
-- Never writes `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or `--add-dir` folders. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
+- Never writes the agent files the [`agent-files`](#presets) preset lists, in the current or `--add-dir` folders. A sandboxed `claude` can't save project permission rules either
 - Reads only those folders, plus the `allowRead` paths in the [default config](#default) and [presets](#presets), and what [Claude Code](#claude-code) or [Codex](#codex) needs
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
 ### Claude Code
 
-`blackwall claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. For security, a sandboxed run never writes to `~/.claude`, and reads only `~/.claude/plugins`.
+`blackwall claude` uses `~/.claude-blackwall` as its config folder instead of `~/.claude`. A sandboxed run never writes to `~/.claude`, and reads only `~/.claude/plugins`.
 
-- Every launch copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude`, replacing what was there, so edits to those copies don't last
-- Your plugins load from `~/.claude/plugins` read-only, without auto-update. Sandboxed sessions follow the plugin versions installed outside
+- Every launch copies your `CLAUDE.md`, `rules`, `skills`, `agents`, `commands`, and `output-styles` from `~/.claude`, so edits to the copies don't last
+- Plugins load read-only from `~/.claude/plugins`, without auto-update
 - Sessions, settings, and login stay separate
-- `settings.json` starts with only your `enabledPlugins`, since your other settings, like hooks and permissions, assume no sandbox. After that it's yours to edit
+- `settings.json` starts with only your `enabledPlugins`, since hooks and permissions assume no sandbox. After that it's yours to edit
 
 Log in with `/login`, or run `claude setup-token` outside the sandbox and put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`. The token is better: `/login` inside the sandbox stores a `.credentials.json` the agent can read, while the env var never reaches its shell.
 
 ### Codex
 
-`blackwall codex` uses `~/.codex-blackwall` as its config folder instead of `~/.codex`. A sandboxed run never writes to `~/.codex`, and reads only `~/.codex/packages`, where the standalone installer puts the `codex` binary.
+`blackwall codex` uses `~/.codex-blackwall` as its config folder instead of `~/.codex`. A sandboxed run never writes to `~/.codex`, and reads only `~/.codex/packages`.
 
-- Every launch copies your `AGENTS.md` and `agents` from `~/.codex`, plus `skills` from `~/.agents`. These copies replace what was there, so edits to them don't last
+- Every launch copies your `AGENTS.md` and `agents` from `~/.codex`, plus `skills` from `~/.agents`, so edits to the copies don't last
 - Sessions, `config.toml`, `rules`, and login stay separate. Put sandbox-specific rules in `~/.codex-blackwall/rules/`
 - Codex's own sandbox is off (`-c sandbox_mode="danger-full-access"`), since it can't start inside blackwall's. blackwall is the sandbox
 
@@ -140,7 +140,7 @@ npx skills add vinta/blackwall -g
 
 ### Environment Variables
 
-Put your env vars in `~/.blackwall/.env` if you need them.
+Put your env vars in `~/.blackwall/.env`:
 
 ```bash
 GH_TOKEN=xxx   # generate a read-only PAT from https://github.com/settings/personal-access-tokens
@@ -153,19 +153,19 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 [`src/config/default-config.json`](src/config/default-config.json) holds the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`, at the top level or, except `srt`, under `overrideDefaults`.
 
 - `presets: ["agent-files", "python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
-- `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. srt refuses loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses for every name. blackwall applies the same to IP literals under `"*"`. These aren't in `--print-config`
-- `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`; without `"*"`, an unlisted host is refused anyway. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name. A range is overridden only by that IP itself in `allowedHosts`
+- `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. srt refuses loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses for every name, and blackwall does the same for IP literals under `"*"`
+- `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name. A range is overridden only by that IP itself in `allowedHosts`
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
-- `srt.enableWeakerNetworkIsolation: true`: On macOS, lets Go tools like `gh` verify TLS certificates through `com.apple.trustd.agent`, which also opens a data exfiltration path through that service. On by default because the `github` preset is
-- `srt.enableWeakerNestedSandbox: false`: On Linux, lets the sandbox run inside Docker without privileged namespaces, which considerably weakens isolation
+- `srt.enableWeakerNetworkIsolation: true`: On macOS, lets Go tools like `gh` verify TLS certificates through `com.apple.trustd.agent`, which also opens a data exfiltration path through that service
+- `srt.enableWeakerNestedSandbox: false`: On Linux, lets the sandbox run inside Docker without privileged namespaces, which weakens isolation
 - `srt.allowPty: true`: Lets sandboxed commands open pseudo-terminals, which TUIs need
 
-`srt` holds [srt settings](https://github.com/anthropics/sandbox-runtime), passed to srt untouched, each replacing its default. Blackwall doesn't read `~/.srt-settings.json`, only the `srt` CLI does.
+`srt` holds [srt settings](https://github.com/anthropics/sandbox-runtime), each replacing its default. Blackwall doesn't read `~/.srt-settings.json`.
 
 ### Presets
 
-A preset is what one tool needs to work in the sandbox: hosts, read paths, write denies, env vars like its cache folder, shell lines, macOS services, and a `why`, which `blackwall --print-env` prints above the preset's env vars and shell lines. Each is a module in [`src/presets`](src/presets):
+A preset is what one tool needs to work in the sandbox: hosts, read paths, write denies, env vars like its cache folder, shell lines, macOS services, and a `why`, which `--print-env` prints. Each is a module in [`src/presets`](src/presets):
 
 - **Always on**
   - [mac](src/presets/mac.js): System paths macOS tools need. On macOS
@@ -179,12 +179,10 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, write
   - [python](src/presets/python.js): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
   - [node](src/presets/node.js): The npm registry, and Node.js installed by fnm
   - [pre-commit](src/presets/pre-commit.js): Its cache folder, and hook repos clone through srt's proxy
-  - [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders: an unsandboxed `claude` runs what they hold, the settings even before you trust the folder. Drop it and a sandboxed command can plant commands that run on the host
+  - [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders: an unsandboxed `claude` runs what they hold, the settings even before you trust the folder
 - **Off by default**
   - [clipboard](src/presets/clipboard.js): On macOS, lets `claude` read an image you copied, e.g. a Cmd+Ctrl+Shift+4 screenshot, when you paste it. Every sandboxed command can then read what you copy, passwords included, and replace what you paste next
   - [screenshots](src/presets/screenshots.js): Reads your screenshot folder, so a screenshot you copy in Finder and paste as its path reaches `claude`. That's `~/Desktop`, unless you moved it with `defaults write com.apple.screencapture location ~/Screenshots`, which also keeps the rest of your Desktop unreadable
-
-`tmpdir`, `mac`, and `linux` aren't in the `presets` list, so overriding it can't drop them.
 
 Preset paths follow `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME`, and `XDG_RUNTIME_DIR` when you set them.
 
@@ -206,9 +204,9 @@ Put your customizations in `~/.blackwall/config.json`:
 ```
 
 - Top-level `presets`, `filesystem`, and `network` keys take lists only, and they're **added** to the defaults. A relative `filesystem.denyRead` or `filesystem.denyWrite` entry applies to the current folder and every `--add-dir` folder
-- To allow every public host and public IP literal, add `"*"` to `network.allowedHosts`, or launch with `--allow-internet` for one run. Loopback, private ranges, and `localhost` stay denied, so add a local server as its IP literal or name with the port, e.g. `127.0.0.1:8000` or `localhost:8000`
+- To allow every public host, add `"*"` to `network.allowedHosts`, or launch with `--allow-internet` for one run. Loopback, private ranges, and `localhost` stay denied, so add a local server with the port, e.g. `127.0.0.1:8000`
 - `overrideDefaults` takes `presets`, `network`, and `filesystem`, and **replaces** their default values. It's applied first, then the top-level lists are added
-- If you set `overrideDefaults.presets`, add `local-network`, or `localhost` by name opens again under `"*"`. Add `private-network` too, or private ranges stay open. Add `agent-files` too, or sandboxed commands can write the settings and hooks an unsandboxed `claude` runs
+- If you set `overrideDefaults.presets`, keep `local-network`, `private-network`, and `agent-files`, or `localhost` and private ranges open again under `"*"`, and the agent files become writable
 
 </details>
 
@@ -242,15 +240,13 @@ A cloned repo can ship a `.blackwall/config.json` that widens the sandbox, so `b
 <details>
 <summary>Give blackwall its own identity in Little Snitch</summary>
 
-For firewall apps like Little Snitch. Every sandboxed command connects through a proxy inside `blackwall`, so the firewall sees all that traffic as `node`, the same `node` behind every other Node script. One rule covers them all.
-
-To give `blackwall` its own identity on macOS:
+Every sandboxed command connects through a proxy inside `blackwall`, so Little Snitch sees all that traffic as `node`, like every other Node script. To fix that on macOS:
 
 ```bash
 BLACKWALL_USE_SELF_SIGNED_NODE=1 # put this in ~/.blackwall/.env, or export it
 ```
 
-Little Snitch then shows `node-blackwall` instead of `node`. It's an ad-hoc-signed copy of your `node` at `~/.blackwall/node-blackwall`, created on the first run and again whenever it's missing. Delete it after upgrading Node to get a fresh copy.
+Little Snitch then shows `node-blackwall`, an ad-hoc-signed copy of your `node` at `~/.blackwall/node-blackwall`. Delete it after upgrading Node to get a fresh copy.
 
 </details>
 
@@ -267,9 +263,9 @@ What blackwall defends:
 
 Out of scope:
 
-- You, running a hostile command on purpose. If you start `blackwall` with an evil command, that's on you
+- Starting `blackwall` with an evil command on purpose. That's on you
 - What you grant: `allowRead`, `allowWrite`, `--add-dir`, and a trusted `.blackwall/config.json` with its `.env` count as your own setup. Review both before `--trust`
-- What `--trust` leaves to you: it pins only `config.json`'s content. `~/.blackwall/.env` always loads, and a project's `.env` loads whenever its `config.json` is trusted, later edits included, with no new `--trust`. Review `.env` again after a pull that touches it
+- `--trust` pins only `config.json`. A project's `.env` loads whenever its `config.json` is trusted, later edits included, so review it after a pull that touches it
 - Secrets in your shell environment, `~/.blackwall/.env`, and the sandbox's agent profile. They reach the command by design
 - Files copied from your host agent profiles, including their symlink targets. The command can read the copies. Keep those sources outside sandbox-writable folders: later launches also follow links planted there
 - Files it writes inside granted folders survive. Later sandboxed runs may read or execute them, and so does your shell when that folder is on its PATH, like an activated `.venv/bin`: a planted `node` there runs your next `blackwall` unsandboxed. Keep such folders off the PATH you launch from
@@ -285,13 +281,13 @@ A finding counts when the sandboxed command alone gets past this, with no help f
 <details>
 <summary>Nested agent files and git hooks on Linux, HTTP proxy, and profile folder symlinks can still get past the sandbox</summary>
 
-- On Linux, nested write denies cover matching paths found at launch, up to 3 folders below the current or `--add-dir` folder. A run can still plant `.claude/settings.json`, `.claude/hooks`, or `.git/hooks` under deeper or newly created folders, for an unsandboxed `claude` or your own `git` to run later. Before running `claude` outside the sandbox from a subfolder an agent worked in, check its `.claude/`. On macOS, these denies cover every depth, including folders created during the run
+- On Linux, nested write denies cover matching paths found at launch, up to 3 folders below the current or `--add-dir` folder. A run can still plant `.claude/settings.json`, `.claude/hooks`, or `.git/hooks` under deeper or newly created folders, for an unsandboxed `claude` or your own `git` to run later. Before running `claude` outside the sandbox from a subfolder an agent worked in, check its `.claude/`
 - With `HTTP_PROXY` or `HTTPS_PROXY` set, in your shell or `~/.blackwall/.env`, srt sends names through that proxy and lets it resolve them, so it can't check what they resolve to. The `private-network` preset, `deniedHosts` ranges, and srt's built-in refused classes then don't apply to names. IP literals under `"*"` are still judged. Unset the proxy when you need those denies
 - On macOS, a sandboxed command can replace its own profile folder, like `~/.claude-blackwall`, or `~/.cache-blackwall`, with a symlink. Blackwall refuses to launch when it finds one and never grants reads through it. But a session still running can swap the folder right after a second launch, say for another repo, has checked it. That launch then deletes the files it copies in, like `~/.claude/CLAUDE.md`, where the link points. It can't regain reads of the host folder that way. Don't start a second blackwall launch while a session you don't trust is running. Closing this needs srt to forbid unlinking a granted folder itself
 
 </details>
 
-Also see: [TODO.md](TODO.md) for the known gaps not closed yet, and what's planned
+Also see: [TODO.md](TODO.md) for open gaps and plans
 
 ## License
 
