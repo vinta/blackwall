@@ -40,4 +40,5 @@
 
 ## Launch
 
+- `--presets clipboard,screenshots`: adds presets for one run, like `--add-dir` and `--allow-internet`, so a one-session need like pasting a screenshot doesn't need `config.json`. Additive only; dropping a preset stays `overrideDefaults`. Comma list, not space-separated: `blackwall --presets clipboard node script.js` would swallow `node`, a preset name and a command. Ships with the usage line, `--print-config` showing it, zsh completion with the preset names, a Usage row in the README and SKILL.md, and an e2e check
 - Keep the machine awake while a sandboxed command runs: the launcher, not the sandbox, holds the assertion, since inside Seatbelt `caffeinate` needs a power-management mach lookup that srt likely denies (unverified). macOS: spawn `caffeinate -i -w <child pid>` next to the child, so it ends with the child and survives the launcher only as long as the pid does; Linux: `systemd-inhibit --what=idle --who=blackwall --why=<command>` wrapping the child. Opt-in (`--keep-awake` or a config key, user config only), since idle sleep is the user's power policy and an agent should not change it from a repo
