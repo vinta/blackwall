@@ -175,6 +175,11 @@ setup() {
   assert [ -f "$home/.cache-blackwall/gh/probe" ]
 }
 
+@test "write pre-commit cache" {
+  run -0 blackwall sh -c 'mkdir -p "$PRE_COMMIT_HOME" && echo x > "$PRE_COMMIT_HOME/probe"'
+  assert [ -f "$home/.cache-blackwall/pre-commit/probe" ]
+}
+
 # zsh writes heredocs under $TMPPREFIX, /tmp/zsh by default, not $TMPDIR
 @test "zsh heredoc" {
   command -v zsh >/dev/null || skip "no zsh"
