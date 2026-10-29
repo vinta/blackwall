@@ -1,10 +1,11 @@
 {
   "name": "blackwall-sandbox",
-  "description": "Opinionated lightweight sandbox for daily dev tasks with coding agents",
+  "description": "Opinionated out-of-the-box sandbox for claude and codex, with delicately crafted presets that already configure daily dev tools for you (common gotchas included)",
   "keywords": [
     "sandbox",
     "seatbelt",
     "claude-code",
+    "codex",
     "ai-agent",
     "cli"
   ],

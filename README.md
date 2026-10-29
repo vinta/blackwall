@@ -2,13 +2,41 @@
 
 [![npm Version](https://img.shields.io/npm/v/blackwall-sandbox?style=for-the-badge)](https://www.npmjs.com/package/blackwall-sandbox)
 
-Opinionated lightweight sandbox for daily dev tasks with coding agents. Built on Anthropic's [sandbox-runtime](https://github.com/anthropics/sandbox-runtime) (srt).
+Opinionated out-of-the-box sandbox for `claude` and `codex`, with delicately crafted **[presets](#presets)** that already configure daily dev tools for you (common gotchas included). So you don't need to write cumbersome sandbox configurations in Claude Code or Codex settings, or to figure out which hosts `pip`, `npm`, and `gh` need, which paths to open, and what the agent must never write.
+
+Claude Code's sandbox covers shell commands only, and Codex's network proxy skips MCP servers, so if you want the whole agent isolated, use Blackwall. It runs everything inside Anthropic's [sandbox-runtime](https://github.com/anthropics/sandbox-runtime) (srt), hooks and MCP servers included.
 
 > This project is named after the Blackwall in Cyberpunk 2077, a firewall NetWatch built to keep rogue AIs out of the Net.
 
-## Why Blackwall
+## Installation
 
-Blackwall is an out-of-the-box sandbox for long-running agent tasks, mainly `claude` and `codex`. You get nearly the same experience as your daily dev work outside a sandbox, but much safer. At least the blast radius stays under control. Unlike the built-in sandboxes, it runs the whole agent inside srt, hooks and MCP servers included.
+Needs Node.js 22.21 or later.
+
+```bash
+npm install -g blackwall-sandbox
+```
+
+<details>
+<summary>Shell completion</summary>
+
+To enable zsh completion with oh-my-zsh:
+
+```bash
+mkdir -p $ZSH_CUSTOM/completions
+blackwall --completion zsh > $ZSH_CUSTOM/completions/_blackwall  # run it again after upgrading blackwall
+```
+
+</details>
+
+## Get Started
+
+Blackwall or: How I Learned to Stop Worrying and Love the YOLO Mode:
+
+```bash
+# Claude Code can TRULY only read/write the current working folder (plus some other required paths defined in presets)
+# Even with full Internet access granted, the blast radius is under control
+blackwall --allow-internet claude --dangerously-skip-permissions
+```
 
 <details>
 <summary>Comparison: blackwall vs claude/codex built-in sandboxes vs srt</summary>
@@ -52,35 +80,6 @@ srt's [security limitations](https://github.com/anthropics/sandbox-runtime#secur
 
 </details>
 
-### What You Give Up
-
-- Hosts and paths are fixed at launch. A new host means a config edit or `--allow-internet` and a relaunch, not a prompt mid-session
-- No credential masking yet, while Claude Code's built-in sandbox can [mask secrets](https://code.claude.com/docs/en/sandboxing#mask-credentials)
-
-## Installation
-
-Needs Node.js 22.21 or later.
-
-```bash
-npm install -g blackwall-sandbox
-```
-
-Keep blackwall and srt outside every writable folder, including the current folder and any `--add-dir` folder. If a sandboxed command can rewrite either package, the next launch runs that code outside the sandbox.
-
-<details>
-<summary>Shell completion</summary>
-
-To enable zsh completion with oh-my-zsh:
-
-```bash
-mkdir -p $ZSH_CUSTOM/completions
-blackwall --completion zsh > $ZSH_CUSTOM/completions/_blackwall  # run it again after upgrading blackwall
-```
-
-Without oh-my-zsh, save it to `~/.zfunc/_blackwall` instead, and add `fpath=(~/.zfunc $fpath)` to `~/.zshrc`, before `compinit`.
-
-</details>
-
 ## Usage
 
 ```bash
@@ -103,7 +102,7 @@ By default, a sandboxed command:
 - Writes only to the current folder, `--add-dir` folders, `/tmp/claude`, and `~/.cache-blackwall`
 - Never writes `.git/config` or `.git/hooks`, in the current or `--add-dir` folders. `git remote add`, `git config`, and `git branch -m` fail; `git push -u`, `git branch -D`, and `git switch -c` lose their tracking update. Set remotes and upstreams on the host, or push with `git push origin HEAD`
 - Never writes `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, or `.claude/agents` in the current or `--add-dir` folders. The names come from the [`agent-files`](#presets) preset. A sandboxed `claude` can't save project permission rules either
-- Reads only those folders, plus the `allowRead` paths in the [default config](#default-config) and [presets](#presets)
+- Reads only those folders, plus the `allowRead` paths in the [default config](#default) and [presets](#presets)
 - Connects only to the hosts in [presets](#presets), and the ones [Claude Code](#claude-code) or [Codex](#codex) needs
 
 ### Claude Code
@@ -115,7 +114,7 @@ By default, a sandboxed command:
 - Sessions, settings, and login stay separate
 - `settings.json` starts with only your `enabledPlugins`, since your other settings, like hooks and permissions, assume no sandbox. After that it's yours to edit
 
-Log in with `/login`, or put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`.
+Log in with `/login`, or run `claude setup-token` outside the sandbox and put `CLAUDE_CODE_OAUTH_TOKEN` in `~/.blackwall/.env`. The token is better: `/login` inside the sandbox stores a `.credentials.json` the agent can read, while the env var never reaches its shell.
 
 ### Codex
 
@@ -144,8 +143,7 @@ npx skills add vinta/blackwall -g
 Put your env vars in `~/.blackwall/.env` if you need them.
 
 ```bash
-GH_TOKEN=xxx                  # generate a read-only PAT from https://github.com/settings/personal-access-tokens
-CLAUDE_CODE_OAUTH_TOKEN=xxx   # run `claude setup-token` to get one
+GH_TOKEN=xxx   # generate a read-only PAT from https://github.com/settings/personal-access-tokens
 ```
 
 Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs inside blackwall.
@@ -275,10 +273,14 @@ Out of scope:
 - Secrets in your shell environment, `~/.blackwall/.env`, and the sandbox's agent profile. They reach the command by design
 - Files copied from your host agent profiles, including their symlink targets. The command can read the copies. Keep those sources outside sandbox-writable folders: later launches also follow links planted there
 - Files it writes inside granted folders survive. Later sandboxed runs may read or execute them, and so does your shell when that folder is on its PATH, like an activated `.venv/bin`: a planted `node` there runs your next `blackwall` unsandboxed. Keep such folders off the PATH you launch from
+- `blackwall` and `srt` installed inside a writable folder, like the current folder or an `--add-dir` folder. If a sandboxed command can rewrite either package, the next launch runs that code outside the sandbox. `npm install -g` keeps them out
 
 A finding counts when the sandboxed command alone gets past this, with no help from you beyond launching blackwall again. Reading host files outranks writing them, and writing outranks breaking a session.
 
 ### Known Limitations
+
+- Hosts and paths are fixed at launch. A new host means a config edit or `--allow-internet` and a relaunch, not a prompt mid-session
+- No credential masking yet, while Claude Code's built-in sandbox can [mask secrets](https://code.claude.com/docs/en/sandboxing#mask-credentials)
 
 <details>
 <summary>Nested agent files on Linux, HTTP proxy, and profile folder symlinks can still get past the sandbox</summary>
