@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sandbox-runtime": "0.0.81",
-    "zod": "3.25.76"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "bats": "1.13.0",
