@@ -97,6 +97,7 @@ blackwall claude                              # run Claude Code in the sandbox
 blackwall --add-dir ../another-repo claude    # also let it write to another folder
 blackwall --allow-internet claude             # also let it reach every public host, but not localhost or private ranges
 blackwall --no-config npx some-tool           # ignore every config and .env file, run with the defaults only
+blackwall --self-signed-node claude           # run blackwall in its signed node copy, see Signed Node below
 blackwall npm test                            # any command works, not only claude
 blackwall --print-config claude               # show the merged config
 blackwall --print-file-access claude          # show what it can read and write, as srt sees it
@@ -161,13 +162,14 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 ### Default
 
-[`src/config/default-config.json`](src/config/default-config.json) holds the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`, at the top level or, except `srt`, under `overrideDefaults`. With `--no-config`, blackwall skips both config files and both `.env` files, so it runs with these defaults even in a repo with an untrusted `.blackwall/config.json`.
+[`src/config/default-config.json`](src/config/default-config.json) holds the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`, at the top level or, except `srt` and `useSelfSignedNode`, under `overrideDefaults`. With `--no-config`, blackwall skips both config files and both `.env` files, so it runs with these defaults even in a repo with an untrusted `.blackwall/config.json`.
 
 - `presets: ["agent-files", "python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
 - `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. srt refuses loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses for every name, and blackwall does the same for IP literals under `"*"`
 - `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name. A range is overridden only by that IP itself in `allowedHosts`
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
+- `useSelfSignedNode: false`: Runs blackwall in its [signed node](#signed-node) copy when `true`. Only `~/.blackwall/config.json` can set it
 - `srt.enableWeakerNetworkIsolation: true`: On macOS, lets Go tools like `gh` verify TLS certificates through `com.apple.trustd.agent`, which also opens a data exfiltration path through that service
 - `srt.enableWeakerNestedSandbox: false`: On Linux, lets the sandbox run inside Docker without privileged namespaces, which weakens isolation
 - `srt.allowPty: true`: Lets sandboxed commands open pseudo-terminals, which TUIs need
@@ -251,11 +253,11 @@ A cloned repo can ship a `.blackwall/config.json` that widens the sandbox, so `b
 <details>
 <summary>Give blackwall its own identity in Little Snitch</summary>
 
-Every sandboxed command connects through a proxy inside `blackwall`, so Little Snitch sees all that traffic as `node`, like every other Node script. To fix that on macOS:
+Every sandboxed command connects through a proxy inside `blackwall`, so Little Snitch sees all that traffic as `node`, like every other Node script. To fix that on macOS, use one of these:
 
-```bash
-BLACKWALL_USE_SELF_SIGNED_NODE=1 # put this in ~/.blackwall/.env, or export it
-```
+- `"useSelfSignedNode": true` in `~/.blackwall/config.json`
+- `BLACKWALL_USE_SELF_SIGNED_NODE=1` in `~/.blackwall/.env`, or exported
+- `blackwall --self-signed-node` for one run, even with `--no-config`
 
 Little Snitch then shows `node-blackwall`, an ad-hoc-signed copy of your `node` at `~/.blackwall/node-blackwall`. Delete it after upgrading Node to get a fresh copy.
 

@@ -44,8 +44,8 @@ export function buildConfig({ addDirs, allowInternet, noConfig, additions }) {
   // From ~, both paths name the user config
   const project = noConfig || PROJECT_CONFIG === USER_CONFIG ? { additions: {}, overrides: {}, presets: [], srt: {} } : readConfig(PROJECT_CONFIG, true);
 
-  // presets is blackwall's own key, so it never reaches srt
-  const { presets: basePresets, ...base } = {
+  // presets and useSelfSignedNode are blackwall's own keys, so they never reach srt
+  const { presets: basePresets, useSelfSignedNode, ...base } = {
     ...DEFAULTS,
     ...user.overrides,
     ...project.overrides,
@@ -248,6 +248,8 @@ export function parseConfig(file, text) {
     const path = issue.path.join(".");
     exitWithConfigError(file, path && issue.code !== "unrecognized_keys" ? `${path}: ${issue.message}` : issue.message);
   }
+  // It picks the binary that runs unsandboxed, so a cloned repo must not set it
+  if (file !== USER_CONFIG && Object.hasOwn(parsed, "useSelfSignedNode")) exitWithConfigError(file, "useSelfSignedNode can only be set in ~/.blackwall/config.json");
   const { overrideDefaults: overrides = {}, presets = [], srt = {}, ...additions } = parsed;
   return { additions, overrides, presets, srt };
 }

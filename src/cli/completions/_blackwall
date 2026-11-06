@@ -13,6 +13,7 @@ _arguments -S -A '-*' \
   '*--add-dir[also let the command write to another folder]:folder:_directories' \
   '--allow-internet[also let the command reach every public host]' \
   '--no-config[ignore every config and .env file, use the defaults only]' \
+  '--self-signed-node[run blackwall in its ad-hoc-signed node copy]' \
   "${exclusive}--print-config[show the merged config]" \
   "${exclusive}--print-file-access[show what the command can read and write]" \
   "${exclusive}--print-network-access[show which hosts the command can reach]" \

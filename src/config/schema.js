@@ -64,7 +64,7 @@ const SRT_SETTINGS = SRT.pick(Object.fromEntries(Object.keys(DEFAULTS.srt).map((
   .partial()
   .strict();
 
-export const CONFIG_SCHEMA = LISTS.extend({ srt: SRT_SETTINGS, overrideDefaults: LISTS }).partial().strict();
+export const CONFIG_SCHEMA = LISTS.extend({ useSelfSignedNode: z.boolean(), srt: SRT_SETTINGS, overrideDefaults: LISTS }).partial().strict();
 
 export function configErrorMap(issue, ctx) {
   if (issue.code !== "unrecognized_keys") return { message: ctx.defaultError };

@@ -15,7 +15,7 @@ import { printFileAccess } from "./commands/printFileAccess.js";
 import { printNetworkAccess } from "./commands/printNetworkAccess.js";
 import { trust } from "./commands/trust.js";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--allow-internet] [--no-config] [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version | --completion zsh | --help] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--allow-internet] [--no-config] [--self-signed-node] [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version | --completion zsh | --help] [--] <command> [args...]";
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
@@ -40,6 +40,9 @@ export async function main(args) {
     } else if (args[0] === "--no-config") {
       args.shift();
       noConfig = true;
+    } else if (args[0] === "--self-signed-node") {
+      // Handled in blackwall.js before main() runs
+      args.shift();
     } else if (args[0] === "--print-config") {
       args.shift();
       showConfig = true;

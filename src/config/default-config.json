@@ -33,6 +33,7 @@
     "allowWrite": [],
     "denyWrite": []
   },
+  "useSelfSignedNode": false,
   "srt": {
     "enableWeakerNetworkIsolation": true,
     "enableWeakerNestedSandbox": false,

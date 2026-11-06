@@ -6,6 +6,7 @@
 
 - Upgrades srt to 0.0.81. Every change in that release is on Windows, so nothing changes on macOS or Linux
 - `blackwall --no-config` ignores `~/.blackwall/config.json`, `.blackwall/config.json`, and both `.env` files for one run, so a third-party tool gets the defaults only, not the hosts and paths your config adds. An untrusted project config is skipped instead of refused
+- `blackwall --self-signed-node` and `"useSelfSignedNode": true` in `~/.blackwall/config.json` run blackwall in its ad-hoc-signed node copy, like `BLACKWALL_USE_SELF_SIGNED_NODE=1`. The flag works under `--no-config` too, which skips the files that set the other two
 
 ## v0.6.0 / 2026-10-28
 
