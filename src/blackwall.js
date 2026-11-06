@@ -14,7 +14,13 @@ if (process.env.BLACKWALL_SANDBOX === "1") {
   process.exit(2);
 }
 
-Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
+// main() parses flags too late, since the signed node check below already reads this .env. Flags end at the command or --
+let noConfig = false;
+const args = process.argv.slice(2);
+for (let i = 0; i < args.length && args[i].startsWith("-") && args[i] !== "--"; i += args[i] === "--add-dir" ? 2 : 1) {
+  if (args[i] === "--no-config") noConfig = true;
+}
+if (!noConfig) Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
 
 // Create an ad-hoc-signed node copy, so users can configure firewall rules for blackwall
 if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === "1" && basename(process.execPath) !== basename(SIGNED_NODE)) {
