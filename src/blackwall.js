@@ -6,7 +6,7 @@ import { parseEnv } from "node:util";
 
 import { main } from "./cli/index.js";
 import { readIfExists } from "./config/config.js";
-import { HOME, SIGNED_NODE } from "./constants/paths.js";
+import { HOME, SIGNED_NODE, USER_CONFIG } from "./constants/paths.js";
 
 // Seatbelt can't nest, and inside, ~/.blackwall is unreadable on macOS and empty on Linux
 if (process.env.BLACKWALL_SANDBOX === "1") {
@@ -16,14 +16,22 @@ if (process.env.BLACKWALL_SANDBOX === "1") {
 
 // main() parses flags too late, since the signed node check below already reads this .env. Flags end at the command or --
 let noConfig = false;
+let selfSignedNode = false;
 const args = process.argv.slice(2);
 for (let i = 0; i < args.length && args[i].startsWith("-") && args[i] !== "--"; i += args[i] === "--add-dir" ? 2 : 1) {
   if (args[i] === "--no-config") noConfig = true;
+  if (args[i] === "--self-signed-node") selfSignedNode = true;
 }
-if (!noConfig) Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
+if (!noConfig) {
+  Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
+  // A broken config only leaves the key off here; main() reports it
+  try {
+    selfSignedNode ||= JSON.parse(readIfExists(USER_CONFIG) ?? "{}").useSelfSignedNode === true;
+  } catch {}
+}
 
 // Create an ad-hoc-signed node copy, so users can configure firewall rules for blackwall
-if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === "1" && basename(process.execPath) !== basename(SIGNED_NODE)) {
+if ((process.env.BLACKWALL_USE_SELF_SIGNED_NODE === "1" || selfSignedNode) && basename(process.execPath) !== basename(SIGNED_NODE)) {
   if (!existsSync(SIGNED_NODE)) {
     mkdirSync(dirname(SIGNED_NODE), { recursive: true });
     // Signed under a temp name, so an interrupted run can't leave a broken copy that counts as present
