@@ -107,6 +107,14 @@ setup() {
   assert_output --partial '"*"'
 }
 
+@test "--no-config drops the user config, not the other flags" {
+  run -0 blackwall --print-config
+  assert_output --partial '"*.sslip.io"'
+  run -0 blackwall --no-config --allow-internet --print-config
+  refute_output --partial '"*.sslip.io"'
+  assert_output --partial '"*"'
+}
+
 @test "--print-network-access puts * on the denied side without it" {
   run -0 blackwall --print-network-access
   assert_line "  github.com"

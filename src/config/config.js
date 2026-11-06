@@ -38,11 +38,11 @@ export const PRESETS = {
 };
 
 // additions is the adapter's layer, added after every config file's lists
-export function buildConfig({ addDirs, allowInternet, additions }) {
+export function buildConfig({ addDirs, allowInternet, noConfig, additions }) {
   // overrideDefaults replaces default values and srt replaces them per key, the project's over the user's, then the presets and the top-level lists of both are added on top
-  const user = readConfig(USER_CONFIG);
+  const user = noConfig ? { additions: {}, overrides: {}, presets: [], srt: {} } : readConfig(USER_CONFIG);
   // From ~, both paths name the user config
-  const project = PROJECT_CONFIG === USER_CONFIG ? { additions: {}, overrides: {}, presets: [], srt: {} } : readConfig(PROJECT_CONFIG, true);
+  const project = noConfig || PROJECT_CONFIG === USER_CONFIG ? { additions: {}, overrides: {}, presets: [], srt: {} } : readConfig(PROJECT_CONFIG, true);
 
   // presets is blackwall's own key, so it never reaches srt
   const { presets: basePresets, ...base } = {

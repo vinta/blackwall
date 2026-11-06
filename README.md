@@ -96,6 +96,7 @@ srt's [security limitations](https://github.com/anthropics/sandbox-runtime#secur
 blackwall claude                              # run Claude Code in the sandbox
 blackwall --add-dir ../another-repo claude    # also let it write to another folder
 blackwall --allow-internet claude             # also let it reach every public host, but not localhost or private ranges
+blackwall --no-config npx some-tool           # ignore every config and .env file, run with the defaults only
 blackwall npm test                            # any command works, not only claude
 blackwall --print-config claude               # show the merged config
 blackwall --print-file-access claude          # show what it can read and write, as srt sees it
@@ -160,7 +161,7 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 ### Default
 
-[`src/config/default-config.json`](src/config/default-config.json) holds the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`, at the top level or, except `srt`, under `overrideDefaults`.
+[`src/config/default-config.json`](src/config/default-config.json) holds the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`, at the top level or, except `srt`, under `overrideDefaults`. With `--no-config`, blackwall skips both config files and both `.env` files, so it runs with these defaults even in a repo with an untrusted `.blackwall/config.json`.
 
 - `presets: ["agent-files", "python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
 - `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. srt refuses loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses for every name, and blackwall does the same for IP literals under `"*"`

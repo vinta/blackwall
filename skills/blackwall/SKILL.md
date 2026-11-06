@@ -85,6 +85,7 @@ sudo apt-get install -y bubblewrap socat ripgrep                   # Linux only
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0      # Ubuntu 24.04+ only
 blackwall claude                                                   # or codex, or any command
 blackwall --add-dir ../other-repo claude
+blackwall --no-config npx some-tool                                # defaults only, ignores every config and .env file
 blackwall --trust                                                  # in the project, after reviewing .blackwall/config.json
 ```
 

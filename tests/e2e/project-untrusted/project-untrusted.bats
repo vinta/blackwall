@@ -15,6 +15,12 @@ setup() {
   assert_output --partial "not trusted"
 }
 
+@test "--no-config ignores an untrusted project config" {
+  run -1 blackwall --no-config cat "$elsewhere/secret.txt"
+  refute_output --partial "not trusted"
+  refute_output --partial hunter2
+}
+
 @test "--trust" {
   run -0 blackwall --trust
 }

@@ -5,6 +5,7 @@
 ### Changes
 
 - Upgrades srt to 0.0.81. Every change in that release is on Windows, so nothing changes on macOS or Linux
+- `blackwall --no-config` ignores `~/.blackwall/config.json`, `.blackwall/config.json`, and both `.env` files for one run, so a third-party tool gets the defaults only, not the hosts and paths your config adds. An untrusted project config is skipped instead of refused
 
 ## v0.6.0 / 2026-10-28
 

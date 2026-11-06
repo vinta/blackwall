@@ -14,3 +14,7 @@ setup() {
   run -2 blackwall true
   assert_output --partial "loads only with a trusted"
 }
+
+@test "--no-config ignores a project .env" {
+  run -0 blackwall --no-config true
+}
