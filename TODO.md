@@ -31,6 +31,7 @@
 
 - Upstream to srt: `getDangerousDirectories()` always denies writes to `.vscode`, `.idea`, `.claude/commands`, and `.claude/agents` but not `.claude/settings.json` (hooks, env, `apiKeyHelper`) or `.codex/hooks.json`, which a program executes with no model in between just the same. Ask for the settings and hook files only, since skills stay writable on purpose (see AGENTS.md). Blackwall's presets deny them meanwhile; srt's list would also cover nesting on Linux for free
 - Upstream to srt, macOS: an `allowRead` carve-out inside a `denyRead` folder stays denied (`denyRead: ["secrets"]`, `allowRead: ["secrets/public"]`, then `secrets/public/key` fails), though srt's README says `allowRead` wins. Seen on 0.0.79; recheck on 0.0.81 before filing
+- Package-manager safety settings don't apply inside the sandbox: `min-release-age` and `ignore-scripts` set in `~/.npmrc` read as unset there, since the file is unreadable. Same for `~/.bunfig.toml` and `~/.config/pip/pip.conf`; only `~/.config/uv/uv.toml` is readable. Passing the values in through `~/.blackwall/.env` would conflict with `--no-config`, which skips that file
 
 ## Linux
 
