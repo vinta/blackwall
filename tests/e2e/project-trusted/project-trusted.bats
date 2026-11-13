@@ -31,6 +31,11 @@ setup() {
   assert_output 1
 }
 
+@test "BLACKWALL_VERSION carries the version" {
+  run -0 blackwall sh -c 'echo $BLACKWALL_VERSION'
+  run -0 grep -q "\"version\": \"$output\"" "$repo/package.json"
+}
+
 @test "project .env can't override blackwall vars" {
   run -0 blackwall sh -c 'echo $GH_CONFIG_DIR'
   assert_output "$home/.cache-blackwall/gh"

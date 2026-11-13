@@ -53,6 +53,21 @@ setup() {
   assert_output --partial "Request was cancelled"
 }
 
+@test "node's own https.Agent ignores the proxy" {
+  run -0 blackwall "$node" -e 'const https = require("node:https"); https.get("https://api.github.com", { agent: new https.Agent() }).on("error", (e) => console.log(e.syscall))'
+  # ENOTFOUND on macOS, EAI_AGAIN on Linux
+  assert_output getaddrinfo
+}
+
+# corepack reads package.json files upward until one names a package manager, and the repo's own is unreadable
+@test "corepack downloads a package manager" {
+  mkdir -p "$proj/corepack"
+  echo '{"packageManager": "pnpm@10.0.0"}' >"$proj/corepack/package.json"
+
+  run -0 blackwall sh -c 'cd corepack && "$0" "$1" pnpm --version' "$node" "$(dirname "$node")/corepack"
+  assert_line 10.0.0
+}
+
 @test "gh runs" {
   run -0 blackwall gh --version
 }
