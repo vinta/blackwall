@@ -84,7 +84,7 @@ allow_listener() {
 }
 
 @test "public host allowed under *" {
-  assert_equal "$(http_code https://example.com/)" 200
+  assert_equal "$(http_code https://www.wikipedia.org/)" 200
 }
 
 # 1.1.1.1 may answer 200 or 301; only the proxy's 403 matters

@@ -18,13 +18,13 @@ setup() {
 }
 
 @test "other host blocked" {
-  run ! blackwall curl -sSv -o /dev/null --max-time 20 https://example.com
+  run ! blackwall curl -sSv -o /dev/null --max-time 20 https://www.wikipedia.org
   assert_output --partial "response 403"
   assert_output --partial "403 host is not on the allow list"
 }
 
 @test "--allow-internet allows other host" {
-  run -0 blackwall --allow-internet curl -sS -o /dev/null --max-time 20 https://example.com
+  run -0 blackwall --allow-internet curl -sS -o /dev/null --max-time 20 https://www.wikipedia.org
 }
 
 # srt's NO_PROXY sends loopback around the proxy, so curl clears it
