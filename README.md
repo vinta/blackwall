@@ -187,7 +187,7 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, write
   - [git](src/presets/git.js): Your git config and global ignore files. Commit signing off, since gpg can't reach `~/.gnupg`. Keeps srt's proxy login out of your credential helpers. Denies writes to `.git/hooks` and `.git/config` in `--add-dir` folders, since srt covers only the current folder. Drop it only if you won't run git: with a `~/.gitconfig` it can't read, git refuses to start
   - [github](src/presets/github.js): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
   - [python](src/presets/python.js): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
-  - [node](src/presets/node.js): The npm registry, and Node.js installed by fnm
+  - [node](src/presets/node.js): The npm registry, Node.js installed by fnm, and cache folders for npm and corepack
   - [pre-commit](src/presets/pre-commit.js): Its cache folder, and hook repos clone through srt's proxy
   - [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders: an unsandboxed `claude` runs what they hold, the settings even before you trust the folder
 - **Off by default**
