@@ -4,19 +4,12 @@ import { copyFileSync, existsSync, mkdirSync, renameSync } from "node:fs";
 import { basename, dirname } from "node:path";
 import { parseEnv } from "node:util";
 
-import packageJson from "../package.json" with { type: "json" };
-
 import { main } from "./cli/index.js";
 import { readIfExists } from "./config/config.js";
 import { HOME, SIGNED_NODE } from "./constants/paths.js";
 
 // Seatbelt can't nest, and inside, ~/.blackwall is unreadable on macOS and empty on Linux
 if (process.env.BLACKWALL_SANDBOX === "1") {
-  // Bug reports written inside a session need the version
-  if (process.argv[2] === "--version") {
-    console.log(packageJson.version);
-    process.exit(0);
-  }
   console.error("blackwall: can't run inside a sandbox; run it from a plain terminal");
   process.exit(2);
 }

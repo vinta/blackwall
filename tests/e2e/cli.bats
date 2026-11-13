@@ -13,13 +13,8 @@ setup() {
 @test "nested blackwall refused" {
   # fnm's PATH entry is a link under the real ~/.local/state, which the stub HOME doesn't grant
 
-  run -2 blackwall --add-dir "$repo" "$(realpath "$(command -v node)")" "$repo/src/blackwall.js" true
+  run -2 blackwall --add-dir "$repo" "$(realpath "$(command -v node)")" "$repo/src/blackwall.js" --version
   assert_output --partial "run inside a sandbox"
-}
-
-@test "--version works inside a sandbox" {
-  run -0 blackwall --add-dir "$repo" "$(realpath "$(command -v node)")" "$repo/src/blackwall.js" --version
-  run -0 grep -q "\"version\": \"$output\"" "$repo/package.json"
 }
 
 @test "package ships the skill" {

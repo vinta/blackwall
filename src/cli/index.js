@@ -97,7 +97,7 @@ export async function main(args) {
 
   // Each label names where its vars and shell lines come from, for --print-env
   const envSources = [
-    ["blackwall: tells scripts they run inside blackwall", { BLACKWALL_SANDBOX: "1" }],
+    ["blackwall: tells scripts they run inside blackwall, and which version", { BLACKWALL_SANDBOX: "1", BLACKWALL_VERSION: packageJson.version }],
     ...presets.filter((preset) => Object.keys(preset.env).length || preset.shell.length).map((preset) => [`preset ${preset.name}: ${preset.why}`, preset.env, preset.shell]),
     ...(adapter.env ? [[`adapter ${name}`, adapter.env()]] : []),
   ];

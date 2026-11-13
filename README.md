@@ -156,7 +156,7 @@ Put your env vars in `~/.blackwall/.env`:
 GH_TOKEN=xxx   # generate a read-only PAT from https://github.com/settings/personal-access-tokens
 ```
 
-Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs inside blackwall.
+Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs inside blackwall, and `BLACKWALL_VERSION` with the version of the blackwall that started them.
 
 ### Default
 

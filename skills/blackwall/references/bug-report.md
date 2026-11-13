@@ -20,7 +20,7 @@ One bug per report.
 
 ## Environment
 - OS and version, backend (Seatbelt on macOS, bubblewrap on Linux)
-- blackwall version: `blackwall --version`, which works inside too; when the sandbox can't read blackwall's own files, ask the user or write "not captured"
+- blackwall version: `$BLACKWALL_VERSION` inside, `blackwall --version` outside; when neither is available, ask the user or write "not captured"
 - Node version, the wrapped command and its version
 - Ran inside the sandbox, outside, or both
 
