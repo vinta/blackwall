@@ -161,3 +161,22 @@ EOF
   run -0 cat "$home/.claude-blackwall/plugins/installed_plugins.json"
   assert_output --partial "\"installPath\": \"$home/.claude/plugins/cache/y/x/2.0.0\""
 }
+
+@test "marketplaces copied from the host with auto-update off" {
+  printf '#!/bin/sh\n' >"$proj/claude" && chmod +x "$proj/claude"
+  rm -f "$home/.claude-blackwall/plugins/known_marketplaces.json"
+
+  run -0 blackwall ./claude
+  run -0 node -e 'const { y } = require(process.argv[1]); if (y.installLocation !== process.argv[2] || y.autoUpdate !== false) { console.log(y); process.exit(1); }' "$home/.claude-blackwall/plugins/known_marketplaces.json" "$home/.claude/plugins/marketplaces/y"
+}
+
+@test "marketplaces refreshed from the host, keeping sandbox ones" {
+  printf '#!/bin/sh\n' >"$proj/claude" && chmod +x "$proj/claude"
+  mkdir -p "$home/.claude-blackwall/plugins"
+  cat >"$home/.claude-blackwall/plugins/known_marketplaces.json" <<EOF
+{"y":{"source":{"source":"github","repo":"o/y"},"installLocation":"$home/.claude-blackwall/plugins/marketplaces/y","lastUpdated":"2026-01-01T00:00:00.000Z","autoUpdate":false},"z":{"source":{"source":"github","repo":"o/z"},"installLocation":"$home/.claude-blackwall/plugins/marketplaces/z","lastUpdated":"2026-01-01T00:00:00.000Z"}}
+EOF
+
+  run -0 blackwall ./claude
+  run -0 node -e 'const { y, z } = require(process.argv[1]); if (y.installLocation !== process.argv[2] || y.autoUpdate !== false || !z) { console.log(y, z); process.exit(1); }' "$home/.claude-blackwall/plugins/known_marketplaces.json" "$home/.claude/plugins/marketplaces/y"
+}

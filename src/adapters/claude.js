@@ -81,6 +81,10 @@ export default {
     // Claude records each enabled plugin once, pointing at the profile's own cache, which never exists, and never refreshes it, so re-apply the host's record every launch
     // Entries only in the profile are plugins installed inside the sandbox
     mergeHostRecord("installed_plugins.json", (host, profile = { ...host, plugins: {} }) => ({ ...profile, plugins: { ...profile.plugins, ...host.plugins } }));
+
+    // Claude loads plugins before it syncs the seed's marketplaces into the profile, so a plugin from a marketplace added on the host since the last launch fails to load once
+    // autoUpdate off, as Claude's own sync writes it, since the host's marketplaces folder is read-only here
+    mergeHostRecord("known_marketplaces.json", (host, profile) => ({ ...profile, ...Object.fromEntries(Object.entries(host).map(([name, marketplace]) => [name, { ...marketplace, autoUpdate: false }])) }));
   },
 };
 
