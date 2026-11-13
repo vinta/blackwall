@@ -54,8 +54,9 @@ setup() {
 }
 
 @test "node's own https.Agent ignores the proxy" {
-  run -0 blackwall "$node" -e 'const https = require("node:https"); https.get("https://api.github.com", { agent: new https.Agent() }).on("error", (e) => console.log(e.code))'
-  assert_output ENOTFOUND
+  run -0 blackwall "$node" -e 'const https = require("node:https"); https.get("https://api.github.com", { agent: new https.Agent() }).on("error", (e) => console.log(e.syscall))'
+  # ENOTFOUND on macOS, EAI_AGAIN on Linux
+  assert_output getaddrinfo
 }
 
 # corepack reads package.json files upward until one names a package manager, and the repo's own is unreadable
