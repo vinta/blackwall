@@ -29,6 +29,15 @@ setup() {
   run ! git -C "$proj" rev-parse -q --verify refs/heads/gone
 }
 
+# git falls back to a terminal prompt when no helper answers, and a sandboxed command has none
+@test "git over HTTPS gets no login from the keychain helper" {
+  [ "$(uname)" = Darwin ] || skip "macOS only"
+  git config --file "$home/.gitconfig" credential.helper osxkeychain
+
+  run -128 blackwall git ls-remote https://github.com/vinta/blackwall-e2e-missing HEAD
+  assert_output "fatal: could not read Username for 'https://github.com': Device not configured"
+}
+
 # git saves srt's per-launch proxy login through every credential helper after a transfer
 @test "git keeps srt's proxy login out of credential helpers" {
   git config --file "$home/.gitconfig" credential.helper "store --file=$proj/creds.txt"
