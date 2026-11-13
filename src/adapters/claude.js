@@ -80,25 +80,32 @@ export default {
 
     // Claude records each enabled plugin once, pointing at the profile's own cache, which never exists, and never refreshes it, so re-apply the host's record every launch
     // Entries only in the profile are plugins installed inside the sandbox
-    let host;
-    try {
-      host = JSON.parse(readFileSync(`${PLUGINS}/installed_plugins.json`, "utf8"));
-    } catch (error) {
-      if (error.code === "ENOENT") return;
-      throw error;
-    }
-    mkdirManaged(`${PROFILE}/plugins`);
-    const record = `${PROFILE}/plugins/installed_plugins.json`;
-    // A sandboxed run can plant a link here to have a host file written through, a FIFO to block the read forever, or a directory to fail the launch
-    if (lstatSync(record, { throwIfNoEntry: false })?.isFile() === false) rmSync(record, { recursive: true });
-    let profile;
-    try {
-      profile = JSON.parse(readFileSync(record, "utf8"));
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-      profile = { ...host, plugins: {} };
-    }
-    profile.plugins = { ...profile.plugins, ...host.plugins };
-    writeFileSync(record, `${JSON.stringify(profile, null, 2)}\n`);
+    mergeHostRecord("installed_plugins.json", (host, profile = { ...host, plugins: {} }) => ({ ...profile, plugins: { ...profile.plugins, ...host.plugins } }));
+
+    // Claude loads plugins before it syncs the seed's marketplaces into the profile, so a plugin from a marketplace added on the host since the last launch fails to load once
+    // autoUpdate off, as Claude's own sync writes it, since the host's marketplaces folder is read-only here
+    mergeHostRecord("known_marketplaces.json", (host, profile) => ({ ...profile, ...Object.fromEntries(Object.entries(host).map(([name, marketplace]) => [name, { ...marketplace, autoUpdate: false }])) }));
   },
 };
+
+// Writes merge(host, profile) over the profile's copy of a plugins/ file; profile is undefined when the profile has none
+function mergeHostRecord(file, merge) {
+  let host;
+  try {
+    host = JSON.parse(readFileSync(`${PLUGINS}/${file}`, "utf8"));
+  } catch (error) {
+    if (error.code === "ENOENT") return;
+    throw error;
+  }
+  mkdirManaged(`${PROFILE}/plugins`);
+  const record = `${PROFILE}/plugins/${file}`;
+  // A sandboxed run can plant a link here to have a host file written through, a FIFO to block the read forever, or a directory to fail the launch
+  if (lstatSync(record, { throwIfNoEntry: false })?.isFile() === false) rmSync(record, { recursive: true });
+  let profile;
+  try {
+    profile = JSON.parse(readFileSync(record, "utf8"));
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+  writeFileSync(record, `${JSON.stringify(merge(host, profile), null, 2)}\n`);
+}
