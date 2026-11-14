@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-import { execFileSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, renameSync } from "node:fs";
-import { basename, dirname } from "node:path";
+import { existsSync } from "node:fs";
+import { basename } from "node:path";
 import { parseEnv } from "node:util";
 
 import { main } from "./cli/index.js";
@@ -14,19 +13,19 @@ if (process.env.BLACKWALL_SANDBOX === "1") {
   process.exit(2);
 }
 
-Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
+// main() parses flags too late, since this .env and the signed node check below already depend on them. Flags end at the command or --
+let noConfig = false;
+let generateSignedNode = false;
+const args = process.argv.slice(2);
+for (let i = 0; i < args.length && args[i].startsWith("-") && args[i] !== "--"; i += args[i] === "--add-dir" ? 2 : 1) {
+  if (args[i] === "--no-config") noConfig = true;
+  if (args[i] === "--generate-signed-node") generateSignedNode = true;
+}
+if (!noConfig) Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
 
-// Create an ad-hoc-signed node copy, so users can configure firewall rules for blackwall
-if (process.env.BLACKWALL_USE_SELF_SIGNED_NODE === "1" && basename(process.execPath) !== basename(SIGNED_NODE)) {
-  if (!existsSync(SIGNED_NODE)) {
-    mkdirSync(dirname(SIGNED_NODE), { recursive: true });
-    // Signed under a temp name, so an interrupted run can't leave a broken copy that counts as present
-    const temp = `${SIGNED_NODE}.tmp`;
-    copyFileSync(process.execPath, temp);
-    execFileSync("codesign", ["-f", "-s", "-", temp], { stdio: "pipe" });
-    renameSync(temp, SIGNED_NODE);
-  }
-
+// codesign is macOS-only, so a file at this path elsewhere must never run unsandboxed
+// --generate-signed-node copies process.execPath, so it stays in plain node rather than copy the copy
+if (process.platform === "darwin" && !generateSignedNode && existsSync(SIGNED_NODE) && basename(process.execPath) !== basename(SIGNED_NODE)) {
   // Replaces this process in place, keeping its pid and stdio, so the terminal sees one process,
   // so that blackwall runs in signed node, not plain node
   process.execve(SIGNED_NODE, [SIGNED_NODE, ...process.execArgv, ...process.argv.slice(1)]);

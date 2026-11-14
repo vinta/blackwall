@@ -26,6 +26,12 @@ setup() {
   assert_output project
 }
 
+@test "--no-config skips the project config and both .env files" {
+  run -1 blackwall --add-dir "$added" --no-config sh -c 'echo "[$E2E_TOKEN]"; cat "$1"' sh "$elsewhere/secret.txt"
+  assert_line --index 0 "[]"
+  refute_output --partial hunter2
+}
+
 @test "BLACKWALL_SANDBOX marks the sandbox" {
   run -0 blackwall sh -c 'echo $BLACKWALL_SANDBOX'
   assert_output 1
