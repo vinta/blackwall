@@ -29,14 +29,10 @@ setup() {
 
 # pbpaste exits 1 when Seatbelt refuses the pasteboard service, whatever the clipboard holds
 @test "clipboard preset reaches the pasteboard (macOS)" {
-  [ "$(uname)" = Darwin ] || skip "macOS only"
-
   run -0 blackwall sh -c 'pbpaste >/dev/null'
 }
 
 @test "clipboard preset replaces the pasteboard (macOS)" {
-  [ "$(uname)" = Darwin ] || skip "macOS only"
-
   run -0 blackwall sh -c 'printf blackwall-e2e | pbcopy && pbpaste'
   assert_output blackwall-e2e
 }

@@ -31,7 +31,6 @@ setup() {
 
 # git falls back to a terminal prompt when no helper answers, and a sandboxed command has none
 @test "git over HTTPS gets no login from the keychain helper" {
-  [ "$(uname)" = Darwin ] || skip "macOS only"
   git config --file "$home/.gitconfig" credential.helper osxkeychain
 
   run -128 blackwall git ls-remote https://github.com/vinta/blackwall-e2e-missing HEAD

@@ -5,11 +5,12 @@
 ### Breaking Changes
 
 - `BLACKWALL_USE_SELF_SIGNED_NODE` is no longer read. Blackwall runs in its ad-hoc-signed node copy whenever `~/.blackwall/node-blackwall` exists, so run `blackwall --generate-signed-node` once to create it, and delete it to turn it off. If you ever launched with the variable, the copy already exists and blackwall keeps running in it, even after you removed the variable. Run the command again if you upgraded Node since then
+- Linux is no longer supported, so blackwall refuses to run on any OS but macOS. On Ubuntu 25.04 and later, it couldn't start anyway. `srt.enableWeakerNestedSandbox`, which only worked on Linux, is a config error now, so remove it from your config
 
 ### Changes
 
 - `homebrew` preset, on by default. `brew --prefix <formula>` and `brew --cellar <formula>` work in the sandbox, so `$(brew --prefix ansible)` in a Makefile no longer expands to an empty string
-- Upgrades srt to 0.0.81. Every change in that release is on Windows, so nothing changes on macOS or Linux
+- Upgrades srt to 0.0.81. Every change in that release is on Windows, so nothing changes on macOS
 - `blackwall --no-config` ignores `~/.blackwall/config.json`, `.blackwall/config.json`, and both `.env` files for one run, so a third-party tool gets the defaults only, not the hosts and paths your config adds. An untrusted project config is skipped instead of refused
 
 ## v0.6.0 / 2026-10-28

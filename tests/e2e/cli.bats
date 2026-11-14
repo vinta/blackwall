@@ -17,6 +17,11 @@ setup() {
   assert_output --partial "run inside a sandbox"
 }
 
+@test "refused off macOS" {
+  run -2 env HOME="$home" node --input-type=module -e 'Object.defineProperty(process, "platform", { value: "linux" }); await import(process.argv[1])' "$repo/src/blackwall.js"
+  assert_output "blackwall: works on macOS only"
+}
+
 @test "package ships the skill" {
   run -0 bash -c 'cd "$1" && npm pack --dry-run --json' bash "$repo"
   assert_output --partial '"skills/blackwall/SKILL.md"'

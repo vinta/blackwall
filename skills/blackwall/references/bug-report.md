@@ -19,7 +19,7 @@ One bug per report.
 # <what blackwall did>, <under what condition>
 
 ## Environment
-- OS and version, backend (Seatbelt on macOS, bubblewrap on Linux)
+- macOS version
 - blackwall version: `$BLACKWALL_VERSION` inside, `blackwall --version` outside; when neither is available, ask the user or write "not captured"
 - Node version, the wrapped command and its version
 - Ran inside the sandbox, outside, or both

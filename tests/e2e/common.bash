@@ -29,5 +29,5 @@ prepare() {
   git -C "$added" init -q
 }
 
-# Ubuntu runners set XDG_CONFIG_HOME to the real home, so git would read its config from outside the stub
+# An XDG_CONFIG_HOME set on the host would point git's config outside the stub
 blackwall() { (cd "$proj" && HOME=$home XDG_CONFIG_HOME=$home/.config node "$repo/src/blackwall.js" "$@"); }

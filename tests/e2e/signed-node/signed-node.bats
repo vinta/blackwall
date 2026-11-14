@@ -19,7 +19,6 @@ plant_stub() {
 }
 
 @test "the signed copy runs blackwall" {
-  [ "$(uname)" = Darwin ] || skip "macOS only"
   plant_stub
 
   run -0 blackwall --version
@@ -30,21 +29,12 @@ plant_stub() {
   assert_output --partial node-blackwall
 }
 
-@test "the signed copy ignored off macOS" {
-  [ "$(uname)" = Linux ] || skip "Linux only"
-  plant_stub
-
-  run -0 blackwall --version
-  refute_output --partial node-blackwall
-}
-
 @test "--generate-signed-node after the command goes to the command" {
   run -0 blackwall --no-config -- echo --generate-signed-node
   assert_output -- --generate-signed-node
 }
 
 @test "--generate-signed-node replaces the copy from plain node" {
-  [ "$(uname)" = Darwin ] || skip "macOS only"
   plant_stub
 
   run -0 blackwall --generate-signed-node
@@ -53,12 +43,4 @@ plant_stub() {
   assert_output --partial "Signature=adhoc"
   run -0 "$home/.blackwall/node-blackwall" --version
   assert_output "$(node --version)"
-}
-
-@test "--generate-signed-node refused off macOS" {
-  [ "$(uname)" = Linux ] || skip "Linux only"
-
-  run -2 blackwall --generate-signed-node
-  assert_output "blackwall: --generate-signed-node works on macOS only"
-  refute [ -e "$home/.blackwall/node-blackwall" ]
 }

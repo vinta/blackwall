@@ -36,7 +36,6 @@
   },
   "srt": {
     "enableWeakerNetworkIsolation": true,
-    "enableWeakerNestedSandbox": false,
     "allowPty": true
   }
 }

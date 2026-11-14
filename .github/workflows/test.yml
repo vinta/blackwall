@@ -21,8 +21,6 @@ jobs:
         os:
           - macos-26
           - macos-latest
-          - ubuntu-24.04
-          - ubuntu-latest
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
@@ -35,14 +33,6 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: '24'
-
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y bubblewrap socat ripgrep zsh
-          # Ubuntu 24.04+ strips capabilities from unprivileged user namespaces, which bubblewrap needs
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
       - name: Install dependencies
         run: |

@@ -55,7 +55,6 @@ setup() {
 
 @test "node's own https.Agent ignores the proxy" {
   run -0 blackwall "$node" -e 'const https = require("node:https"); https.get("https://api.github.com", { agent: new https.Agent() }).on("error", (e) => console.log(e.syscall))'
-  # ENOTFOUND on macOS, EAI_AGAIN on Linux
   assert_output getaddrinfo
 }
 
@@ -98,7 +97,6 @@ setup() {
   run -0 cat "$proj/result"
   assert_output 0
 
-  # On Linux the child's proxy port belongs to the relay inside its network namespace, so this probe checks the proxy is gone on macOS only
   proxy=$(cat "$proj/proxy")
   port=${proxy##*:}
   run ! nc -z -w 1 127.0.0.1 "${port%/}"
