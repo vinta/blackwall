@@ -32,10 +32,8 @@ for (const range of Object.values(SRT_REFUSED_CLASSES).flat()) assert.equal(guar
 assert.equal(SandboxManager.askCallbackDenyReason, true);
 
 const defaults = JSON.parse(readFileSync(new URL("../src/config/default-config.json", import.meta.url), "utf8"));
-const { srt, useSelfSignedNode, ...lists } = defaults;
-accepts({ srt, useSelfSignedNode, overrideDefaults: lists });
-rejects({ overrideDefaults: { useSelfSignedNode: true } }, /^unknown key overrideDefaults\.useSelfSignedNode$/);
-rejects({ useSelfSignedNode: "1" });
+const { srt, ...lists } = defaults;
+accepts({ srt, overrideDefaults: lists });
 
 accepts({ network: { allowedHosts: ["*", "github.com"] } });
 rejects({ network: { allowedHosts: ["*:22"] } });

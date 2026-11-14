@@ -2,12 +2,15 @@
 
 ## Unreleased
 
+### Breaking Changes
+
+- `BLACKWALL_USE_SELF_SIGNED_NODE` is no longer read. Blackwall runs in its ad-hoc-signed node copy whenever `~/.blackwall/node-blackwall` exists, so run `blackwall --generate-signed-node` once to create it, and delete it to turn it off. If you ever launched with the variable, the copy already exists and blackwall keeps running in it, even after you removed the variable. Run the command again if you upgraded Node since then
+
 ### Changes
 
 - `homebrew` preset, on by default. `brew --prefix <formula>` and `brew --cellar <formula>` work in the sandbox, so `$(brew --prefix ansible)` in a Makefile no longer expands to an empty string
 - Upgrades srt to 0.0.81. Every change in that release is on Windows, so nothing changes on macOS or Linux
 - `blackwall --no-config` ignores `~/.blackwall/config.json`, `.blackwall/config.json`, and both `.env` files for one run, so a third-party tool gets the defaults only, not the hosts and paths your config adds. An untrusted project config is skipped instead of refused
-- `blackwall --self-signed-node` and `"useSelfSignedNode": true` in `~/.blackwall/config.json` run blackwall in its ad-hoc-signed node copy, like `BLACKWALL_USE_SELF_SIGNED_NODE=1`. The flag works under `--no-config` too, which skips the files that set the other two
 
 ## v0.6.0 / 2026-10-28
 

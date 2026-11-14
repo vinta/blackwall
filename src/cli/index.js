@@ -9,13 +9,14 @@ import { buildConfig, readProjectEnv } from "../config/config.js";
 import { SANDBOX_CACHE } from "../constants/paths.js";
 import { createSandbox } from "../sandbox/srt.js";
 import { completion } from "./commands/completion.js";
+import { generateSignedNode } from "./commands/generateSignedNode.js";
 import { printConfig } from "./commands/printConfig.js";
 import { printEnv } from "./commands/printEnv.js";
 import { printFileAccess } from "./commands/printFileAccess.js";
 import { printNetworkAccess } from "./commands/printNetworkAccess.js";
 import { trust } from "./commands/trust.js";
 
-const USAGE = "usage: blackwall [--add-dir DIR]... [--allow-internet] [--no-config] [--self-signed-node] [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --version | --completion zsh | --help] [--] <command> [args...]";
+const USAGE = "usage: blackwall [--add-dir DIR]... [--allow-internet] [--no-config] [--print-config | --print-file-access | --print-network-access | --print-env | --trust | --generate-signed-node | --version | --completion zsh | --help] [--] <command> [args...]";
 
 // Each adapter handles one command's quirks, matched by the command's name
 const ADAPTERS = { claude, codex };
@@ -40,9 +41,6 @@ export async function main(args) {
     } else if (args[0] === "--no-config") {
       args.shift();
       noConfig = true;
-    } else if (args[0] === "--self-signed-node") {
-      // Handled in blackwall.js before main() runs
-      args.shift();
     } else if (args[0] === "--print-config") {
       args.shift();
       showConfig = true;
@@ -57,6 +55,10 @@ export async function main(args) {
       showEnv = true;
     } else if (args[0] === "--trust") {
       trust();
+      process.exit(0);
+    } else if (args[0] === "--generate-signed-node") {
+      if (process.platform !== "darwin") exitWithError("--generate-signed-node works on macOS only");
+      generateSignedNode();
       process.exit(0);
     } else if (args[0] === "--completion") {
       args.shift();
