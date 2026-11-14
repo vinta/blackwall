@@ -190,6 +190,19 @@ setup() {
   assert_output /opt/homebrew/opt/blackwall-probe
 }
 
+@test "brew --prefix answers from a HOMEBREW_CACHE set in ~/.blackwall/.env" {
+  [ "$(brew --prefix 2>/dev/null)" = /opt/homebrew ] || skip "needs Homebrew in /opt/homebrew"
+  mkdir -p "$home/brewcache/api"
+  echo blackwall-probe >"$home/brewcache/api/formula_names.txt"
+  echo "HOMEBREW_CACHE=$home/brewcache" >"$home/.blackwall/.env"
+
+  # Removed before asserting, so a failure can't leak the .env into later tests
+  HOMEBREW_CACHE= run blackwall brew --prefix blackwall-probe
+  rm "$home/.blackwall/.env"
+  assert_success
+  assert_output /opt/homebrew/opt/blackwall-probe
+}
+
 # zsh writes heredocs under $TMPPREFIX, /tmp/zsh by default, not $TMPDIR
 @test "zsh heredoc" {
   command -v zsh >/dev/null || skip "no zsh"
