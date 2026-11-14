@@ -4,6 +4,7 @@
 
 ### Changes
 
+- `homebrew` preset, on by default. `brew --prefix <formula>` and `brew --cellar <formula>` work in the sandbox, so `$(brew --prefix ansible)` in a Makefile no longer expands to an empty string
 - Upgrades srt to 0.0.81. Every change in that release is on Windows, so nothing changes on macOS or Linux
 
 ## v0.6.0 / 2026-10-28

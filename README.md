@@ -82,7 +82,7 @@ Blackwall is srt underneath, with the setup done for you:
 | Localhost and LAN       | Private ranges denied by the `private-network` preset, and `local-network` keeps `localhost` denied under `"*"`            | Loopback denied, but an allowed name can still resolve into your LAN                          |
 | `~/.claude`             | `~/.claude-blackwall`, with your `CLAUDE.md`, rules, skills, agents, commands, and output styles copied in on every launch | Must be writable for `claude` to run, so the agent can edit your hooks and settings           |
 | Agent files in the repo | Also `.claude/settings.json`, `.claude/settings.local.json`, and `.claude/hooks`, and all six in `--add-dir` folders too   | `.mcp.json`, `.claude/commands`, and `.claude/agents` denied, beneath the current folder only |
-| Tool setup              | Presets for `python`, `node`, `github`, `git`, and `pre-commit`                                                            | Yours to write: each tool's hosts, read paths, and cache folders                              |
+| Tool setup              | Presets for `python`, `node`, `homebrew`, `github`, `git`, and `pre-commit`                                                | Yours to write: each tool's hosts, read paths, and cache folders                              |
 | Project config          | `.blackwall/config.json`, loaded only after `--trust`                                                                      | None, only `--settings` with a path                                                           |
 | Inspection              | `--print-config`, `--print-file-access`, `--print-network-access`, and `--print-env`                                       | `--debug` logs                                                                                |
 
@@ -162,7 +162,7 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 [`src/config/default-config.json`](src/config/default-config.json) holds the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`, at the top level or, except `srt`, under `overrideDefaults`.
 
-- `presets: ["agent-files", "python", "node", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
+- `presets: ["agent-files", "python", "node", "homebrew", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
 - `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. srt refuses loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses for every name, and blackwall does the same for IP literals under `"*"`
 - `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name. A range is overridden only by that IP itself in `allowedHosts`
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
@@ -188,6 +188,7 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, write
   - [github](src/presets/github.js): GitHub, for `git`, `gh`, and raw files, and gh's own config folder
   - [python](src/presets/python.js): PyPI, for `pip` and `uv`, and uv's config, Python installs, and tools
   - [node](src/presets/node.js): The npm registry, Node.js installed by fnm, and cache folders for npm and corepack
+  - [homebrew](src/presets/homebrew.js): Homebrew's formula list, so `brew --prefix <formula>` and `brew --cellar <formula>` work. `brew install` and other commands that write still fail
   - [pre-commit](src/presets/pre-commit.js): Its cache folder, and hook repos clone through srt's proxy
   - [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders: an unsandboxed `claude` runs what they hold, the settings even before you trust the folder
 - **Off by default**
