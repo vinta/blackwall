@@ -10,7 +10,7 @@ Claude Code's sandbox covers shell commands only, and Codex's network proxy skip
 
 ## Installation
 
-Needs macOS and Node.js 22.21 or later.
+Needs Node.js 22.21 or later.
 
 ```bash
 npm install -g blackwall-sandbox
