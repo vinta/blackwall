@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.7.0 / 2026-11-14
+## v0.7.0 / 2026-11-15
 
 ### Breaking Changes
 
