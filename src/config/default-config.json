@@ -3,6 +3,7 @@
     "agent-files",
     "python",
     "node",
+    "homebrew",
     "github",
     "git",
     "pre-commit",

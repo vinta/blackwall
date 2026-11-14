@@ -9,6 +9,7 @@ import agentFiles from "../presets/agent-files.js";
 import clipboard from "../presets/clipboard.js";
 import git from "../presets/git.js";
 import github from "../presets/github.js";
+import homebrew from "../presets/homebrew.js";
 import linux from "../presets/linux.js";
 import localNetwork from "../presets/local-network.js";
 import mac from "../presets/mac.js";
@@ -26,6 +27,7 @@ export const PRESETS = {
   clipboard,
   git,
   github,
+  homebrew,
   linux,
   "local-network": localNetwork,
   mac,

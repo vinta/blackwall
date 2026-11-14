@@ -180,6 +180,16 @@ setup() {
   assert [ -f "$home/.cache-blackwall/pre-commit/probe" ]
 }
 
+# brew answers from the formula list without checking the formula is installed, so a made-up name proves the read
+@test "brew --prefix answers from the API cache" {
+  [ "$(brew --prefix 2>/dev/null)" = /opt/homebrew ] || skip "needs Homebrew in /opt/homebrew"
+  mkdir -p "$home/Library/Caches/Homebrew/api"
+  echo blackwall-probe >"$home/Library/Caches/Homebrew/api/formula_names.txt"
+
+  HOMEBREW_CACHE= run -0 blackwall brew --prefix blackwall-probe
+  assert_output /opt/homebrew/opt/blackwall-probe
+}
+
 # zsh writes heredocs under $TMPPREFIX, /tmp/zsh by default, not $TMPDIR
 @test "zsh heredoc" {
   command -v zsh >/dev/null || skip "no zsh"
