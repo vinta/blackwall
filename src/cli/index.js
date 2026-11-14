@@ -57,7 +57,6 @@ export async function main(args) {
       trust();
       process.exit(0);
     } else if (args[0] === "--generate-signed-node") {
-      if (process.platform !== "darwin") exitWithError("--generate-signed-node works on macOS only");
       generateSignedNode();
       process.exit(0);
     } else if (args[0] === "--completion") {

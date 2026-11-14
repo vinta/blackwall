@@ -1,6 +1,6 @@
 import { getDefaultWritePaths } from "@anthropic-ai/sandbox-runtime";
 import { createHash } from "node:crypto";
-import { existsSync, globSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, readlinkSync } from "node:fs";
 import { dirname, join, normalize, resolve } from "node:path";
 import { parseEnv } from "node:util";
 
@@ -10,7 +10,6 @@ import clipboard from "../presets/clipboard.js";
 import git from "../presets/git.js";
 import github from "../presets/github.js";
 import homebrew from "../presets/homebrew.js";
-import linux from "../presets/linux.js";
 import localNetwork from "../presets/local-network.js";
 import mac from "../presets/mac.js";
 import node from "../presets/node.js";
@@ -28,7 +27,6 @@ export const PRESETS = {
   git,
   github,
   homebrew,
-  linux,
   "local-network": localNetwork,
   mac,
   node,
@@ -57,7 +55,7 @@ export function buildConfig({ addDirs, allowInternet, noConfig, additions }) {
   };
 
   // Always on, so overriding presets can't drop the sandbox's own needs
-  const ALWAYS = ["tmpdir", ...({ darwin: ["mac"], linux: ["linux"] }[process.platform] ?? [])];
+  const ALWAYS = ["tmpdir", "mac"];
   const names = [...new Set([...ALWAYS, ...basePresets, ...user.presets, ...project.presets])];
   const presets = names.map((name) => {
     if (!Object.hasOwn(PRESETS, name)) {
@@ -165,15 +163,10 @@ export function buildConfig({ addDirs, allowInternet, noConfig, additions }) {
   return { config, presets };
 }
 
-// Linux's write lists take no globs, so it gets what exists at launch, up to three folders deep (each level tries .* since * skips dot folders): a folder created during the run stays writable there, as under srt's own denies.
-// Only the first component has to exist, so a missing .claude/settings.json in an existing .claude folder is still denied
 function nestedMatches(dir, path) {
   // srt rejects a deny glob that ends in a separator
   const relative = normalize(path).replace(/\/$/, "");
-  if (process.platform === "darwin") return [`${dir}/**/${relative}`];
-  const [first, ...rest] = relative.split("/");
-  const levels = ["{.*,*}", "{.*,*}/{.*,*}", "{.*,*}/{.*,*}/{.*,*}"];
-  return globSync(levels.map((level) => `${level}/${first}`), { cwd: dir }).map((match) => [dir, match, ...rest].join("/"));
+  return [`${dir}/**/${relative}`];
 }
 
 // Every symlink the sandbox can write is one a run could have planted, so this follows links one hop at a time, like the kernel, and gives up at the first such link, which realpathSync would follow

@@ -7,9 +7,13 @@ import { main } from "./cli/index.js";
 import { readIfExists } from "./config/config.js";
 import { HOME, SIGNED_NODE } from "./constants/paths.js";
 
-// Seatbelt can't nest, and inside, ~/.blackwall is unreadable on macOS and empty on Linux
+// Seatbelt can't nest, and inside, ~/.blackwall is unreadable
 if (process.env.BLACKWALL_SANDBOX === "1") {
   console.error("blackwall: can't run inside a sandbox; run it from a plain terminal");
+  process.exit(2);
+}
+if (process.platform !== "darwin") {
+  console.error("blackwall: works on macOS only");
   process.exit(2);
 }
 
@@ -23,9 +27,8 @@ for (let i = 0; i < args.length && args[i].startsWith("-") && args[i] !== "--"; 
 }
 if (!noConfig) Object.assign(process.env, parseEnv(readIfExists(`${HOME}/.blackwall/.env`) ?? ""));
 
-// codesign is macOS-only, so a file at this path elsewhere must never run unsandboxed
 // --generate-signed-node copies process.execPath, so it stays in plain node rather than copy the copy
-if (process.platform === "darwin" && !generateSignedNode && existsSync(SIGNED_NODE) && basename(process.execPath) !== basename(SIGNED_NODE)) {
+if (!generateSignedNode && existsSync(SIGNED_NODE) && basename(process.execPath) !== basename(SIGNED_NODE)) {
   // Replaces this process in place, keeping its pid and stdio, so the terminal sees one process,
   // so that blackwall runs in signed node, not plain node
   process.execve(SIGNED_NODE, [SIGNED_NODE, ...process.execArgv, ...process.argv.slice(1)]);

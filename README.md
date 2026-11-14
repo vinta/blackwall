@@ -17,16 +17,6 @@ npm install -g blackwall-sandbox
 ```
 
 <details>
-<summary>Linux</summary>
-
-```bash
-sudo apt-get install -y bubblewrap socat ripgrep
-sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0      # Ubuntu 24.04+ only
-```
-
-</details>
-
-<details>
 <summary>Shell completion</summary>
 
 With oh-my-zsh:
@@ -170,7 +160,6 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
 - `filesystem.allowRead` opens only `~/.local/bin` under `~/.local`, and presets add their tools' folders. Version managers like mise keep tools elsewhere in it, so add their folders to your [user config](#user-config)
 - `srt.enableWeakerNetworkIsolation: true`: On macOS, lets Go tools like `gh` verify TLS certificates through `com.apple.trustd.agent`, which also opens a data exfiltration path through that service
-- `srt.enableWeakerNestedSandbox: false`: On Linux, lets the sandbox run inside Docker without privileged namespaces, which weakens isolation
 - `srt.allowPty: true`: Lets sandboxed commands open pseudo-terminals, which TUIs need
 
 `srt` holds [srt settings](https://github.com/anthropics/sandbox-runtime), each replacing its default. Blackwall doesn't read `~/.srt-settings.json`.
@@ -180,8 +169,7 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 A preset is what one tool needs to work in the sandbox: hosts, read paths, write denies, env vars like its cache folder, shell lines, macOS services, and a `why`, which `--print-env` prints. Each is a module in [`src/presets`](src/presets):
 
 - **Always on**
-  - [mac](src/presets/mac.js): System paths macOS tools need. On macOS
-  - [linux](src/presets/linux.js): System paths Linux tools need, and `/tmp`. On Linux
+  - [mac](src/presets/mac.js): System paths macOS tools need
   - [tmpdir](src/presets/tmpdir.js): `/tmp/claude` as the temp folder
 - **On by default**
   - [private-network](src/presets/private-network.js): Denies hosts in private ranges: RFC 1918, CGNAT, and IPv6 ULA. To reach one, add its IP literal with the port to `network.allowedHosts`, e.g. `192.168.1.10:8080`
@@ -197,7 +185,7 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, write
   - [clipboard](src/presets/clipboard.js): On macOS, lets `claude` read an image you copied, e.g. a Cmd+Ctrl+Shift+4 screenshot, when you paste it. Every sandboxed command can then read what you copy, passwords included, and replace what you paste next
   - [screenshots](src/presets/screenshots.js): Reads your screenshot folder, so a screenshot you copy in Finder and paste as its path reaches `claude`. That's `~/Desktop`, unless you moved it with `defaults write com.apple.screencapture location ~/Screenshots`, which also keeps the rest of your Desktop unreadable
 
-Preset paths follow `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, `XDG_CACHE_HOME`, and `XDG_RUNTIME_DIR` when you set them.
+Preset paths follow `XDG_CONFIG_HOME`, `XDG_DATA_HOME`, `XDG_STATE_HOME`, and `XDG_RUNTIME_DIR` when you set them.
 
 ### User Config
 
@@ -292,9 +280,8 @@ A finding counts when the sandboxed command alone gets past this, with no help f
 - No credential masking yet, while Claude Code's built-in sandbox can [mask secrets](https://code.claude.com/docs/en/sandboxing#mask-credentials)
 
 <details>
-<summary>Nested agent files and git hooks on Linux, HTTP proxy, and profile folder symlinks can still get past the sandbox</summary>
+<summary>HTTP proxy and profile folder symlinks can still get past the sandbox</summary>
 
-- On Linux, nested write denies cover matching paths found at launch, up to 3 folders below the current or `--add-dir` folder. A run can still plant `.claude/settings.json`, `.claude/hooks`, `.git/hooks`, or `.git/config` under deeper or newly created folders, for an unsandboxed `claude` or your own `git` to run later. Before running `claude` or `git` outside the sandbox from a subfolder an agent worked in, check its `.claude/` and `.git/`
 - With `HTTP_PROXY` or `HTTPS_PROXY` set, in your shell or `~/.blackwall/.env`, srt sends names through that proxy and lets it resolve them, so it can't check what they resolve to. The `private-network` preset, `deniedHosts` ranges, and srt's built-in refused classes then don't apply to names. IP literals under `"*"` are still judged. Unset the proxy when you need those denies
 - On macOS, a sandboxed command can replace its own profile folder, like `~/.claude-blackwall`, or `~/.cache-blackwall`, with a symlink. Blackwall refuses to launch when it finds one and never grants reads through it. But a session still running can swap the folder right after a second launch, say for another repo, has checked it. That launch then deletes the files it copies in, like `~/.claude/CLAUDE.md`, where the link points. It can't regain reads of the host folder that way. Don't start a second blackwall launch while a session you don't trust is running. Closing this needs srt to forbid unlinking a granted folder itself
 

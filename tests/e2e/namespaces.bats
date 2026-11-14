@@ -10,17 +10,8 @@ setup() {
   load common
 }
 
-@test "user namespace refused (Linux)" {
-  [ "$(uname)" = Linux ] || skip "Linux only"
-
-  run ! blackwall unshare -r true
-  assert_output --partial "Operation not permitted"
-}
-
 # Chromium, Electron, and Playwright register a name like this at launch and die on the refusal
 @test "Mach bootstrap name registration refused (macOS)" {
-  [ "$(uname)" = Darwin ] || skip "macOS only"
-
   cc -x c -o "$proj/checkin" - <<'C'
 #include <servers/bootstrap.h>
 #include <stdio.h>

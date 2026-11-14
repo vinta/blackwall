@@ -15,7 +15,7 @@ const ENV_FD = 3;
 // What the sandboxed shell runs before the command, joined with && so a failed read stops the chain and the command never runs without its env
 function applyEnvThenExec(quotedCommand) {
   return [
-    // cat on the already open fd, not `. /dev/fd/3`: Linux can't open Node's socketpair through /dev/fd, and bash 3.2 cuts a sourced /dev/fd stream off near 64 KB
+    // cat on the already open fd, not `. /dev/fd/3`: bash 3.2 cuts a sourced /dev/fd stream off near 64 KB
     `blackwall_env=$(cat <&${ENV_FD})`,
     `eval "$blackwall_env"`,
     // Its own step: bash 3.2 turns `cmd 3<&-` into a move to fd 10 instead of a close

@@ -40,7 +40,6 @@ setup() {
   refute_output --partial sentinel-a
 }
 
-# On Linux a denied write lands in a tmpfs and vanishes with the run, so the host file is the check, not the exit code
 @test "[ab]: write sibling a denied" {
   proj=$ab run blackwall sh -c 'echo x >> ../a'
   run -0 cat "$code/a"
