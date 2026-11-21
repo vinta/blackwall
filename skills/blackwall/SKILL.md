@@ -1,6 +1,6 @@
 ---
 name: blackwall
-description: "Run, configure, and debug blackwall, the sandbox for claude, codex, and other dev commands (srt: Seatbelt on macOS). Use when the user asks whether this session is sandboxed or what it can read, write, or reach, mentions blackwall, wants a command run sandboxed, or wants the sandbox to reach a path, host, or tool: ~/.blackwall/config.json, .blackwall/config.json, presets, --add-dir, --trust; or wants a blackwall bug report. Also use inside a sandboxed session when a command fails with `Operation not permitted` on a path that exists, `CONNECT tunnel failed, response 403`, ENOTFOUND or `nodename nor servname provided` for every host, a write under /tmp or ~ that fails, or blackwall itself refuses with `can't run inside a sandbox`: those are blackwall denials, not project bugs. Not for configuring Claude Code's built-in sandbox or Codex's sandbox_mode."
+description: "Run, configure, and debug blackwall, the sandbox for claude, codex, and other dev commands (srt: Seatbelt on macOS). Use when the user asks whether this session is sandboxed or what it can read, write, or reach, mentions blackwall, wants a command run sandboxed, or wants the sandbox to reach a path, host, or tool: ~/.blackwall/config.json, .blackwall/config.json, presets, --add-dir, --trust; or wants a bug report or feedback on blackwall written up. Also use inside a sandboxed session when a command fails with `Operation not permitted` on a path that exists, `CONNECT tunnel failed, response 403`, ENOTFOUND or `nodename nor servname provided` for every host, a write under /tmp or ~ that fails, or blackwall itself refuses with `can't run inside a sandbox`: those are blackwall denials, not project bugs. Not for configuring Claude Code's built-in sandbox or Codex's sandbox_mode."
 license: MIT
 compatibility: Node.js 22.21+; macOS (Seatbelt)
 allowed-tools: Bash(blackwall --print-config:*) Bash(blackwall --print-file-access:*) Bash(blackwall --print-network-access:*) Bash(blackwall --print-env:*) Bash(blackwall --version)
@@ -46,7 +46,7 @@ Noise, harmless, the command still ran:
 - `make: error: couldn't create cache file '/var/folders/…/xcrun_db-…' (errno=Operation not permitted)`, same from `xcrun`
 - pip: `WARNING: The directory '…/Library/Caches/pip' or its parent directory is not owned or is not writable … The cache has been disabled`
 
-A failure no row explains, a path or host the docs deny that goes through, or a misleading message is a blackwall bug: write a local report as [references/bug-report.md](references/bug-report.md) describes.
+A failure no row explains, a path or host the docs deny that goes through, or a misleading message is a blackwall bug. For one of those, or when the user asks for a bug report or feedback on blackwall, write a local report as [references/bug-report.md](references/bug-report.md) describes.
 
 ## Granting the narrowest thing
 

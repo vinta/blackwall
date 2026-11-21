@@ -2,6 +2,8 @@
 
 Ask the user where to save the report before writing it; inside the sandbox, only the current folder, `--add-dir` folders, and `$TMPDIR` are writable. Save it there as a Markdown file and tell the user its path. Don't file, post, or send it: the user reads it and decides what happens next.
 
+The report is a handoff: another agent fixes the problem in a later session. Collect what it needs to reproduce the problem, then stop. Finding the cause and trying a fix are that agent's work, so spend no time on either.
+
 ## Is it a bug?
 
 A denial that matches a row in SKILL.md's "Reading a denial" is the policy working: hand the user the grant instead. Write a report for:
@@ -12,6 +14,8 @@ A denial that matches a row in SKILL.md's "Reading a denial" is the policy worki
 - blackwall crashing, or rejecting a valid config
 
 One bug per report.
+
+Feedback the user asks you to write up, like friction, a missing feature, or a confusing doc line, takes the same sections: under Steps to reproduce, what they did; under Expected, what they want instead.
 
 ## Sections
 
@@ -37,10 +41,10 @@ What should happen, citing the SKILL.md row or README line that says so.
 ## Actual
 
 ## Tried
-Each grant or workaround tried, and what it changed.
+Each grant or workaround already tried, and what it changed.
 
 ## Notes
-Optional: root-cause guesses and fix suggestions, labeled as guesses.
+Optional: a cause or fix you already suspect, labeled as a guess.
 ```
 
 Mark every claim you didn't run as untested.
