@@ -3,8 +3,10 @@ import { parseAddressRange } from "@anthropic-ai/sandbox-runtime/dist/sandbox/ad
 import { matchesDomainPatternWithPort } from "@anthropic-ai/sandbox-runtime/dist/sandbox/domain-pattern.js";
 import { canonicalizeHost } from "@anthropic-ai/sandbox-runtime/dist/sandbox/parent-proxy.js";
 import { createResolvedAddressGuard } from "@anthropic-ai/sandbox-runtime/dist/sandbox/resolved-address-guard.js";
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { isIP } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // Single quotes, so the shell expands nothing inside: not $, not backticks, not newlines
 const quote = (arg) => `'${arg.replaceAll("'", `'\\''`)}'`;
@@ -74,6 +76,8 @@ export function createSandbox(config) {
     deniedNames,
 
     async run(args, commandEnv, launcherEnv, shellLines) {
+      // macOS caps a socket path at about 103 bytes and srt binds its proxy socket under os.tmpdir(), so a long TMPDIR falls back to the per-user temp folder
+      if (Buffer.byteLength(join(tmpdir(), `srt-mux-${process.pid}-0.sock`)) > 103) process.env.TMPDIR = execFileSync("getconf", ["DARWIN_USER_TEMP_DIR"], { encoding: "utf8" }).trim();
       await SandboxManager.initialize(srtConfig, askCallback);
       // The terminal sends Ctrl+C to the child too, so the launcher must outlive it, and so must srt's proxy, whose SIGINT cleanup initialize() installs; srt's exit handler still cleans up when the child ends
       process.removeAllListeners("SIGINT");

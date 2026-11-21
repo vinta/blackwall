@@ -105,6 +105,15 @@ setup() {
   run -127 blackwall nosuchcmd
 }
 
+# srt binds its proxy socket under the launcher's TMPDIR, and macOS caps a socket path at about 103 bytes
+@test "long TMPDIR still launches" {
+  local tmp=$work/$(printf 'x%.0s' {1..100})
+  mkdir -p "$tmp"
+
+  TMPDIR=$tmp run -0 blackwall sh -c 'echo "$TMPDIR"'
+  assert_output "/private/tmp/claude"
+}
+
 @test "--allow-internet adds * to allowedHosts" {
   run -0 blackwall --print-config
   refute_output --partial '"*"'
