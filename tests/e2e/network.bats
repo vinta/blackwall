@@ -23,6 +23,18 @@ setup() {
   assert_output --partial "403 host is not on the allow list"
 }
 
+# A proxied request must not turn a piped stdout non-blocking, or a write bigger than the pipe buffer fails with EAGAIN when the reader lags
+@test "stdout pipe stays blocking after a proxied request" {
+  slow_read() {
+    blackwall sh -c 'curl -s -o /dev/null --max-time 20 https://www.wikipedia.org; head -c 2000000 /dev/zero' | (sleep 2 && wc -c | tr -d " ")
+    echo "writer exit ${PIPESTATUS[0]}"
+  }
+
+  run -0 slow_read
+  assert_line 2000000
+  assert_line "writer exit 0"
+}
+
 @test "--allow-internet allows other host" {
   run -0 blackwall --allow-internet curl -sS -o /dev/null --max-time 20 https://www.wikipedia.org
 }

@@ -82,6 +82,9 @@ export function createSandbox(config) {
       for (const warning of SandboxManager.checkDependencies().warnings) console.warn(`blackwall: ${warning}`);
 
       const command = await SandboxManager.wrapWithSandbox(applyEnvThenExec(args.map(quote).join(" ")));
+      // srt's proxy reads process.stdout mid-run, and the first read makes a piped stdout non-blocking for the child too; libuv restores it for a child only at spawn
+      void process.stdout;
+      void process.stderr;
       const stdio = ["inherit", "inherit", "inherit"];
       stdio[ENV_FD] = "pipe";
       const child = spawn(command, { shell: true, stdio, env: launcherEnv });
