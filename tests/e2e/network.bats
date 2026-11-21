@@ -56,12 +56,21 @@ setup() {
   assert_output --partial "403 resolved to a listed address"
 }
 
-# With a CA file that can't match, Apple's curl verifies only through the system trust store, a Mach service the sandbox refuses
-@test "Apple's curl can't reach the system trust store" {
+# With a CA file that can't match, Apple's curl verifies only through the system trust store, a Mach service the system-trust preset grants
+@test "Apple's curl verifies through the system trust store" {
   /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -keyout /dev/null -subj /CN=unrelated -out "$proj/unrelated.pem" 2>/dev/null
 
   run -0 /usr/bin/curl -sS -o /dev/null --max-time 20 --cacert "$proj/unrelated.pem" https://api.github.com
-  run -60 blackwall /usr/bin/curl -sS -o /dev/null --max-time 20 --cacert unrelated.pem https://api.github.com
+  run -0 blackwall /usr/bin/curl -sS -o /dev/null --max-time 20 --cacert unrelated.pem https://api.github.com
+}
+
+# A stub HOME of its own, so the dropped preset doesn't reach the other tests in this file
+@test "Apple's curl can't reach the system trust store without system-trust" {
+  /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -keyout /dev/null -subj /CN=unrelated -out "$proj/unrelated.pem" 2>/dev/null
+  cp -R "$home" "$work/home-no-system-trust"
+  echo '{"overrideDefaults":{"presets":["agent-files","python","node","homebrew","github","git","pre-commit","local-network","private-network"]}}' >"$work/home-no-system-trust/.blackwall/config.json"
+
+  home=$work/home-no-system-trust run -60 blackwall /usr/bin/curl -sS -o /dev/null --max-time 20 --cacert unrelated.pem https://api.github.com
   assert_output --partial "unable to get local issuer certificate"
 }
 

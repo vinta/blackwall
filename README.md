@@ -154,7 +154,7 @@ Sandboxed commands get `BLACKWALL_SANDBOX=1`, so a script can tell it runs insid
 
 [`src/config/default-config.json`](src/config/default-config.json) holds the default settings. Only keys in `default-config.json` can be set in your `~/.blackwall/config.json` or `.blackwall/config.json`, at the top level or, except `srt`, under `overrideDefaults`. With `--no-config`, blackwall skips both config files and both `.env` files, so it runs with these defaults even in a repo with an untrusted `.blackwall/config.json`.
 
-- `presets: ["agent-files", "python", "node", "homebrew", "github", "git", "pre-commit", "local-network", "private-network"]`: The [presets](#presets) on by default
+- `presets: ["agent-files", "python", "node", "homebrew", "github", "git", "pre-commit", "local-network", "private-network", "system-trust"]`: The [presets](#presets) on by default
 - `network.allowedHosts: []`: No hosts beyond presets. An entry is a name, like `example.com` or `*.example.com`, or an IP literal, and can take a port, e.g. `127.0.0.1:8000`. srt refuses loopback, unspecified, link-local, multicast, broadcast, cloud metadata, and your machine's own addresses for every name, and blackwall does the same for IP literals under `"*"`
 - `network.deniedHosts: []`: Hosts to refuse. A name is refused under `"*"`. An IP literal or a range, like `10.0.0.0/8`, is refused as a literal, and also when an allowed name resolves into it. An `allowedHosts` entry wins over a `deniedHosts` name. A range is overridden only by that IP itself in `allowedHosts`
 - `filesystem.denyRead: ["/"]`: Blocks every read, then `allowRead` opens what dev tools need
@@ -181,6 +181,7 @@ A preset is what one tool needs to work in the sandbox: hosts, read paths, write
   - [homebrew](src/presets/homebrew.js): Homebrew's formula list, so `brew --prefix <formula>` and `brew --cellar <formula>` work. `brew install` and other commands that write still fail
   - [pre-commit](src/presets/pre-commit.js): Its cache folder, and hook repos clone through srt's proxy
   - [agent-files](src/presets/agent-files.js): Denies writes to `.claude/settings.json`, `.claude/settings.local.json`, `.claude/hooks`, `.mcp.json`, `.claude/commands`, and `.claude/agents` in the current and `--add-dir` folders: an unsandboxed `claude` runs what they hold, the settings even before you trust the folder
+  - [system-trust](src/presets/system-trust.js): On macOS, lets `/usr/bin/curl`, git, and `/usr/bin/python3` verify a site whose root certificate is missing from `/etc/ssl/cert.pem`, through `com.apple.TrustEvaluationAgent`. The sandboxed command can then reach that service, which runs outside the sandbox
 - **Off by default**
   - [clipboard](src/presets/clipboard.js): On macOS, lets `claude` read an image you copied, e.g. a Cmd+Ctrl+Shift+4 screenshot, when you paste it. Every sandboxed command can then read what you copy, passwords included, and replace what you paste next
   - [screenshots](src/presets/screenshots.js): Reads your screenshot folder, so a screenshot you copy in Finder and paste as its path reaches `claude`. That's `~/Desktop`, unless you moved it with `defaults write com.apple.screencapture location ~/Screenshots`, which also keeps the rest of your Desktop unreadable
